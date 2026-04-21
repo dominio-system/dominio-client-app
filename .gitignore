@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Electron build
+dist/
+build/
+out/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+
+# Logs
+*.log
+npm-debug.log*
+
+# Builds distribuibles
+*.dmg
+*.pkg
+*.exe
+*.msi
+
+# Installer staging
+downloads/

@@ -1,0 +1,71 @@
+{
+  "name": "dominio",
+  "productName": "Dominio",
+  "version": "2.0.0",
+  "description": "Dashboard de rendimiento para clientes de Dominio",
+  "main": "main.js",
+  "author": {
+    "name": "Dominio",
+    "email": "hola@dominiosystem.com"
+  },
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build:mac": "electron-builder --mac",
+    "build:win": "electron-builder --win",
+    "build:all": "electron-builder --mac --win"
+  },
+  "dependencies": {
+    "electron-updater": "^6.1.7"
+  },
+  "devDependencies": {
+    "electron": "^41.2.0",
+    "electron-builder": "^26.8.1"
+  },
+  "build": {
+    "appId": "com.dominio.client",
+    "productName": "Dominio",
+    "copyright": "© 2026 Dominio",
+    "icon": "assets/icon",
+    "files": [
+      "main.js",
+      "preload.js",
+      "login.html",
+      "dashboard.html",
+      "assets/**"
+    ],
+    "mac": {
+      "category": "public.app-category.business",
+      "icon": "assets/icon.icns",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["x64", "arm64"]
+        }
+      ]
+    },
+    "dmg": {
+      "title": "Dominio",
+      "backgroundColor": "#0c0c0c",
+      "window": {
+        "width": 540,
+        "height": 380
+      }
+    },
+    "win": {
+      "icon": "assets/icon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "Dominio"
+    }
+  }
+}

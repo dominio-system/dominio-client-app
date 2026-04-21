@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Dominio</title>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --bg:#0c0c0c;--sidebar:#0f0f0f;--card:#141414;--card2:#1a1a1a;--card3:#1e1e1e;
+  --border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.12);
+  --accent:#e8e8e8;
+  --success:#6fcf97;--success-s:rgba(111,207,151,0.10);
+  --warn:#f2c94c;--warn-s:rgba(242,201,76,0.10);
+  --danger:#eb5757;--danger-s:rgba(235,87,87,0.10);
+  --aria:#e8e8e8;--aria-s:rgba(232,232,232,0.06);--aria-border:rgba(232,232,232,0.18);
+  --text:#f0f0f0;--text2:#aaaaaa;--text3:#777777;
+  --sidebar-w:232px;--sidebar-wc:56px;
+  --aria-drawer-w:380px;
+}
+/* LIGHT THEME OVERRIDE */
+body.theme-light{
+  --bg:#f4f4f4;--sidebar:#ffffff;--card:#ffffff;--card2:#ececec;--card3:#e0e0e0;
+  --border:rgba(0,0,0,0.08);--border2:rgba(0,0,0,0.15);
+  --accent:#111111;
+  --text:#111111;--text2:#555;--text3:#999;
+  --aria:#111111;--aria-s:rgba(0,0,0,0.05);--aria-border:rgba(0,0,0,0.15);
+}
+body.theme-light input,body.theme-light textarea,body.theme-light select{
+  color:#111!important;background:#fff!important;border-color:rgba(0,0,0,0.15)!important;
+}
+body.theme-light .aria-fab{background:#111;color:#fff;}
+body.theme-light .aria-fab:hover{background:#000;}
+body.theme-light .btn.primary{background:#111;color:#fff;border-color:#111;}
+body.theme-light .btn.primary:hover{background:#000;}
+body.theme-light .logo-icon img{filter:none;}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Geist',sans-serif;display:flex;height:100vh;overflow:hidden;font-size:13px;-webkit-font-smoothing:antialiased;transition:background-color 200ms,color 200ms;}
+
+/* Tabs sistema para Settings */
+.tabs-nav{display:flex;gap:2px;background:var(--card);border:1px solid var(--border);border-radius:7px;padding:3px;margin-bottom:16px;overflow-x:auto;}
+.tabs-nav::-webkit-scrollbar{display:none;}
+.tab-btn{flex:1;min-width:fit-content;padding:7px 14px;border:0;background:transparent;color:var(--text3);cursor:pointer;border-radius:5px;font-size:11px;font-family:'Geist',sans-serif;font-weight:500;white-space:nowrap;transition:all 120ms;}
+.tab-btn:hover{color:var(--text2);}
+.tab-btn.active{background:var(--card3);color:var(--text);}
+.tab-pane{display:none;}
+.tab-pane.active{display:block;}
+
+/* DRAG REGION (macOS) */
+.drag-region{position:fixed;top:0;left:0;right:0;height:28px;-webkit-app-region:drag;z-index:1000;pointer-events:none;}
+
+/* ============= SIDEBAR ============= */
+.sidebar{width:var(--sidebar-w);min-width:var(--sidebar-w);background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:28px 0 0;transition:width 220ms cubic-bezier(.4,0,.2,1),min-width 220ms cubic-bezier(.4,0,.2,1);position:relative;}
+body.sb-collapsed .sidebar{width:var(--sidebar-wc);min-width:var(--sidebar-wc);}
+.logo-area{padding:0 16px 14px;border-bottom:1px solid var(--border);height:62px;display:flex;align-items:center;position:relative;}
+.logo-badge{display:flex;align-items:center;gap:10px;overflow:hidden;}
+.logo-icon{width:30px;height:30px;min-width:30px;border-radius:6px;background:var(--card2);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.logo-icon img{width:100%;height:100%;object-fit:cover;}
+.logo-txt{display:flex;flex-direction:column;transition:opacity 150ms;}
+body.sb-collapsed .logo-txt{opacity:0;pointer-events:none;}
+.logo-text{font-size:13px;font-weight:600;letter-spacing:-0.2px;white-space:nowrap;}
+.logo-sub{font-size:8px;color:var(--text3);letter-spacing:2px;font-family:'Geist Mono',monospace;margin-top:2px;white-space:nowrap;}
+.collapse-btn{position:absolute;right:-11px;top:20px;width:22px;height:22px;background:var(--card2);border:1px solid var(--border2);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:10px;color:var(--text3);z-index:100;}
+.collapse-btn:hover{color:var(--text);background:var(--card3);}
+.collapse-btn svg{transition:transform 220ms;}
+body.sb-collapsed .collapse-btn svg{transform:rotate(180deg);}
+
+.nav-scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:10px 8px;}
+.nav-scroll::-webkit-scrollbar{width:4px;}
+.nav-scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+.nav-group{margin-bottom:4px;}
+.group-head{display:flex;align-items:center;padding:8px 10px 6px;cursor:pointer;user-select:none;border-radius:5px;gap:6px;transition:background 120ms;}
+.group-head:hover{background:var(--card2);}
+.group-chev{width:10px;height:10px;display:flex;align-items:center;justify-content:center;color:var(--text3);transition:transform 180ms;flex-shrink:0;}
+.group-chev svg{width:8px;height:8px;}
+.group-label{font-size:9px;letter-spacing:1.8px;color:var(--text3);font-family:'Geist Mono',monospace;text-transform:uppercase;flex:1;white-space:nowrap;transition:opacity 150ms;}
+body.sb-collapsed .group-label,body.sb-collapsed .group-chev{opacity:0;pointer-events:none;}
+body.sb-collapsed .group-head{justify-content:center;padding:4px 0;}
+.nav-group.closed .group-chev{transform:rotate(-90deg);}
+.nav-group.closed .group-items{max-height:0;opacity:0;pointer-events:none;}
+.group-items{max-height:500px;overflow:hidden;transition:max-height 260ms cubic-bezier(.4,0,.2,1),opacity 180ms;padding-top:2px;}
+
+.nav-item{display:flex;align-items:center;gap:10px;padding:6px 10px 6px 24px;border-radius:5px;cursor:pointer;font-size:12px;color:var(--text2);font-weight:500;margin-bottom:1px;position:relative;white-space:nowrap;transition:background 120ms,color 120ms;}
+.nav-item:hover{background:var(--card2);color:var(--text);}
+.nav-item.active{background:var(--card2);color:var(--accent);}
+.nav-item.active::before{content:'';position:absolute;left:12px;top:50%;transform:translateY(-50%);width:3px;height:14px;background:var(--accent);border-radius:2px;}
+.nav-icon{width:14px;height:14px;display:flex;align-items:center;justify-content:center;color:currentColor;opacity:0.7;flex-shrink:0;}
+.nav-icon svg{width:13px;height:13px;}
+.nav-text{flex:1;transition:opacity 150ms;overflow:hidden;text-overflow:ellipsis;}
+.nav-badge{font-size:9px;padding:1px 6px;border-radius:10px;font-family:'Geist Mono',monospace;background:var(--card3);color:var(--text3);transition:opacity 150ms;}
+.nav-badge.alert{background:var(--danger-s);color:var(--danger);}
+.nav-badge.new{background:var(--aria-s);color:var(--aria);}
+body.sb-collapsed .nav-item{justify-content:center;padding:8px 0;}
+body.sb-collapsed .nav-item.active::before{left:4px;}
+body.sb-collapsed .nav-text,body.sb-collapsed .nav-badge{opacity:0;width:0;padding:0;pointer-events:none;overflow:hidden;}
+body.sb-collapsed .nav-item:hover::after{content:attr(data-label);position:absolute;left:calc(100% + 8px);top:50%;transform:translateY(-50%);background:var(--card3);border:1px solid var(--border2);padding:5px 10px;border-radius:5px;font-size:11px;color:var(--text);white-space:nowrap;z-index:200;font-family:'Geist',sans-serif;box-shadow:0 4px 12px rgba(0,0,0,0.3);}
+body.sb-collapsed .nav-group .group-items{max-height:500px!important;opacity:1!important;pointer-events:auto!important;}
+body.sb-collapsed .nav-group:not(:last-child){border-bottom:1px solid var(--border);margin-bottom:6px;padding-bottom:6px;}
+
+.sidebar-footer{padding:10px 14px;border-top:1px solid var(--border);display:flex;align-items:center;gap:9px;}
+.user-avatar{width:28px;height:28px;min-width:28px;border-radius:50%;background:var(--card2);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--text2);}
+.user-info{display:flex;flex-direction:column;gap:1px;overflow:hidden;transition:opacity 150ms;}
+body.sb-collapsed .user-info{opacity:0;width:0;}
+.user-name{font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;}
+.user-plan{font-size:9px;color:var(--text3);font-family:'Geist Mono',monospace;white-space:nowrap;}
+.sidebar-foot-actions{margin-left:auto;display:flex;gap:2px;}
+.foot-btn{background:transparent;border:0;color:var(--text3);cursor:pointer;padding:5px;border-radius:4px;display:flex;align-items:center;justify-content:center;transition:color 120ms,background 120ms;}
+.foot-btn:hover{color:var(--text);background:var(--card2);}
+.foot-btn.danger:hover{color:var(--danger);}
+body.sb-collapsed .sidebar-foot-actions{display:none;}
+
+/* ============= WRAPPER ============= */
+.wrapper{display:flex;flex-direction:column;flex:1;overflow:hidden;min-width:0;padding-top:28px;transition:margin-right 260ms;}
+body.aria-open .wrapper{margin-right:var(--aria-drawer-w);}
+.topbar{height:50px;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0;}
+.crumb{font-size:11px;color:var(--text3);display:flex;align-items:center;gap:6px;}
+.crumb .sep{color:var(--text3);font-size:9px;opacity:0.5;}
+.crumb .current{color:var(--text);font-weight:600;}
+.crumb .date{color:var(--text3);font-size:10px;margin-left:6px;font-family:'Geist Mono',monospace;}
+.top-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
+.period-tabs{display:flex;gap:2px;background:var(--card);border:1px solid var(--border);border-radius:5px;padding:2px;}
+.period-tab{padding:3px 9px;font-size:10px;color:var(--text3);cursor:pointer;border-radius:3px;font-family:'Geist Mono',monospace;transition:all 120ms;}
+.period-tab:hover{color:var(--text2);}
+.period-tab.active{background:var(--card3);color:var(--text);}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-family:'Geist Mono',monospace;padding:4px 10px;border-radius:20px;letter-spacing:0.5px;}
+.pill-ok{background:var(--success-s);color:var(--success);border:1px solid rgba(111,207,151,0.2);}
+.pill-warn{background:var(--warn-s);color:var(--warn);border:1px solid rgba(242,201,76,0.2);}
+.pill-aria{background:var(--aria-s);color:var(--aria);border:1px solid rgba(232,232,232,0.2);cursor:pointer;}
+.pill-dot{width:5px;height:5px;border-radius:50%;background:currentColor;animation:pulse 1.6s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.35;}}
+
+.bell{position:relative;width:32px;height:32px;border:1px solid var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:var(--card);color:var(--text2);}
+.bell:hover{color:var(--text);border-color:var(--border2);}
+.bell-dot{position:absolute;top:5px;right:6px;width:6px;height:6px;border-radius:50%;background:var(--danger);display:none;}
+.bell.has-notif .bell-dot{display:block;}
+
+/* ============= CONTENT ============= */
+.content{flex:1;overflow-y:auto;padding:20px;}
+.content::-webkit-scrollbar{width:6px;}
+.content::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+
+.page-head{margin-bottom:16px;display:flex;align-items:flex-end;gap:14px;}
+.page-title{font-size:20px;font-weight:600;color:var(--text);letter-spacing:-0.3px;}
+.page-sub{font-size:10px;color:var(--text3);font-family:'Geist Mono',monospace;letter-spacing:0.6px;margin-top:3px;}
+.page-actions{margin-left:auto;display:flex;gap:8px;}
+
+.sec-head{display:flex;align-items:center;gap:10px;margin:22px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+.sec-label{font-size:9px;letter-spacing:2px;color:var(--text3);font-family:'Geist Mono',monospace;text-transform:uppercase;}
+.sec-title{font-size:13px;font-weight:600;color:var(--text);}
+.sec-meta{font-size:10px;color:var(--text3);font-family:'Geist Mono',monospace;margin-left:auto;}
+
+.btn{padding:6px 12px;font-size:11px;font-weight:500;border-radius:5px;border:1px solid var(--border2);background:var(--card2);color:var(--text);cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-family:inherit;}
+.btn:hover{background:var(--card3);}
+.btn.primary{background:var(--accent);color:#000;border-color:var(--accent);}
+.btn.primary:hover{background:#fff;}
+.btn.aria{background:var(--aria-s);border-color:rgba(232,232,232,0.3);color:var(--aria);}
+.btn.aria:hover{background:rgba(232,232,232,0.2);}
+.btn.ghost{background:transparent;border-color:var(--border);color:var(--text2);}
+.btn.ghost:hover{color:var(--text);border-color:var(--border2);}
+.btn.success{background:var(--success-s);border-color:rgba(111,207,151,0.3);color:var(--success);}
+.btn.danger{background:var(--danger-s);border-color:rgba(235,87,87,0.3);color:var(--danger);}
+
+.kpi-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px;}
+.kpi-strip.five{grid-template-columns:repeat(5,1fr);}
+.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px 16px;transition:border-color 150ms;}
+.kpi-card:hover{border-color:var(--border2);}
+.kpi-label{font-size:8px;letter-spacing:1.5px;color:var(--text3);font-family:'Geist Mono',monospace;text-transform:uppercase;margin-bottom:6px;font-weight:600;}
+.kpi-value{font-size:24px;font-weight:600;letter-spacing:-1px;font-family:'Geist Mono',monospace;color:var(--text);line-height:1.1;}
+.kpi-trend{font-size:9px;color:var(--text3);margin-top:5px;font-family:'Geist Mono',monospace;}
+.kpi-trend.up{color:var(--success);}
+.kpi-trend.down{color:var(--danger);}
+
+.panel{background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+.panel-head{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.panel-title{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:1.2px;font-family:'Geist Mono',monospace;}
+.panel-sub{font-size:9px;color:var(--text3);margin-left:auto;font-family:'Geist Mono',monospace;}
+.panel-body{padding:14px;}
+
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.grid-side{display:grid;grid-template-columns:1fr 320px;gap:12px;}
+
+/* Executive brief (narrative IA) */
+.brief{background:linear-gradient(135deg,var(--card),var(--card2));border:1px solid var(--border2);border-radius:10px;padding:20px;margin-bottom:16px;position:relative;overflow:hidden;}
+.brief::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--aria),transparent);}
+.brief-head{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.brief-icon{width:32px;height:32px;border-radius:8px;background:var(--aria-s);border:1px solid rgba(232,232,232,0.25);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--aria);}
+.brief-title{font-size:13px;font-weight:600;color:var(--text);}
+.brief-meta{font-size:10px;color:var(--text3);font-family:'Geist Mono',monospace;margin-left:auto;}
+.brief-body{font-size:14px;line-height:1.65;color:var(--text);letter-spacing:-0.1px;}
+.brief-body strong{color:var(--accent);font-weight:600;}
+.brief-body .hi-ok{color:var(--success);font-weight:500;}
+.brief-body .hi-danger{color:var(--danger);font-weight:500;}
+.brief-actions{display:flex;gap:8px;margin-top:14px;padding-top:14px;border-top:1px dashed var(--border);}
+
+.chart-wrap{height:220px;padding:14px;position:relative;}
+.chart-wrap-sm{height:120px;padding:10px;position:relative;}
+
+.tbl{width:100%;border-collapse:collapse;}
+.tbl th{text-align:left;font-size:9px;letter-spacing:1.5px;color:var(--text3);font-family:'Geist Mono',monospace;padding:9px 14px;border-bottom:1px solid var(--border);font-weight:500;text-transform:uppercase;}
+.tbl td{padding:10px 14px;border-bottom:1px solid var(--border);font-size:12px;}
+.tbl tr:last-child td{border-bottom:0;}
+.tbl tr:hover td{background:var(--card2);}
+.mono{font-family:'Geist Mono',monospace;}
+.num{font-family:'Geist Mono',monospace;color:var(--text);}
+.dim{color:var(--text3);}
+.ok{color:var(--success);}
+.err{color:var(--danger);}
+
+.chip{font-size:9px;padding:2px 8px;border-radius:10px;font-family:'Geist Mono',monospace;display:inline-flex;align-items:center;gap:5px;}
+.chip-ok{background:var(--success-s);color:var(--success);}
+.chip-warn{background:var(--warn-s);color:var(--warn);}
+.chip-err{background:var(--danger-s);color:var(--danger);}
+.chip-off{background:var(--card2);color:var(--text3);}
+.chip-aria{background:var(--aria-s);color:var(--aria);}
+.chip-dot{width:5px;height:5px;border-radius:50%;background:currentColor;}
+.chip-live .chip-dot{animation:pulse 1.6s infinite;}
+
+.icon-btn{width:26px;height:26px;border-radius:5px;border:1px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;}
+.icon-btn:hover{color:var(--text);background:var(--card2);}
+
+.view{display:none;}
+.view.active{display:block;}
+
+/* Funnel */
+.funnel-container{display:flex;flex-direction:column;gap:8px;padding:14px;}
+.funnel-row{display:grid;grid-template-columns:140px 1fr 60px 50px 28px;gap:12px;align-items:center;}
+.funnel-label{font-size:11px;color:var(--text2);font-weight:500;}
+.funnel-bar{height:26px;border-radius:4px;background:var(--card2);position:relative;overflow:hidden;}
+.funnel-bar-fill{height:100%;background:rgba(111,207,151,0.6);border-radius:4px;transition:width 400ms;}
+.funnel-bar-fill.drop{background:rgba(235,87,87,0.6);}
+.funnel-count{font-size:11px;font-weight:600;color:var(--text);text-align:right;font-family:'Geist Mono',monospace;}
+.funnel-pct{font-size:9px;color:var(--text3);text-align:right;font-family:'Geist Mono',monospace;}
+.funnel-ia-hint{padding:8px 14px;background:var(--aria-s);border-left:2px solid var(--aria);margin:4px 14px;border-radius:0 4px 4px 0;font-size:11px;color:var(--text2);}
+.funnel-ia-hint strong{color:var(--aria);}
+
+/* Agenda calendar */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;padding:14px;}
+.cal-cell{min-height:70px;background:var(--card2);border:1px solid var(--border);border-radius:4px;padding:6px;font-size:11px;cursor:pointer;position:relative;}
+.cal-cell:hover{background:var(--card3);}
+.cal-cell.today{border-color:var(--accent);}
+.cal-cell.has-appt{background:rgba(111,207,151,0.08);border-color:rgba(111,207,151,0.2);}
+.cal-day{font-size:10px;color:var(--text3);font-family:'Geist Mono',monospace;}
+.cal-appt{font-size:9px;margin-top:4px;padding:2px 4px;background:var(--success-s);color:var(--success);border-radius:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cal-head{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;padding:0 14px 6px;font-size:9px;color:var(--text3);font-family:'Geist Mono',monospace;letter-spacing:1.5px;text-transform:uppercase;}
+
+/* Score pill */
+.score-pill{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;font-size:10px;font-family:'Geist Mono',monospace;font-weight:600;}
+.score-hot{background:var(--danger-s);color:var(--danger);}
+.score-warm{background:var(--warn-s);color:var(--warn);}
+.score-cold{background:var(--card2);color:var(--text3);}
+
+/* ============= ARIA DRAWER ============= */
+.aria-fab{position:fixed;bottom:20px;right:20px;width:56px;height:56px;border-radius:28px;background:var(--accent);border:none;color:#000;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;font-family:'Geist',sans-serif;letter-spacing:-0.5px;box-shadow:0 8px 24px rgba(0,0,0,0.5);z-index:500;transition:transform 200ms,box-shadow 200ms;}
+.aria-fab:hover{transform:scale(1.05);box-shadow:0 12px 32px rgba(0,0,0,0.6);background:#fff;}
+.aria-fab-badge{position:absolute;top:-4px;right:-4px;min-width:22px;height:22px;border-radius:11px;background:var(--danger);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 6px;border:2px solid var(--bg);}
+body.aria-open .aria-fab{display:none;}
+
+.aria-drawer{position:fixed;right:-420px;top:0;bottom:0;width:var(--aria-drawer-w);background:var(--sidebar);border-left:1px solid var(--border);display:flex;flex-direction:column;z-index:400;transition:right 260ms cubic-bezier(.4,0,.2,1);}
+body.aria-open .aria-drawer{right:0;}
+.aria-head{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;padding-top:38px;}
+.aria-badge-icon{width:32px;height:32px;border-radius:8px;background:var(--aria-s);border:1px solid rgba(232,232,232,0.25);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:var(--aria);}
+.aria-title{flex:1;font-size:13px;font-weight:600;}
+.aria-title span{display:block;font-size:9px;color:var(--text3);font-family:'Geist Mono',monospace;letter-spacing:1.5px;margin-top:2px;}
+.aria-close{background:transparent;border:0;color:var(--text3);cursor:pointer;width:28px;height:28px;border-radius:5px;display:flex;align-items:center;justify-content:center;}
+.aria-close:hover{color:var(--text);background:var(--card2);}
+
+.aria-filter{padding:10px 18px;border-bottom:1px solid var(--border);display:flex;gap:6px;overflow-x:auto;}
+.aria-filter::-webkit-scrollbar{display:none;}
+.aria-filter-btn{flex-shrink:0;padding:4px 10px;border:1px solid var(--border);background:transparent;color:var(--text3);border-radius:10px;font-size:10px;font-family:'Geist Mono',monospace;cursor:pointer;white-space:nowrap;}
+.aria-filter-btn.active{background:var(--aria-s);border-color:rgba(232,232,232,0.3);color:var(--aria);}
+
+.aria-list{flex:1;overflow-y:auto;padding:10px;}
+.aria-list::-webkit-scrollbar{width:4px;}
+.aria-list::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+.aria-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:10px;transition:border-color 150ms;}
+.aria-card:hover{border-color:rgba(232,232,232,0.3);}
+.aria-card-head{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;}
+.aria-type-icon{width:28px;height:28px;border-radius:7px;background:var(--card2);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;}
+.aria-card-title{font-size:12px;font-weight:600;color:var(--text);line-height:1.35;margin-bottom:2px;}
+.aria-card-meta{font-size:9px;color:var(--text3);font-family:'Geist Mono',monospace;letter-spacing:0.5px;text-transform:uppercase;}
+.aria-confidence{font-size:9px;padding:1px 6px;border-radius:4px;font-family:'Geist Mono',monospace;font-weight:600;margin-left:auto;background:var(--aria-s);color:var(--aria);flex-shrink:0;}
+.aria-reasoning{font-size:11px;color:var(--text2);line-height:1.5;margin-bottom:10px;padding:8px 10px;background:var(--card2);border-radius:5px;border-left:2px solid var(--aria);}
+.aria-payload{font-size:10px;color:var(--text3);font-family:'Geist Mono',monospace;margin-bottom:10px;padding:6px 8px;background:var(--card2);border-radius:4px;border:1px dashed var(--border);word-break:break-all;max-height:60px;overflow-y:auto;}
+.aria-actions{display:flex;gap:6px;}
+.aria-actions .btn{flex:1;justify-content:center;font-size:10px;padding:6px 8px;}
+
+.aria-empty{text-align:center;padding:40px 20px;color:var(--text3);}
+.aria-empty-icon{width:48px;height:48px;border-radius:12px;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;margin:0 auto 12px;color:var(--aria);}
+.aria-empty-text{font-size:12px;line-height:1.5;}
+
+/* TOAST */
+.toast-container{position:fixed;top:60px;right:20px;z-index:600;display:flex;flex-direction:column;gap:8px;max-width:320px;}
+.toast{background:var(--card);border:1px solid var(--border2);border-radius:8px;padding:10px 14px;font-size:12px;box-shadow:0 8px 24px rgba(0,0,0,0.4);animation:toast-in 200ms ease-out;}
+.toast.success{border-left:3px solid var(--success);}
+.toast.aria{border-left:3px solid var(--aria);}
+.toast.warn{border-left:3px solid var(--warn);}
+.toast.err{border-left:3px solid var(--danger);}
+.toast-title{font-weight:600;color:var(--text);margin-bottom:2px;}
+.toast-body{color:var(--text2);font-size:11px;}
+@keyframes toast-in{from{opacity:0;transform:translateX(40px);}to{opacity:1;transform:translateX(0);}}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:700;display:none;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay.show{display:flex;}
+.modal{background:var(--card);border:1px solid var(--border2);border-radius:10px;width:100%;max-width:480px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;}
+.modal-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.modal-title{font-size:14px;font-weight:600;}
+.modal-close{margin-left:auto;width:26px;height:26px;background:transparent;border:0;color:var(--text3);cursor:pointer;border-radius:5px;display:flex;align-items:center;justify-content:center;}
+.modal-close:hover{color:var(--text);background:var(--card2);}
+.modal-body{padding:16px 20px;overflow-y:auto;flex:1;}
+.modal-foot{padding:12px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;}
+.field{margin-bottom:12px;}
+.field-label{font-size:9px;letter-spacing:1.5px;color:var(--text3);font-family:'Geist Mono',monospace;margin-bottom:5px;text-transform:uppercase;}
+.field-input,.field-select,.field-textarea{width:100%;background:var(--card2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-family:inherit;font-size:12px;outline:none;}
+.field-input:focus,.field-select:focus,.field-textarea:focus{border-color:var(--border2);}
+.field-textarea{resize:vertical;min-height:80px;}
+
+/* ═══════════ ARIA SECTION ═══════════ */
+.aria-hero{background:linear-gradient(135deg,var(--card),var(--card2));border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px;display:flex;align-items:center;gap:16px;position:relative;overflow:hidden;}
+.aria-hero::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);}
+.aria-avatar-big{width:56px;height:56px;border-radius:14px;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#000;font-size:22px;font-weight:700;letter-spacing:-1px;flex-shrink:0;}
+.aria-info{flex:1;}
+.aria-info-title{font-size:18px;font-weight:600;letter-spacing:-0.3px;}
+.aria-info-sub{font-size:11px;color:var(--text2);margin-top:3px;}
+.aria-status-row{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap;}
+.aria-phone{font-family:'Geist Mono',monospace;font-size:13px;color:var(--text);font-weight:600;}
+.verified-chip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;background:var(--success-s);border:1px solid rgba(111,207,151,0.25);color:var(--success);border-radius:10px;font-size:9px;font-family:'Geist Mono',monospace;letter-spacing:0.5px;}
+.verified-chip::before{content:'✓';font-weight:700;}
+.quality-chip{padding:2px 8px;border:1px solid var(--border2);border-radius:10px;font-size:9px;font-family:'Geist Mono',monospace;color:var(--success);}
+.live-chip{display:inline-flex;align-items:center;gap:5px;font-size:9px;font-family:'Geist Mono',monospace;padding:3px 9px;border-radius:10px;background:var(--success-s);color:var(--success);letter-spacing:0.5px;}
+.live-dot{width:5px;height:5px;border-radius:50%;background:currentColor;animation:pulse 1.6s infinite;}
+.aria-quick-stats{display:flex;gap:10px;}
+.stat-mini{padding:8px 12px;background:var(--card2);border:1px solid var(--border);border-radius:6px;text-align:center;min-width:70px;}
+.stat-val{font-size:16px;font-weight:600;font-family:'Geist Mono',monospace;letter-spacing:-0.5px;}
+.stat-lbl{font-size:8px;color:var(--text3);font-family:'Geist Mono',monospace;letter-spacing:1.2px;text-transform:uppercase;margin-top:2px;}
+
+/* ARIA tabs */
+.aria-tabs{display:flex;gap:2px;background:var(--card);border:1px solid var(--border);border-radius:7px;padding:3px;margin-bottom:14px;}
+.aria-tab{flex:1;padding:9px 14px;border:0;background:transparent;color:var(--text3);cursor:pointer;border-radius:5px;font-size:12px;font-family:'Geist',sans-serif;font-weight:500;transition:all 120ms;}
+.aria-tab:hover{color:var(--text2);}
+.aria-tab.active{background:var(--card3);color:var(--text);}
+.aria-tab-pane{display:none;}
+.aria-tab-pane.active{display:block;}
+
+/* Conversaciones */
+.conv-wrap{display:grid;grid-template-columns:340px 1fr;gap:12px;height:calc(100vh - 340px);min-height:460px;}
+.conv-list{background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden;display:flex;flex-direction:column;}
+.conv-filters{display:flex;gap:4px;padding:10px 12px;border-bottom:1px solid var(--border);overflow-x:auto;}
+.conv-filters::-webkit-scrollbar{display:none;}
+.conv-filter-btn{flex-shrink:0;padding:4px 10px;border:1px solid var(--border);background:transparent;color:var(--text3);border-radius:12px;font-size:10px;font-family:'Geist Mono',monospace;cursor:pointer;white-space:nowrap;}
+.conv-filter-btn.active{background:var(--card3);border-color:var(--border2);color:var(--text);}
+.conv-search-wrap{padding:8px 12px;border-bottom:1px solid var(--border);}
+.conv-search-wrap input{width:100%;background:var(--card2);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:5px;font-family:inherit;font-size:11px;outline:none;}
+.conv-items{flex:1;overflow-y:auto;}
+.conv-items::-webkit-scrollbar{width:4px;}
+.conv-items::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+.conv-item{padding:12px 14px;border-bottom:1px solid var(--border);cursor:pointer;display:flex;gap:10px;}
+.conv-item:hover{background:var(--card2);}
+.conv-item.active{background:var(--card2);border-left:2px solid var(--accent);padding-left:12px;}
+.conv-avatar{width:36px;height:36px;border-radius:50%;background:var(--card3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--text2);font-weight:600;font-size:12px;flex-shrink:0;position:relative;}
+.conv-avatar-dot{position:absolute;bottom:0;right:0;width:10px;height:10px;border-radius:50%;background:var(--success);border:2px solid var(--card);}
+.conv-avatar-dot.paused{background:var(--warn);}
+.conv-avatar-dot.escalated{background:var(--danger);}
+.conv-body{flex:1;min-width:0;}
+.conv-top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:3px;}
+.conv-name{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.conv-time{font-size:9px;color:var(--text3);font-family:'Geist Mono',monospace;flex-shrink:0;}
+.conv-preview{font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.conv-meta{display:flex;gap:5px;align-items:center;margin-top:4px;}
+.conv-meta-chip{font-size:8px;padding:1px 5px;border-radius:3px;font-family:'Geist Mono',monospace;letter-spacing:0.5px;}
+.conv-meta-chip.aria-c{background:var(--aria-s);border:1px solid var(--aria-border);color:var(--accent);}
+.conv-meta-chip.human{background:var(--card3);color:var(--text3);}
+.conv-meta-chip.escalated{background:var(--danger-s);color:var(--danger);}
+.conv-unread{font-size:9px;background:var(--danger);color:#fff;border-radius:10px;padding:1px 6px;font-weight:600;font-family:'Geist Mono',monospace;}
+.chat-panel{background:var(--card);border:1px solid var(--border);border-radius:8px;display:flex;flex-direction:column;overflow:hidden;}
+.chat-head{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;}
+.chat-who{flex:1;}
+.chat-who-name{font-size:13px;font-weight:600;}
+.chat-who-meta{font-size:10px;color:var(--text3);margin-top:2px;font-family:'Geist Mono',monospace;}
+.chat-status-banner{padding:8px 16px;background:var(--aria-s);border-bottom:1px solid var(--aria-border);font-size:10px;color:var(--text2);display:flex;align-items:center;gap:8px;}
+.chat-status-banner.paused{background:var(--warn-s);border-bottom-color:rgba(242,201,76,0.15);}
+.chat-msgs{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:10px;}
+.chat-msgs::-webkit-scrollbar{width:4px;}
+.chat-msgs::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+.msg{max-width:75%;padding:8px 12px;border-radius:10px;font-size:12px;line-height:1.45;}
+.msg.in{align-self:flex-start;background:var(--card2);border:1px solid var(--border);}
+.msg.out{align-self:flex-end;background:var(--card3);border:1px solid var(--border2);}
+.msg-time{font-size:8px;color:var(--text3);margin-top:4px;font-family:'Geist Mono',monospace;letter-spacing:0.5px;}
+.msg-by-aria{display:inline-block;font-size:8px;background:var(--aria-s);color:var(--accent);padding:1px 5px;border-radius:3px;font-family:'Geist Mono',monospace;letter-spacing:0.5px;margin-right:4px;border:1px solid var(--aria-border);}
+.msg-by-human{display:inline-block;font-size:8px;background:var(--card3);color:var(--text3);padding:1px 5px;border-radius:3px;font-family:'Geist Mono',monospace;letter-spacing:0.5px;margin-right:4px;}
+.msg-system{align-self:center;font-size:9px;color:var(--text3);font-family:'Geist Mono',monospace;padding:4px 10px;background:var(--card2);border-radius:10px;letter-spacing:0.5px;}
+.chat-compose{padding:10px 14px;border-top:1px solid var(--border);display:flex;gap:8px;align-items:center;}
+.chat-compose input{flex:1;background:var(--card2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:18px;font-family:inherit;font-size:12px;outline:none;}
+.chat-compose .btn{border-radius:18px;}
+
+/* Automatización */
+.auto-kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;}
+.rule-row{display:grid;grid-template-columns:40px 1.5fr 1.2fr 1fr 80px 60px;gap:12px;align-items:center;padding:11px 14px;border-bottom:1px solid var(--border);font-size:12px;}
+.rule-row:hover{background:var(--card2);}
+.rule-row:last-child{border-bottom:0;}
+.rule-name{font-weight:500;}
+.rule-desc{font-size:10px;color:var(--text3);margin-top:2px;}
+.rule-tag{display:inline-block;font-size:9px;padding:1px 6px;border-radius:3px;font-family:'Geist Mono',monospace;letter-spacing:0.5px;text-transform:uppercase;}
+.rule-tag.trigger{background:var(--card3);color:var(--text2);}
+.rule-tag.action{background:var(--aria-s);border:1px solid var(--aria-border);color:var(--accent);}
+.rule-tag.escalate{background:var(--danger-s);color:var(--danger);border:1px solid rgba(235,87,87,0.2);}
+.rule-count{font-family:'Geist Mono',monospace;color:var(--text3);font-size:10px;}
+.tpl-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:14px;}
+.tpl-card{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:14px;cursor:pointer;transition:all 150ms;}
+.tpl-card:hover{border-color:var(--border2);transform:translateY(-1px);}
+.tpl-icon{width:32px;height:32px;border-radius:7px;background:var(--card3);display:flex;align-items:center;justify-content:center;font-size:14px;margin-bottom:10px;}
+.tpl-name{font-size:12px;font-weight:600;margin-bottom:3px;}
+.tpl-desc{font-size:10px;color:var(--text3);line-height:1.5;margin-bottom:10px;}
+.tpl-add{font-size:10px;color:var(--accent);font-family:'Geist Mono',monospace;letter-spacing:1px;}
+
+/* Conexión */
+.conn-grid{display:grid;grid-template-columns:1fr 320px;gap:12px;}
+.conn-status-card{padding:20px;}
+.conn-status-header{display:flex;align-items:center;gap:14px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border);}
+.conn-icon{width:48px;height:48px;border-radius:10px;background:#25d366;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;}
+.conn-title{font-size:14px;font-weight:600;}
+.conn-sub{font-size:11px;color:var(--text2);margin-top:3px;}
+.conn-field{padding:12px 0;border-bottom:1px dashed var(--border);display:flex;justify-content:space-between;align-items:center;gap:14px;}
+.conn-field:last-child{border-bottom:0;}
+.conn-field-lbl{font-size:10px;letter-spacing:1.2px;color:var(--text3);font-family:'Geist Mono',monospace;text-transform:uppercase;min-width:140px;}
+.conn-field-val{font-family:'Geist Mono',monospace;font-size:11px;color:var(--text);text-align:right;word-break:break-all;}
+.conn-field-mask{color:var(--text3);}
+.conn-stats{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);border-radius:6px;overflow:hidden;margin-top:16px;}
+.conn-stat{background:var(--card2);padding:12px;}
+.conn-stat-lbl{font-size:9px;color:var(--text3);font-family:'Geist Mono',monospace;letter-spacing:1px;text-transform:uppercase;}
+.conn-stat-val{font-size:18px;font-weight:600;font-family:'Geist Mono',monospace;margin-top:4px;}
+.conn-actions{display:flex;gap:8px;margin-top:20px;padding-top:16px;border-top:1px solid var(--border);}
+.help-card{padding:18px;}
+.help-step{display:flex;gap:10px;padding:10px 0;border-bottom:1px dashed var(--border);}
+.help-step:last-child{border-bottom:0;}
+.help-step-n{width:22px;height:22px;border-radius:11px;background:var(--card2);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;flex-shrink:0;font-family:'Geist Mono',monospace;color:var(--text2);}
+.help-step-body{flex:1;font-size:11px;color:var(--text2);line-height:1.5;}
+.help-step-body strong{color:var(--text);}
+.pricing-note{padding:10px 12px;background:var(--warn-s);border:1px solid rgba(242,201,76,0.15);border-radius:6px;font-size:10px;color:var(--text2);line-height:1.5;margin-top:10px;}
+.pricing-note strong{color:var(--warn);}
+
+/* Wizard para conexión desconectada */
+.wiz-steps{display:flex;margin-bottom:20px;}
+.wiz-step{flex:1;padding:12px 14px;background:var(--card2);border:1px solid var(--border);font-size:10px;font-family:'Geist Mono',monospace;color:var(--text3);}
+.wiz-step:first-child{border-radius:6px 0 0 6px;}
+.wiz-step:last-child{border-radius:0 6px 6px 0;}
+.wiz-step+.wiz-step{border-left:0;}
+.wiz-step.active{background:var(--card3);color:var(--text);}
+.wiz-step.done{color:var(--success);}
+
+/* WhatsApp webview (legacy para fallback) */
+.wa-wrap{display:grid;grid-template-columns:1fr 320px;gap:12px;height:calc(100vh - 140px);}
+.wa-webview{background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden;position:relative;}
+.wa-webview webview{width:100%;height:100%;}
+.wa-sidebar{background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden;display:flex;flex-direction:column;}
+
+/* Coach Dominio */
+.coach-hero{background:linear-gradient(135deg,var(--card),var(--card2));border:1px solid var(--border2);border-radius:10px;padding:24px;margin-bottom:16px;}
+.coach-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;background:var(--aria-s);border:1px solid rgba(232,232,232,0.3);border-radius:20px;font-size:10px;font-family:'Geist Mono',monospace;color:var(--aria);letter-spacing:1.2px;margin-bottom:14px;}
+.coach-title{font-size:22px;font-weight:600;letter-spacing:-0.3px;margin-bottom:6px;}
+.coach-sub{font-size:12px;color:var(--text2);line-height:1.6;max-width:580px;}
+.coach-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px;padding-top:18px;border-top:1px dashed var(--border);}
+
+/* Dominio Index gauge */
+.gauge-container{text-align:center;padding:30px 20px;}
+.gauge-score{font-size:56px;font-weight:700;letter-spacing:-2px;color:var(--success);font-family:'Geist Mono',monospace;line-height:1;}
+.gauge-max{font-size:18px;color:var(--text3);}
+.gauge-label{font-size:11px;color:var(--text2);margin-top:10px;}
+.gauge-rank{font-size:10px;color:var(--aria);font-family:'Geist Mono',monospace;letter-spacing:1.5px;text-transform:uppercase;margin-top:8px;}
+
+/* Toggle switch */
+.switch{position:relative;display:inline-block;width:36px;height:20px;}
+.switch input{opacity:0;width:0;height:0;}
+.slider{position:absolute;cursor:pointer;inset:0;background:var(--card3);border:1px solid var(--border2);border-radius:20px;transition:.2s;}
+.slider:before{content:"";position:absolute;height:14px;width:14px;left:2px;bottom:2px;background:var(--text3);border-radius:50%;transition:.2s;}
+.switch input:checked + .slider{background:var(--success-s);border-color:rgba(111,207,151,0.4);}
+.switch input:checked + .slider:before{transform:translateX(16px);background:var(--success);}
+
+/* WhatsApp QR connection */
+.wa-connect-banner{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 16px;display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+.wa-connect-icon{width:36px;height:36px;border-radius:8px;background:#25d366;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;}
+.wa-connect-body{flex:1;}
+.wa-connect-title{font-size:13px;font-weight:600;color:var(--text);}
+.wa-connect-sub{font-size:11px;color:var(--text2);margin-top:2px;line-height:1.4;}
+.wa-connect-status{font-size:10px;padding:5px 10px;border-radius:10px;font-family:'Geist Mono',monospace;letter-spacing:1px;display:flex;align-items:center;gap:5px;}
+.wa-connect-status.on{background:var(--success-s);color:var(--success);}
+.wa-connect-status.off{background:var(--warn-s);color:var(--warn);}
+
+/* Email confirmation badge in agenda */
+.email-chip{display:inline-flex;align-items:center;gap:4px;font-size:9px;padding:2px 6px;border-radius:4px;background:var(--card3);color:var(--text3);font-family:'Geist Mono',monospace;letter-spacing:0.5px;}
+.email-chip.sent{background:rgba(111,207,151,0.08);color:var(--success);}
+.email-chip.confirmed{background:var(--success-s);color:var(--success);}
+
+/* Empty state */
+.empty{text-align:center;padding:40px 20px;}
+.empty-icon{width:56px;height:56px;border-radius:14px;background:var(--card2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:22px;margin:0 auto 14px;color:var(--text3);}
+.empty-title{font-size:14px;font-weight:500;color:var(--text2);margin-bottom:4px;}
+.empty-sub{font-size:11px;color:var(--text3);}
+
+</style>
+</head>
+<body>
+
+<div class="drag-region"></div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo-area">
+    <div class="logo-badge">
+      <div class="logo-icon"><img src="assets/icon.png" alt="Dominio"></div>
+      <div class="logo-txt">
+        <div class="logo-text">Dominio</div>
+        <div class="logo-sub" id="client-plan">CARGANDO...</div>
+      </div>
+    </div>
+  </div>
+  <div class="collapse-btn" onclick="toggleSidebar()"><svg width="8" height="8" viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M5 1L2 4l3 3"/></svg></div>
+
+  <div class="nav-scroll">
+
+    <div class="nav-group" data-group="home">
+      <div class="group-head" onclick="toggleGroup('home')"><div class="group-chev"><svg viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3l2 2 2-2"/></svg></div><div class="group-label">Home</div></div>
+      <div class="group-items">
+        <div class="nav-item active" data-view="brief" data-label="Executive Brief" onclick="go('brief')"><span class="nav-icon"><svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M2 2h9v9h-9z"/><path d="M4 5h5M4 7h5M4 9h3"/></svg></span><span class="nav-text">Executive Brief</span></div>
+      </div>
+    </div>
+
+    <div class="nav-group" data-group="rendimiento">
+      <div class="group-head" onclick="toggleGroup('rendimiento')"><div class="group-chev"><svg viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3l2 2 2-2"/></svg></div><div class="group-label">Rendimiento</div></div>
+      <div class="group-items">
+        <div class="nav-item" data-view="funnel" data-label="Funnel + Diagnóstico" onclick="go('funnel')"><span class="nav-icon"><svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M1.5 2h10l-3 4v5l-4-1V6z"/></svg></span><span class="nav-text">Funnel Diagnóstico</span></div>
+        <div class="nav-item" data-view="roi" data-label="ROI & Resultados" onclick="go('roi')"><span class="nav-icon"><svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M1.5 10l3-3 2.5 2.5 4-5"/></svg></span><span class="nav-text">ROI & Resultados</span></div>
+      </div>
+    </div>
+
+    <div class="nav-group" data-group="actividad">
+      <div class="group-head" onclick="toggleGroup('actividad')"><div class="group-chev"><svg viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3l2 2 2-2"/></svg></div><div class="group-label">Actividad</div></div>
+      <div class="group-items">
+        <div class="nav-item" data-view="agenda" data-label="Agenda Inteligente" onclick="go('agenda')"><span class="nav-icon"><svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="1.5" y="2.5" width="10" height="9" rx="1"/><path d="M4 1v3M9 1v3M1.5 5.5h10"/></svg></span><span class="nav-text">Agenda</span><span class="nav-badge" id="appt-count">—</span></div>
+        <div class="nav-item" data-view="leads" data-label="Leads con Score" onclick="go('leads')"><span class="nav-icon"><svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="6.5" cy="4.5" r="2.5"/><path d="M2 11.5c0-2 2-3.5 4.5-3.5s4.5 1.5 4.5 3.5"/></svg></span><span class="nav-text">Leads</span><span class="nav-badge" id="leads-count">—</span></div>
+        <div class="nav-item" data-view="crm" data-label="CRM 360" onclick="go('crm')"><span class="nav-icon"><svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M2 3h9v8h-9z"/><path d="M4 5h5M4 7h5M4 9h3"/></svg></span><span class="nav-text">CRM 360</span></div>
+      </div>
+    </div>
+
+    <div class="nav-group" data-group="mensajeria">
+      <div class="group-head" onclick="toggleGroup('mensajeria')"><div class="group-chev"><svg viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3l2 2 2-2"/></svg></div><div class="group-label">Mensajería</div></div>
+      <div class="group-items">
+        <div class="nav-item" data-view="campaigns" data-label="Campaigns Creator" onclick="go('campaigns')"><span class="nav-icon"><svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M1.5 6.5l5-3 5 5-5 2zM1.5 6.5l3 3"/></svg></span><span class="nav-text">Campaigns</span><span class="nav-badge new">IA</span></div>
+        <div class="nav-item" data-view="aria" data-label="ARIA" onclick="go('aria')"><span class="nav-icon"><span style="display:inline-block;width:13px;height:13px;border-radius:3px;background:var(--accent);color:#000;font-weight:700;font-size:9px;display:flex;align-items:center;justify-content:center;">A</span></span><span class="nav-text">ARIA</span><span class="nav-badge live">LIVE</span></div>
+      </div>
+    </div>
+
+    <div class="nav-group closed" data-group="premium">
+      <div class="group-head" onclick="toggleGroup('premium')"><div class="group-chev"><svg viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3l2 2 2-2"/></svg></div><div class="group-label">Premium</div></div>
+      <div class="group-items">
+        <div class="nav-item" data-view="coach" data-label="Coach Dominio" onclick="go('coach')"><span class="nav-icon"><svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M6.5 1.5l1.5 3 3.5.5-2.5 2.5.5 3.5-3-1.5-3 1.5.5-3.5L1.5 5l3.5-.5z"/></svg></span><span class="nav-text">Coach Dominio</span></div>
+        <div class="nav-item" data-view="reports" data-label="Reportes" onclick="go('reports')"><span class="nav-icon"><svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M3 1.5h7v10h-7z"/><path d="M5 4h3M5 6.5h3M5 9h2"/></svg></span><span class="nav-text">Reportes</span></div>
+        <div class="nav-item" data-view="dindex" data-label="Dominio Index" onclick="go('dindex')"><span class="nav-icon"><svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="6.5" cy="6.5" r="5"/><path d="M6.5 6.5l3-3"/></svg></span><span class="nav-text">Dominio Index</span></div>
+      </div>
+    </div>
+
+    <div class="nav-group closed" data-group="cuenta">
+      <div class="group-head" onclick="toggleGroup('cuenta')"><div class="group-chev"><svg viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3l2 2 2-2"/></svg></div><div class="group-label">Cuenta</div></div>
+      <div class="group-items">
+        <div class="nav-item" data-view="sla" data-label="SLA Dashboard" onclick="go('sla')"><span class="nav-icon"><svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="6.5" cy="6.5" r="5"/><path d="M6.5 3.5v3l2 2"/></svg></span><span class="nav-text">SLA</span></div>
+        <div class="nav-item" data-view="billing" data-label="Facturación" onclick="go('billing')"><span class="nav-icon"><svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M3 1.5h7v10l-1.5-1-1 1-1-1-1 1-1-1-1.5 1z"/></svg></span><span class="nav-text">Facturación</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="user-avatar" id="client-initial">?</div>
+    <div class="user-info">
+      <div class="user-name" id="client-name">cargando...</div>
+      <div class="user-plan" id="client-empresa">—</div>
+    </div>
+    <div class="sidebar-foot-actions">
+      <button class="foot-btn" onclick="go('settings')" title="Configuración">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="7" cy="7" r="1.8"/><path d="M7 1v1.5M7 11.5V13M13 7h-1.5M2.5 7H1M11.2 2.8l-1 1M3.8 10.2l-1 1M11.2 11.2l-1-1M3.8 3.8l-1-1"/></svg>
+      </button>
+      <button class="foot-btn danger" onclick="logout()" title="Cerrar sesión">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M5 2H3v10h2M9 4l3 3-3 3M12 7H6"/></svg>
+      </button>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="wrapper">
+  <div class="topbar">
+    <div class="crumb"><span>Dominio</span><span class="sep">›</span><span class="current" id="crumb-current">Executive Brief</span><span class="date" id="crumb-date">—</span></div>
+    <div class="top-right">
+      <div class="period-tabs"><div class="period-tab">7D</div><div class="period-tab active">30D</div><div class="period-tab">90D</div><div class="period-tab">YTD</div></div>
+      <div class="pill pill-ok"><span class="pill-dot"></span>SISTEMA ACTIVO</div>
+      <button class="bell" id="bell-btn" onclick="toggleNotifications()"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M7 2v1M11 10H3l1-3V5a3 3 0 016 0v2zM5 10a2 2 0 004 0"/></svg><span class="bell-dot"></span></button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- EXECUTIVE BRIEF -->
+    <div class="view active" data-view="brief">
+      <div class="page-head"><div><div class="page-title" id="brief-greet">Tu resumen de hoy</div><div class="page-sub">ANALYSIS · POWERED BY ARIA</div></div><div class="page-actions"><button class="btn ghost" onclick="requestReport()">⟱ Descargar reporte</button></div></div>
+
+      <div class="brief">
+        <div class="brief-head">
+          <div class="brief-icon">A</div>
+          <div><div class="brief-title">ARIA · Executive Brief</div><div style="font-size:9px;color:var(--text3);font-family:'Geist Mono',monospace;margin-top:2px;">ANÁLISIS DE 30 DÍAS</div></div>
+          <div class="brief-meta" id="brief-date">—</div>
+        </div>
+        <div class="brief-body" id="brief-narrative">Analizando tu data...</div>
+        <div class="brief-actions">
+          <button class="btn aria" onclick="openAria()">Ver sugerencias</button>
+          <button class="btn ghost" onclick="go('funnel')">Ir al funnel →</button>
+        </div>
+      </div>
+
+      <div class="kpi-strip">
+        <div class="kpi-card"><div class="kpi-label">LEADS 30D</div><div class="kpi-value" id="brief-leads">—</div><div class="kpi-trend up">total recibidos</div></div>
+        <div class="kpi-card"><div class="kpi-label">CITAS</div><div class="kpi-value" id="brief-citas">—</div><div class="kpi-trend">confirmadas</div></div>
+        <div class="kpi-card"><div class="kpi-label">CONVERSIÓN</div><div class="kpi-value" id="brief-conv">—</div><div class="kpi-trend">lead → cita</div></div>
+        <div class="kpi-card"><div class="kpi-label">ARIA PENDIENTES</div><div class="kpi-value" id="brief-aria" style="color:var(--aria);">—</div><div class="kpi-trend">revisa tu drawer</div></div>
+      </div>
+
+      <div class="sec-head"><span class="sec-label">TENDENCIA</span><span class="sec-title">Evolución últimos 6 meses</span></div>
+      <div class="panel"><div class="chart-wrap"><canvas id="chart-brief"></canvas></div></div>
+    </div>
+
+    <!-- FUNNEL -->
+    <div class="view" data-view="funnel">
+      <div class="page-head"><div><div class="page-title">Funnel Diagnóstico</div><div class="page-sub">DIAGNÓSTICO CON ARIA · IDENTIFICA PUNTOS DE FUGA</div></div></div>
+      <div class="panel">
+        <div class="panel-head"><div class="panel-title">Etapas de conversión</div><div class="panel-sub">últimos 30 días</div></div>
+        <div class="funnel-container" id="funnel-container"></div>
+      </div>
+    </div>
+
+    <!-- ROI -->
+    <div class="view" data-view="roi">
+      <div class="page-head"><div><div class="page-title">ROI & Resultados</div><div class="page-sub">ATRIBUCIÓN · BENCHMARK DE INDUSTRIA</div></div></div>
+      <div class="kpi-strip">
+        <div class="kpi-card"><div class="kpi-label">GASTO PUBLICITARIO</div><div class="kpi-value" id="roi-spend">—</div><div class="kpi-trend">últimos 30d</div></div>
+        <div class="kpi-card"><div class="kpi-label">INGRESOS GENERADOS</div><div class="kpi-value" id="roi-rev">—</div><div class="kpi-trend up">total</div></div>
+        <div class="kpi-card"><div class="kpi-label">ROAS</div><div class="kpi-value" id="roi-roas">—</div><div class="kpi-trend">return on ad spend</div></div>
+        <div class="kpi-card"><div class="kpi-label">NUEVOS CLIENTES</div><div class="kpi-value" id="roi-nuevos">—</div><div class="kpi-trend">adquiridos</div></div>
+      </div>
+      <div class="sec-head"><span class="sec-label">BENCHMARK</span><span class="sec-title">Tu performance vs industria</span></div>
+      <div class="panel panel-body">
+        <div id="bench-body">Cargando benchmark...</div>
+      </div>
+    </div>
+
+    <!-- AGENDA -->
+    <div class="view" data-view="agenda">
+      <div class="page-head"><div><div class="page-title">Agenda Inteligente</div><div class="page-sub">REALTIME · SYNC CON MADRE EN VIVO</div></div><div class="page-actions"><button class="btn primary" onclick="openNewAppt()">+ Nueva cita</button></div></div>
+      <div class="panel">
+        <div class="panel-head"><div class="panel-title" id="cal-month">—</div><div class="panel-sub">click en un día para ver detalles</div></div>
+        <div class="cal-head"><div>DOM</div><div>LUN</div><div>MAR</div><div>MIÉ</div><div>JUE</div><div>VIE</div><div>SÁB</div></div>
+        <div class="cal-grid" id="cal-grid"></div>
+      </div>
+      <div class="sec-head"><span class="sec-label">PRÓXIMAS</span><span class="sec-title">Citas agendadas</span></div>
+      <div class="panel"><table class="tbl"><thead><tr><th>Fecha</th><th>Hora</th><th>Cliente</th><th>Servicio</th><th>Estado</th></tr></thead><tbody id="appt-tbody"></tbody></table></div>
+    </div>
+
+    <!-- LEADS CON SCORE -->
+    <div class="view" data-view="leads">
+      <div class="page-head"><div><div class="page-title">Leads con Score IA</div><div class="page-sub">RANKED POR PROBABILIDAD DE CIERRE · ARIA INTENT SCORING</div></div></div>
+      <div class="panel"><table class="tbl"><thead><tr><th>Score</th><th>Nombre</th><th>WhatsApp</th><th>Fuente</th><th>Estado</th><th>Visitas</th><th>Notas</th></tr></thead><tbody id="leads-tbody"></tbody></table></div>
+    </div>
+
+    <!-- CRM 360 -->
+    <div class="view" data-view="crm">
+      <div class="page-head"><div><div class="page-title">CRM 360</div><div class="page-sub">VISTA UNIFICADA DE TUS CLIENTES</div></div></div>
+      <div class="panel"><table class="tbl"><thead><tr><th>Cliente</th><th>Última visita</th><th>Próxima cita</th><th>Visitas totales</th><th>Estado</th><th>Próxima acción</th></tr></thead><tbody id="crm-tbody"></tbody></table></div>
+    </div>
+
+    <!-- CAMPAIGNS -->
+    <div class="view" data-view="campaigns">
+      <div class="page-head"><div><div class="page-title">Campaigns Creator</div><div class="page-sub">WHATSAPP + EMAIL · APRUEBA Y ARIA EJECUTA</div></div><div class="page-actions"><button class="btn primary" onclick="openNewCampaign()">+ Nueva campaña</button></div></div>
+      <div class="panel">
+        <div class="panel-head"><div class="panel-title">WhatsApp Campaigns</div></div>
+        <table class="tbl"><thead><tr><th>Icono</th><th>Nombre</th><th>Tipo</th><th>Segmento</th><th>Enviados</th><th>Leídos</th><th>Respuestas</th><th>Citas</th><th>Estado</th></tr></thead><tbody id="camp-tbody"></tbody></table>
+      </div>
+    </div>
+
+    <!-- ARIA -->
+    <div class="view" data-view="aria">
+      <!-- HERO -->
+      <div class="aria-hero">
+        <div class="aria-avatar-big">A</div>
+        <div class="aria-info">
+          <div class="aria-info-title">ARIA · Tu asistente IA en WhatsApp</div>
+          <div class="aria-info-sub">Automatiza respuestas 24/7, agenda citas y captura leads desde WhatsApp Cloud API</div>
+          <div class="aria-status-row" id="aria-status-row">
+            <span class="live-chip" id="aria-live-chip" style="display:none;"><span class="live-dot"></span>LIVE</span>
+            <span class="chip chip-off" id="aria-off-chip"><span class="chip-dot"></span>DESCONECTADO</span>
+            <span class="aria-phone" id="aria-phone-display"></span>
+            <span class="verified-chip" id="aria-verified" style="display:none;">VERIFIED</span>
+            <span class="quality-chip" id="aria-quality" style="display:none;">QUALITY: —</span>
+          </div>
+        </div>
+        <div class="aria-quick-stats" id="aria-quick-stats">
+          <div class="stat-mini"><div class="stat-val" id="aria-s-msgs">—</div><div class="stat-lbl">MSGS 24H</div></div>
+          <div class="stat-mini"><div class="stat-val" id="aria-s-auto">—</div><div class="stat-lbl">AUTO-REPLY</div></div>
+          <div class="stat-mini"><div class="stat-val" id="aria-s-citas">—</div><div class="stat-lbl">CITAS</div></div>
+        </div>
+      </div>
+
+      <!-- TABS -->
+      <div class="aria-tabs">
+        <button class="aria-tab active" data-atab="conv" onclick="ariaTab('conv')">💬 Conversaciones</button>
+        <button class="aria-tab" data-atab="auto" onclick="ariaTab('auto')">⚙ Automatización</button>
+        <button class="aria-tab" data-atab="conn" onclick="ariaTab('conn')">🔌 Conexión</button>
+      </div>
+
+      <!-- TAB CONVERSACIONES -->
+      <div class="aria-tab-pane active" data-atab="conv">
+        <div class="conv-wrap">
+          <div class="conv-list">
+            <div class="conv-filters" id="conv-filters">
+              <button class="conv-filter-btn active" data-filter="all" onclick="filterConversations('all')">TODAS · <span id="cf-all">0</span></button>
+              <button class="conv-filter-btn" data-filter="active" onclick="filterConversations('active')">ACTIVAS · <span id="cf-active">0</span></button>
+              <button class="conv-filter-btn" data-filter="paused" onclick="filterConversations('paused')">PAUSADAS · <span id="cf-paused">0</span></button>
+              <button class="conv-filter-btn" data-filter="escalated" onclick="filterConversations('escalated')">ESCALADAS · <span id="cf-escalated">0</span></button>
+              <button class="conv-filter-btn" data-filter="resolved" onclick="filterConversations('resolved')">RESUELTAS · <span id="cf-resolved">0</span></button>
+            </div>
+            <div class="conv-search-wrap"><input placeholder="Buscar por nombre o teléfono..." oninput="searchConversations(this.value)"></div>
+            <div class="conv-items" id="conv-items"><div style="padding:40px 20px;text-align:center;color:var(--text3);font-size:11px;">Cargando conversaciones...</div></div>
+          </div>
+          <div class="chat-panel" id="chat-panel">
+            <div style="padding:60px 20px;text-align:center;color:var(--text3);margin:auto;">
+              <div style="font-size:36px;margin-bottom:10px;opacity:0.3;">💬</div>
+              <div style="font-size:12px;">Selecciona una conversación</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB AUTOMATIZACIÓN -->
+      <div class="aria-tab-pane" data-atab="auto">
+        <div class="auto-kpi-grid">
+          <div class="kpi-card"><div class="kpi-label">REGLAS ACTIVAS</div><div class="kpi-value" id="ar-active">0</div></div>
+          <div class="kpi-card"><div class="kpi-label">EJECUCIONES 24H</div><div class="kpi-value" id="ar-exec24">0</div></div>
+          <div class="kpi-card"><div class="kpi-label">AUTO-RESPUESTAS</div><div class="kpi-value" id="ar-autoreply">0%</div></div>
+          <div class="kpi-card"><div class="kpi-label">ESCALADAS HUMANO</div><div class="kpi-value" id="ar-esc" style="color:var(--warn);">0</div></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">Reglas configuradas</div>
+            <div class="panel-sub" id="ar-total">0 reglas</div>
+            <button class="btn primary" onclick="openNewRule()">+ Nueva regla</button>
+          </div>
+          <div class="rule-row" style="font-size:9px;color:var(--text3);font-family:'Geist Mono',monospace;letter-spacing:1px;text-transform:uppercase;padding-top:10px;padding-bottom:8px;">
+            <div>PRIO</div><div>NOMBRE</div><div>TRIGGER</div><div>ACCIÓN</div><div>EJECUTADAS</div><div>ACTIVA</div>
+          </div>
+          <div id="ar-rules-body"><div style="padding:30px 20px;text-align:center;color:var(--text3);font-size:11px;">Sin reglas aún. Agrega una desde plantillas abajo.</div></div>
+        </div>
+
+        <div class="sec-head"><span class="sec-label">PLANTILLAS SUGERIDAS</span><span class="sec-title">Reglas pre-armadas para clínica estética</span><span class="sec-meta">click para agregar</span></div>
+        <div class="panel">
+          <div class="tpl-grid" id="ar-templates"></div>
+        </div>
+      </div>
+
+      <!-- TAB CONEXIÓN -->
+      <div class="aria-tab-pane" data-atab="conn">
+        <div class="conn-grid" id="conn-grid">
+          <div class="panel">
+            <div class="conn-status-card" id="conn-status-card">
+              <div style="padding:40px 20px;text-align:center;color:var(--text3);font-size:11px;">Cargando estado de conexión...</div>
+            </div>
+          </div>
+          <div>
+            <div class="panel" style="margin-bottom:12px;">
+              <div class="panel-head"><div class="panel-title">Cómo funciona</div></div>
+              <div class="help-card">
+                <div class="help-step"><div class="help-step-n">1</div><div class="help-step-body">Tu número se registra en <strong>Meta Business</strong>, no en WhatsApp personal.</div></div>
+                <div class="help-step"><div class="help-step-n">2</div><div class="help-step-body">Cada mensaje entrante llega por <strong>webhook</strong> a nuestro servidor.</div></div>
+                <div class="help-step"><div class="help-step-n">3</div><div class="help-step-body"><strong>ARIA analiza</strong> el mensaje y aplica reglas automáticamente.</div></div>
+                <div class="help-step"><div class="help-step-n">4</div><div class="help-step-body">Respuesta enviada vía <strong>API oficial</strong> — sin riesgo de ban.</div></div>
+                <div class="help-step"><div class="help-step-n">5</div><div class="help-step-body">Todo queda registrado en tu dashboard en <strong>tiempo real</strong>.</div></div>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><div class="panel-title">Costos de Meta</div></div>
+              <div class="help-card">
+                <div class="help-step" style="border:0;padding:6px 0;"><div class="help-step-body"><strong>1,000 conv/mes</strong> gratis</div></div>
+                <div class="help-step" style="border:0;padding:6px 0;"><div class="help-step-body"><strong>Service (respuestas)</strong> $0.00</div></div>
+                <div class="help-step" style="border:0;padding:6px 0;"><div class="help-step-body"><strong>Marketing</strong> $0.033/conv</div></div>
+                <div class="help-step" style="border:0;padding:6px 0;"><div class="help-step-body"><strong>Auth</strong> $0.0135/conv</div></div>
+                <div class="pricing-note" id="wa-cost-note"><strong>Este mes:</strong> — conversaciones · <strong style="color:var(--success);">$0.00</strong></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COACH -->
+    <div class="view" data-view="coach">
+      <div class="page-head"><div><div class="page-title">Coach Dominio</div><div class="page-sub">TU SOCIO ESTRATÉGICO · REVIEWS SEMANALES</div></div></div>
+      <div class="coach-hero">
+        <div class="coach-badge">⭐ CERTIFIED PARTNER</div>
+        <div class="coach-title">Tu camino al siguiente nivel</div>
+        <div class="coach-sub">Esta semana ARIA detectó 3 oportunidades que pueden generarte <strong style="color:var(--success);">+$2,400</strong> si las ejecutamos juntos. Tu Account Manager agendó una llamada el jueves 11:00 AM para revisarlas.</div>
+        <div class="coach-metrics">
+          <div><div class="kpi-label">META DEL MES</div><div class="kpi-value" style="font-size:18px;">$12,400</div><div class="kpi-trend up">68% completo</div></div>
+          <div><div class="kpi-label">VIDEO SEMANAL</div><div class="kpi-value" style="font-size:14px;">Lunes 10am</div><div class="kpi-trend">próximo: 22 abr</div></div>
+          <div><div class="kpi-label">KICK-OFF Q2</div><div class="kpi-value" style="font-size:14px;">Mar 30 Abr</div><div class="kpi-trend">confirmado</div></div>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="panel"><div class="panel-head"><div class="panel-title">Próximas sesiones</div></div><div class="panel-body dim">No hay sesiones agendadas.</div></div>
+        <div class="panel"><div class="panel-head"><div class="panel-title">Últimas reviews</div></div><div class="panel-body dim">Histórico de reviews aparecerá aquí.</div></div>
+      </div>
+    </div>
+
+    <!-- REPORTS -->
+    <div class="view" data-view="reports">
+      <div class="page-head"><div><div class="page-title">Reportes Ejecutivos</div><div class="page-sub">GENERADOS AUTOMÁTICAMENTE CADA LUNES 8AM</div></div><div class="page-actions"><button class="btn primary">Generar ahora</button></div></div>
+      <div class="panel"><table class="tbl"><thead><tr><th>Periodo</th><th>Generado</th><th>Tipo</th><th>Tamaño</th><th></th></tr></thead><tbody><tr><td>Marzo 2026</td><td class="dim">1 abr</td><td>Mensual</td><td class="num dim">2.4 MB</td><td><button class="btn ghost">Descargar</button></td></tr><tr><td>Semana 15</td><td class="dim">14 abr</td><td>Semanal</td><td class="num dim">820 KB</td><td><button class="btn ghost">Descargar</button></td></tr></tbody></table></div>
+    </div>
+
+    <!-- DINDEX -->
+    <div class="view" data-view="dindex">
+      <div class="page-head"><div><div class="page-title">Dominio Index</div><div class="page-sub">TU SCORE VS OTROS CLIENTES · GAMIFICATION</div></div></div>
+      <div class="grid-2">
+        <div class="panel"><div class="panel-head"><div class="panel-title">Tu score global</div></div><div class="gauge-container"><div class="gauge-score">78<span class="gauge-max">/100</span></div><div class="gauge-label">Excelente rendimiento</div><div class="gauge-rank">TOP 15% DE CLIENTES</div></div></div>
+        <div class="panel"><div class="panel-head"><div class="panel-title">Badges</div></div><div class="panel-body" style="display:flex;flex-wrap:wrap;gap:8px;"><span class="chip chip-aria">⭐ CERTIFIED</span><span class="chip chip-ok">🎯 100 LEADS</span><span class="chip chip-warn">🚀 GROWTH</span></div></div>
+      </div>
+    </div>
+
+    <!-- SLA -->
+    <div class="view" data-view="sla">
+      <div class="page-head"><div><div class="page-title">SLA Dashboard</div><div class="page-sub">UPTIME · SATISFACCIÓN · CRÉDITOS</div></div></div>
+      <div class="kpi-strip">
+        <div class="kpi-card"><div class="kpi-label">UPTIME 30D</div><div class="kpi-value ok" id="sla-uptime">—</div><div class="kpi-trend up">SLA garantizado 99.9%</div></div>
+        <div class="kpi-card"><div class="kpi-label">SLA SCORE</div><div class="kpi-value ok" id="sla-score">—</div><div class="kpi-trend">dentro del objetivo</div></div>
+        <div class="kpi-card"><div class="kpi-label">NPS</div><div class="kpi-value" id="sla-nps">—</div><div class="kpi-trend">tu última puntuación</div></div>
+        <div class="kpi-card"><div class="kpi-label">CRÉDITOS SLA</div><div class="kpi-value">$0</div><div class="kpi-trend">sin fallos este mes</div></div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="view" data-view="settings">
+      <div class="page-head"><div><div class="page-title">Configuración</div><div class="page-sub">PERFIL · SERVICIOS · EMAIL · INTEGRACIONES · NOTIF · APARIENCIA</div></div></div>
+
+      <div class="tabs-nav">
+        <button class="tab-btn active" data-tab="perfil" onclick="setTab('perfil')">Perfil</button>
+        <button class="tab-btn" data-tab="servicios" onclick="setTab('servicios')">Mis Servicios</button>
+        <button class="tab-btn" data-tab="email" onclick="setTab('email')">Email</button>
+        <button class="tab-btn" data-tab="integraciones" onclick="setTab('integraciones')">Integraciones</button>
+        <button class="tab-btn" data-tab="notif" onclick="setTab('notif')">Notificaciones</button>
+        <button class="tab-btn" data-tab="apariencia" onclick="setTab('apariencia')">Apariencia</button>
+      </div>
+
+      <!-- TAB: PERFIL -->
+      <div class="tab-pane active" data-tab="perfil">
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">Datos del negocio</div></div>
+          <div class="panel-body">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+              <div class="field"><div class="field-label">NOMBRE</div><input class="field-input" id="set-nombre"></div>
+              <div class="field"><div class="field-label">EMPRESA</div><input class="field-input" id="set-empresa"></div>
+              <div class="field"><div class="field-label">EMAIL DE CONTACTO</div><input class="field-input" id="set-email" type="email"></div>
+              <div class="field"><div class="field-label">WHATSAPP</div><input class="field-input" id="set-whatsapp"></div>
+              <div class="field"><div class="field-label">INDUSTRIA</div><input class="field-input" id="set-industria"></div>
+              <div class="field"><div class="field-label">MONEDA</div><select class="field-select" id="set-moneda"><option value="USD">USD - Dólar</option><option value="MXN">MXN - Peso Mexicano</option><option value="DOP">DOP - Peso Dominicano</option><option value="EUR">EUR - Euro</option><option value="COP">COP - Peso Colombiano</option></select></div>
+            </div>
+            <button class="btn primary" onclick="saveProfile()">Guardar cambios</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: MIS SERVICIOS -->
+      <div class="tab-pane" data-tab="servicios">
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">Catálogo de servicios</div>
+            <div class="panel-sub" id="svc-count">—</div>
+            <button class="btn primary" onclick="openNewService()">+ Nuevo servicio</button>
+          </div>
+          <div style="font-size:11px;color:var(--text2);padding:12px 14px;border-bottom:1px solid var(--border);line-height:1.5;">
+            Define los servicios que ofreces con su <strong style="color:var(--text);">precio</strong> y <strong style="color:var(--text);">duración</strong>. Los usarás al agendar citas y son la base de tus ingresos calculados automáticamente.
+          </div>
+          <table class="tbl">
+            <thead><tr><th>Nombre</th><th>Categoría</th><th>Precio</th><th>Duración</th><th>Estado</th><th></th></tr></thead>
+            <tbody id="svc-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TAB: EMAIL -->
+      <div class="tab-pane" data-tab="email">
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">Email para confirmaciones</div></div>
+          <div class="panel-body">
+            <div style="font-size:11px;color:var(--text2);line-height:1.5;margin-bottom:14px;">
+              Cuando agendas una cita con email del cliente, se envía automáticamente un email de confirmación.
+              Por defecto usamos tu <strong style="color:var(--text);">email de contacto</strong>. Configura uno diferente si tienes correo corporativo branded.
+            </div>
+            <div class="field"><div class="field-label">FROM EMAIL <span style="color:var(--text3);">(opcional · default = email de perfil)</span></div><input class="field-input" id="set-from-email" placeholder="citas@tumarca.com"></div>
+            <div class="field"><div class="field-label">FROM NAME</div><input class="field-input" id="set-from-name" placeholder="Tu nombre o el de tu negocio"></div>
+            <div class="field"><div class="field-label">REPLY-TO <span style="color:var(--text3);">(opcional)</span></div><input class="field-input" id="set-reply-to" placeholder="respuestas@tumarca.com"></div>
+            <button class="btn primary" onclick="saveEmailConfig()">Guardar</button>
+            <button class="btn ghost" onclick="testConfirmationEmail()" style="margin-left:8px;">Enviar email de prueba</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: INTEGRACIONES -->
+      <div class="tab-pane" data-tab="integraciones">
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">Servicios conectados</div></div>
+          <table class="tbl">
+            <tbody>
+              <tr>
+                <td style="width:30%;"><strong>WhatsApp Web</strong><div class="dim" style="font-size:10px;">Integración vía QR</div></td>
+                <td><span class="chip chip-warn" id="wa-conn-status"><span class="chip-dot"></span>REVISAR</span></td>
+                <td class="dim">Sesión persistente</td>
+                <td><button class="btn ghost" onclick="go('inbox')">Ir al inbox →</button></td>
+              </tr>
+              <tr>
+                <td><strong>n8n Webhook</strong><div class="dim" style="font-size:10px;">Automatizaciones</div></td>
+                <td><span class="chip chip-off" id="n8n-conn-status"><span class="chip-dot"></span>CONFIGURAR</span></td>
+                <td><input class="field-input" id="set-n8n-url" placeholder="https://n8n.up.railway.app/webhook/..." style="font-family:'Geist Mono',monospace;font-size:10px;"></td>
+                <td><button class="btn primary" onclick="saveN8nWebhook()">Guardar</button></td>
+              </tr>
+              <tr>
+                <td><strong>Email Provider</strong><div class="dim" style="font-size:10px;">Resend / SMTP vía n8n</div></td>
+                <td><span class="chip chip-off"><span class="chip-dot"></span>PENDIENTE</span></td>
+                <td class="dim">Próxima iteración</td>
+                <td><button class="btn ghost" disabled>Próximamente</button></td>
+              </tr>
+              <tr>
+                <td><strong>Stripe</strong><div class="dim" style="font-size:10px;">Cobros online (plan Pro)</div></td>
+                <td><span class="chip chip-off"><span class="chip-dot"></span>PLAN PRO</span></td>
+                <td class="dim">Requiere upgrade</td>
+                <td><button class="btn ghost" disabled>Upgrade</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TAB: NOTIFICACIONES -->
+      <div class="tab-pane" data-tab="notif">
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">Preferencias de notificación</div></div>
+          <div class="panel-body">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px dashed var(--border);">
+              <div><div style="font-size:13px;">Nuevos leads</div><div class="dim" style="font-size:10px;">Toast cuando llega un lead</div></div>
+              <label class="switch"><input type="checkbox" id="notif-leads" checked><span class="slider"></span></label>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px dashed var(--border);">
+              <div><div style="font-size:13px;">Confirmaciones de cita</div><div class="dim" style="font-size:10px;">Cuando un cliente confirma por email</div></div>
+              <label class="switch"><input type="checkbox" id="notif-confirm" checked><span class="slider"></span></label>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px dashed var(--border);">
+              <div><div style="font-size:13px;">Sugerencias de ARIA</div><div class="dim" style="font-size:10px;">Toast cuando ARIA genera sugerencia</div></div>
+              <label class="switch"><input type="checkbox" id="notif-aria" checked><span class="slider"></span></label>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;">
+              <div><div style="font-size:13px;">Reporte semanal</div><div class="dim" style="font-size:10px;">Email cada lunes 8am</div></div>
+              <label class="switch"><input type="checkbox" id="notif-report" checked><span class="slider"></span></label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: APARIENCIA -->
+      <div class="tab-pane" data-tab="apariencia">
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">Tema</div></div>
+          <div class="panel-body" style="display:flex;gap:10px;">
+            <button class="btn" id="theme-dark-btn" onclick="setTheme('dark')">🌙 Dark</button>
+            <button class="btn ghost" id="theme-light-btn" onclick="setTheme('light')">☀ Light</button>
+          </div>
+        </div>
+
+        <div class="sec-head"><span class="sec-label">SESIÓN</span><span class="sec-title">Tu cuenta</span></div>
+        <div class="panel panel-body" style="display:flex;gap:10px;">
+          <button class="btn danger" onclick="logout()">Cerrar sesión</button>
+          <button class="btn ghost" disabled>Exportar mis datos</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- BILLING -->
+    <div class="view" data-view="billing">
+      <div class="page-head"><div><div class="page-title">Facturación</div><div class="page-sub">TU SUSCRIPCIÓN · INVOICES · MÉTODOS DE PAGO</div></div></div>
+      <div class="kpi-strip">
+        <div class="kpi-card"><div class="kpi-label">PLAN ACTUAL</div><div class="kpi-value" style="font-size:16px;" id="bill-plan">—</div><div class="kpi-trend" id="bill-status">—</div></div>
+        <div class="kpi-card"><div class="kpi-label">FACTURACIÓN</div><div class="kpi-value" id="bill-amount">—</div><div class="kpi-trend" id="bill-interval">—</div></div>
+        <div class="kpi-card"><div class="kpi-label">PRÓXIMO COBRO</div><div class="kpi-value" style="font-size:14px;" id="bill-next">—</div><div class="kpi-trend">renovación automática</div></div>
+        <div class="kpi-card"><div class="kpi-label">FACTURAS PAGADAS</div><div class="kpi-value" id="bill-paid">—</div><div class="kpi-trend up">histórico</div></div>
+      </div>
+      <div class="panel" style="margin-top:12px;"><div class="panel-head"><div class="panel-title">Facturas</div></div><table class="tbl"><thead><tr><th>Número</th><th>Periodo</th><th>Monto</th><th>Estado</th><th>Pagada</th><th></th></tr></thead><tbody id="bill-tbody"></tbody></table></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ARIA DRAWER -->
+<button class="aria-fab" onclick="openAria()" id="aria-fab">
+  A
+  <span class="aria-fab-badge" id="aria-badge" style="display:none;">0</span>
+</button>
+
+<aside class="aria-drawer" id="aria-drawer">
+  <div class="aria-head">
+    <div class="aria-badge-icon">A</div>
+    <div class="aria-title">ARIA<span>TU ASISTENTE IA · <span id="aria-count">0</span> PENDIENTES</span></div>
+    <button class="aria-close" onclick="closeAria()">✕</button>
+  </div>
+  <div class="aria-filter">
+    <button class="aria-filter-btn active" data-filter="pending" onclick="filterAria('pending')">PENDIENTES</button>
+    <button class="aria-filter-btn" data-filter="approved" onclick="filterAria('approved')">APROBADAS</button>
+    <button class="aria-filter-btn" data-filter="rejected" onclick="filterAria('rejected')">RECHAZADAS</button>
+    <button class="aria-filter-btn" data-filter="executed" onclick="filterAria('executed')">EJECUTADAS</button>
+  </div>
+  <div class="aria-list" id="aria-list"></div>
+</aside>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toast-container"></div>
+
+<!-- MODAL GENERIC -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-head"><div class="modal-title" id="modal-title">—</div><button class="modal-close" onclick="closeModal()">✕</button></div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-foot" id="modal-foot"></div>
+  </div>
+</div>
+
+<script src="assets/js/aria-drawer.js"></script>
+<script src="assets/js/aria-section.js"></script>
+<script src="assets/js/realtime.js"></script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>
