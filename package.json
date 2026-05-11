@@ -1,11 +1,11 @@
 {
-  "name": "dominio",
-  "productName": "Dominio",
-  "version": "2.0.0",
-  "description": "Dashboard de rendimiento para clientes de Dominio",
+  "name": "dominio-system",
+  "productName": "Dominio System",
+  "version": "2.3.3",
+  "description": "Dashboard de rendimiento para clientes de Dominio System",
   "main": "main.js",
   "author": {
-    "name": "Dominio",
+    "name": "Dominio System",
     "email": "hola@dominiosystem.com"
   },
   "scripts": {
@@ -16,6 +16,7 @@
     "build:all": "electron-builder --mac --win"
   },
   "dependencies": {
+    "@sentry/electron": "^7.11.0",
     "electron-updater": "^6.1.7"
   },
   "devDependencies": {
@@ -24,9 +25,10 @@
   },
   "build": {
     "appId": "com.dominio.client",
-    "productName": "Dominio",
-    "copyright": "© 2026 Dominio",
+    "productName": "Dominio System",
+    "copyright": "© 2026 Dominio System",
     "icon": "assets/icon",
+    "artifactName": "Dominio-${version}-${arch}.${ext}",
     "files": [
       "main.js",
       "preload.js",
@@ -37,15 +39,33 @@
     "mac": {
       "category": "public.app-category.business",
       "icon": "assets/icon.icns",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
       "target": [
         {
           "target": "dmg",
-          "arch": ["x64", "arm64"]
+          "arch": [
+            "x64",
+            "arm64"
+          ]
         }
-      ]
+      ],
+      "extendInfo": {
+        "NSCameraUsageDescription": "Dominio System necesita acceso a la cámara para capturar tu foto de perfil desde Configuración → Negocio.",
+        "NSMicrophoneUsageDescription": "Dominio System puede solicitar acceso al micrófono junto con la cámara durante la captura de la foto de perfil. No se graba audio."
+      }
     },
+    "publish": [
+      {
+        "provider": "generic",
+        "url": "https://dominiosystem.com/updates/mac",
+        "channel": "latest"
+      }
+    ],
     "dmg": {
-      "title": "Dominio",
+      "title": "Dominio System",
       "backgroundColor": "#0c0c0c",
       "window": {
         "width": 540,
@@ -57,7 +77,9 @@
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ]
     },
@@ -65,7 +87,7 @@
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "shortcutName": "Dominio"
+      "shortcutName": "Dominio System"
     }
   }
 }

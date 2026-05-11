@@ -1,284 +1,280 @@
-// ARIA Drawer — UI + approve/reject/edit flow
-// Depends on window.sb (Supabase client), window.CLIENT_ID, window.toast()
+// ═══════════════════════════════════════════════════════════════════
+// Drawer de Notificaciones · feed read-only
+// ═══════════════════════════════════════════════════════════════════
+// v2.1.43: simplificado a UNA sola fuente de datos.
+//
+// Antes: mezclaba `notifications` + `ia_suggestions` (status='executed').
+// Eso causaba duplicados (la cita agendada por ARIA aparecía dos veces:
+// como notif de aria_action Y como ia_suggestion executed) y ruido (cada
+// WhatsApp automático se mostraba como item).
+//
+// Ahora: SOLO `notifications`. Categorías que el cliente verá:
+//   · 🎯 lead          — nuevo lead capturado (cualquier fuente)
+//   · 📅 appointment   — cita confirmada por el cliente
+//   · 📅 appointment   — cita cancelada / no_show
+//   · 📱 aria_action   — ARIA agendó cita autónomamente
+//   · 💰 payment       — pago cobrado
+//
+// Interacción:
+//   · Click en card → navega a la view relevante (link field)
+//   · Click en (x) → dismiss (soft: marca dismissed_at en DB → persistente)
+//   · Botón "LEÍDAS" → marca todas como read
+//   · Realtime refresca cuando llega nueva notif
+// ═══════════════════════════════════════════════════════════════════
 
 const ARIA = {
-  currentFilter: 'pending',
-  items: [],
-  typeIcons: {
-    send_whatsapp: '💬',
-    send_email: '✉',
-    schedule_appointment: '📅',
-    create_campaign: '📢',
-    update_lead_status: '🔄',
-    reassign_lead: '👤',
-    flag_churn_risk: '⚠',
-    content_suggestion: '✨',
-    pricing_adjustment: '💰',
-    workflow_trigger: '⚙'
+  items: [],                // unified list: notifications + executed suggestions
+  categoryIcons: {
+    appointment: '📅',
+    lead: '🎯',
+    payment: '💰',
+    email: '✉',
+    aria_action: '📱',
+    whatsapp: '💬',
+    report: '📄',
+    alert: '⚠',
+    system: '⚙',
+    default: '🔔',
   },
-  typeLabels: {
-    send_whatsapp: 'Enviar WhatsApp',
-    send_email: 'Enviar Email',
-    schedule_appointment: 'Agendar cita',
-    create_campaign: 'Crear campaña',
-    update_lead_status: 'Actualizar lead',
-    reassign_lead: 'Reasignar lead',
-    flag_churn_risk: 'Riesgo de churn',
-    content_suggestion: 'Contenido',
-    pricing_adjustment: 'Precio',
-    workflow_trigger: 'Workflow'
+  categoryLabels: {
+    appointment: 'Cita',
+    lead: 'Lead',
+    payment: 'Pago',
+    email: 'Email',
+    aria_action: 'ARIA',
+    whatsapp: 'WhatsApp',
+    report: 'Reporte',
+    alert: 'Alerta',
+    system: 'Sistema',
   },
-  // Policy: auto-ejecuta sin aprobación (solo muestra ejecutadas)
-  autoExecuteTypes: ['send_whatsapp','send_email','update_lead_status','content_suggestion']
+  // v2.1.43 — typeIconsLegacy eliminado (ia_suggestions ya no alimenta el feed)
 };
 
+// FIX v2.1.12: exponer ARIA al global scope para que app.js (loadBriefData)
+// pueda leer window.ARIA.items sin crashear con TypeError.
+window.ARIA = ARIA;
+
+// v2.1.41 — al abrir el drawer, forzar refetch. Antes el feed solo se
+// actualizaba en boot inicial o vía realtime. Si el realtime fallaba
+// (JWT vencido, channel caído un instante, etc.) el drawer quedaba
+// vacío para siempre. Ahora cada apertura = fetch fresco.
 function openAria(){
   document.body.classList.add('aria-open');
+  if(typeof window.loadNotifications === 'function' && window.CLIENT_ID){
+    window.loadNotifications().catch(e => console.warn('[ARIA] reload on open:', e?.message));
+  }
 }
-function closeAria(){
-  document.body.classList.remove('aria-open');
-}
+function closeAria(){ document.body.classList.remove('aria-open'); }
 function toggleAria(){
-  document.body.classList.toggle('aria-open');
+  const wasOpen = document.body.classList.toggle('aria-open');
+  if(wasOpen && typeof window.loadNotifications === 'function' && window.CLIENT_ID){
+    window.loadNotifications().catch(e => console.warn('[ARIA] reload on toggle:', e?.message));
+  }
 }
+window.openAria  = openAria;
+window.closeAria = closeAria;
+window.toggleAria = toggleAria;
 
-function filterAria(filter){
-  ARIA.currentFilter = filter;
-  document.querySelectorAll('.aria-filter-btn').forEach(b=>{
-    b.classList.toggle('active', b.dataset.filter === filter);
-  });
-  renderAriaList();
-}
+// ═══════════════ Loader ═══════════════
+// v2.1.43 — SOLO `notifications`. Eliminado el merge con ia_suggestions.
+window.loadNotifications = async function(){
+  if(!window.CLIENT_ID) return;
+  try {
+    const notifs = await sbGet('notifications',
+      `recipient_type=eq.client&recipient_id=eq.${window.CLIENT_ID}&dismissed_at=is.null&select=*&order=created_at.desc&limit=50`);
 
+    ARIA.items = notifs.map(n => ({
+      id: `notif-${n.id}`,
+      source: 'notification',
+      source_id: n.id,
+      icon: ARIA.categoryIcons[n.category] || ARIA.categoryIcons.default,
+      category: n.category || 'system',
+      categoryLabel: ARIA.categoryLabels[n.category] || 'Info',
+      title: n.title,
+      body: n.body,
+      link: n.link,
+      timestamp: n.created_at,
+      unread: !n.read_at,
+      severity: n.severity || 'info',
+    }));
+
+    renderAriaList();
+    updateAriaBadge();
+  } catch(err){
+    console.error('[Notifs] loadNotifications error:', err);
+  }
+};
+
+// ═══════════════ Render ═══════════════
 function renderAriaList(){
   const list = document.getElementById('aria-list');
-  const filtered = ARIA.items.filter(i => i.status === ARIA.currentFilter);
-
-  if(filtered.length === 0){
+  if(!list) return;
+  if(ARIA.items.length === 0){
     list.innerHTML = `
       <div class="aria-empty">
         <div class="aria-empty-icon">A</div>
-        <div class="aria-empty-text">Sin sugerencias <strong>${ARIA.currentFilter === 'pending' ? 'pendientes' : ARIA.currentFilter}</strong><br>ARIA las genera analizando tu negocio continuamente.</div>
+        <div class="aria-empty-text">Sin actividad reciente.<br>ARIA te avisará cuando pase algo importante.</div>
       </div>`;
     return;
   }
 
-  list.innerHTML = filtered.map(item => {
-    const icon = ARIA.typeIcons[item.type] || '•';
-    const label = ARIA.typeLabels[item.type] || item.type;
-    const conf = item.confidence ? Math.round(item.confidence * 100) + '%' : '—';
-    const timeAgo = formatTimeAgo(item.created_at);
-    const payloadStr = typeof item.payload === 'object' ? JSON.stringify(item.payload, null, 2) : item.payload;
-
-    let actions = '';
-    if(item.status === 'pending'){
-      actions = `
-        <button class="btn danger" onclick="rejectSuggestion('${item.id}')">Rechazar</button>
-        <button class="btn ghost" onclick="editSuggestion('${item.id}')">Editar</button>
-        <button class="btn success" onclick="approveSuggestion('${item.id}')">Aprobar</button>`;
-    } else if(item.status === 'approved'){
-      actions = `<button class="btn ghost" style="flex:1;justify-content:center;">En cola para ejecutar...</button>`;
-    } else if(item.status === 'rejected'){
-      actions = `<button class="btn ghost" style="flex:1;justify-content:center;" onclick="unrejectSuggestion('${item.id}')">Restaurar</button>`;
-    } else if(item.status === 'executed'){
-      const result = item.execution_result ? JSON.stringify(item.execution_result) : '—';
-      actions = `<span class="chip chip-ok" style="flex:1;justify-content:center;"><span class="chip-dot"></span>EJECUTADA ${timeAgo}</span>`;
-    }
-
+  list.innerHTML = ARIA.items.map(item => {
+    const time = formatTimeAgo(item.timestamp);
+    const unreadClass = item.unread ? 'unread' : '';
+    const hasLink = !!item.link;
     return `
-      <div class="aria-card" data-id="${item.id}">
-        <div class="aria-card-head">
-          <div class="aria-type-icon">${icon}</div>
-          <div style="flex:1;min-width:0;">
-            <div class="aria-card-title">${escapeHtml(item.title)}</div>
-            <div class="aria-card-meta">${label} · ${timeAgo}</div>
+      <div class="aria-card ${unreadClass}" data-id="${item.id}" ${hasLink ? `onclick="handleNotifClick('${item.id}')"` : ''}>
+        <button class="aria-card-dismiss" onclick="event.stopPropagation(); dismissNotif('${item.id}');" title="Descartar">✕</button>
+        <div class="aria-notif-row">
+          <div class="aria-notif-icon">${item.icon}</div>
+          <div class="aria-notif-body">
+            <div class="aria-notif-title">${escapeHtml(item.title || '')}</div>
+            <div class="aria-notif-meta">${escapeHtml(item.categoryLabel || '')} · ${time}</div>
+            ${item.body ? `<div class="aria-notif-body-text">${escapeHtml(item.body)}</div>` : ''}
           </div>
-          <span class="aria-confidence">${conf}</span>
         </div>
-        ${item.reasoning ? `<div class="aria-reasoning">${escapeHtml(item.reasoning)}</div>` : ''}
-        ${payloadStr && payloadStr !== '{}' ? `<div class="aria-payload">${escapeHtml(payloadStr)}</div>` : ''}
-        <div class="aria-actions">${actions}</div>
       </div>`;
   }).join('');
 }
 
-async function approveSuggestion(id){
+// ═══════════════ Interactions ═══════════════
+// Click en card → navega según link
+window.handleNotifClick = function(id){
   const item = ARIA.items.find(i => i.id === id);
   if(!item) return;
 
-  try{
-    // Update status to 'approved' en Supabase
-    const { data, error } = await window.sb
-      .from('ia_suggestions')
-      .update({
-        status: 'approved',
-        approved_at: new Date().toISOString()
-      })
-      .eq('id', id)
-      .select();
+  // Marcar como read (si es notification y está unread)
+  if(item.source === 'notification' && item.unread){
+    _markNotifRead(item.source_id).catch(e => console.warn('[ARIA] markRead:', e.message));
+    item.unread = false;
+    renderAriaList();
+    updateAriaBadge();
+  }
 
-    if(error) throw error;
+  // Navegar
+  if(item.link){
+    const viewMap = {
+      '/agenda': 'agenda',
+      '/leads': 'leads',
+      '/inbox': 'aria', // ARIA section tab Conversaciones
+      '/crm': 'crm',
+      '/brief': 'brief',
+      '/billing': 'billing',
+      '/reports': 'reports',
+      '/funnel': 'funnel',
+      '/roi': 'roi',
+      '/settings': 'settings',
+    };
+    const path = (item.link || '').split('?')[0];
+    const view = viewMap[path];
+    if(view && window.go) window.go(view);
+  }
+};
 
-    // Si es tipo auto-execute, marcar ejecutado inmediato
-    if(ARIA.autoExecuteTypes.includes(item.type)){
-      await window.sb
-        .from('ia_suggestions')
-        .update({
-          status: 'executed',
-          executed_at: new Date().toISOString(),
-          execution_result: { auto_executed: true, by: 'client' }
-        })
-        .eq('id', id);
-      window.toast('✓ Ejecutada automáticamente', `${ARIA.typeLabels[item.type]}: ${item.title}`, 'success');
-    } else {
-      window.toast('✓ Aprobada', `n8n ejecutará: ${item.title}`, 'success');
+// Dismiss individual — v2.1.43: solo notifications, dismissed_at persistido
+window.dismissNotif = async function(id){
+  const item = ARIA.items.find(i => i.id === id);
+  if(!item) return;
+  try {
+    await sbPatch('notifications', item.source_id, {
+      dismissed_at: new Date().toISOString()
+    });
+    ARIA.items = ARIA.items.filter(i => i.id !== id);
+    renderAriaList();
+    updateAriaBadge();
+  } catch(err){
+    console.error('[Notifs] dismiss error:', err);
+    window.toast && window.toast('Error', 'No se pudo descartar', 'err');
+  }
+};
+
+async function _markNotifRead(notifId){
+  await sbPatch('notifications', notifId, { read_at: new Date().toISOString() });
+}
+
+window.markAllNotifRead = async function(){
+  try {
+    const unread = ARIA.items.filter(i => i.source === 'notification' && i.unread);
+    if(unread.length === 0){
+      window.toast && window.toast('✓ Al día', 'No hay notificaciones sin leer', 'success');
+      return;
     }
-    // Realtime se encarga del update UI
+    // Mark all read en paralelo
+    await Promise.all(unread.map(i => _markNotifRead(i.source_id).catch(() => null)));
+    unread.forEach(i => { i.unread = false; });
+    renderAriaList();
+    updateAriaBadge();
+    window.toast && window.toast('✓ Todas leídas', `${unread.length} notificaciones`, 'success');
   } catch(err){
-    console.error('approve error:', err);
-    window.toast('Error', 'No se pudo aprobar: ' + err.message, 'err');
+    console.error('[ARIA] markAllRead error:', err);
   }
-}
+};
 
-async function rejectSuggestion(id){
-  try{
-    const { error } = await window.sb
-      .from('ia_suggestions')
-      .update({ status: 'rejected', approved_at: new Date().toISOString() })
-      .eq('id', id);
-    if(error) throw error;
-    window.toast('Rechazada', 'Sugerencia archivada', 'warn');
-  } catch(err){
-    window.toast('Error', err.message, 'err');
-  }
-}
-
-async function unrejectSuggestion(id){
-  try{
-    const { error } = await window.sb
-      .from('ia_suggestions')
-      .update({ status: 'pending', approved_at: null })
-      .eq('id', id);
-    if(error) throw error;
-    window.toast('Restaurada', 'Vuelve a pendientes', 'success');
-  } catch(err){
-    window.toast('Error', err.message, 'err');
-  }
-}
-
-function editSuggestion(id){
-  const item = ARIA.items.find(i => i.id === id);
-  if(!item) return;
-
-  const body = `
-    <div class="field">
-      <div class="field-label">TÍTULO</div>
-      <input class="field-input" id="edit-title" value="${escapeHtml(item.title)}">
-    </div>
-    <div class="field">
-      <div class="field-label">PAYLOAD (JSON)</div>
-      <textarea class="field-textarea" id="edit-payload" style="min-height:120px;font-family:'Geist Mono',monospace;">${escapeHtml(JSON.stringify(item.payload, null, 2))}</textarea>
-    </div>
-    <div class="field">
-      <div class="field-label">REASONING</div>
-      <textarea class="field-textarea" id="edit-reasoning">${escapeHtml(item.reasoning || '')}</textarea>
-    </div>
-  `;
-
-  const foot = `
-    <button class="btn ghost" onclick="closeModal()">Cancelar</button>
-    <button class="btn primary" onclick="saveSuggestionEdit('${id}')">Guardar y aprobar</button>
-  `;
-
-  showModal('Editar sugerencia', body, foot);
-}
-
-async function saveSuggestionEdit(id){
-  const title = document.getElementById('edit-title').value;
-  const payloadRaw = document.getElementById('edit-payload').value;
-  const reasoning = document.getElementById('edit-reasoning').value;
-
-  let payload;
-  try { payload = JSON.parse(payloadRaw); }
-  catch(e){ window.toast('Error', 'JSON inválido', 'err'); return; }
-
-  try{
-    const { error } = await window.sb
-      .from('ia_suggestions')
-      .update({
-        title, payload, reasoning,
-        status: 'approved',
-        approved_at: new Date().toISOString()
-      })
-      .eq('id', id);
-    if(error) throw error;
-    closeModal();
-    window.toast('✓ Editada y aprobada', title, 'success');
-  } catch(err){
-    window.toast('Error', err.message, 'err');
-  }
-}
-
+// ═══════════════ Badge (FAB + counter del drawer) ═══════════════
+// v2.1.14: ya NO toca brief-aria. Ese KPI ahora es "Citas cerradas por ARIA"
+// y lo gestiona exclusivamente loadBriefData() en app.js.
 function updateAriaBadge(){
-  const pending = ARIA.items.filter(i => i.status === 'pending').length;
-  const fab = document.getElementById('aria-fab');
+  const unreadCount = ARIA.items.filter(i => i.unread).length;
+  const totalCount = ARIA.items.length;
+
   const badge = document.getElementById('aria-badge');
   const countEl = document.getElementById('aria-count');
-  const briefAria = document.getElementById('brief-aria');
+  const bell = document.getElementById('notif-bell');
 
-  if(pending > 0){
-    badge.textContent = pending;
+  if(unreadCount > 0 && badge){
+    badge.textContent = unreadCount;
     badge.style.display = 'flex';
-  } else {
+  } else if(badge) {
     badge.style.display = 'none';
   }
-  countEl.textContent = pending;
-  if(briefAria) briefAria.textContent = pending;
+  if(countEl) countEl.textContent = totalCount;
+
+  // v2.1.55 — toggle has-notif en el bell del topbar (dispara wiggle animation)
+  if(bell){
+    if(unreadCount > 0) bell.classList.add('has-notif');
+    else bell.classList.remove('has-notif');
+  }
 }
 
-// Utility
+// ═══════════════ Utilities ═══════════════
+// v2.1.36 — delega en window.fmtTimeAgoTZ (helper global con timezone del cliente).
+// Mantenemos este wrapper para no romper si app.js tarda en exponer el helper.
 function formatTimeAgo(iso){
-  const now = new Date();
+  if(typeof window.fmtTimeAgoTZ === 'function') return window.fmtTimeAgoTZ(iso);
+  // Fallback (no debería entrar): mismo comportamiento que antes
+  if(!iso) return '—';
   const then = new Date(iso);
-  const diff = Math.floor((now - then) / 1000);
-  if(diff < 60) return 'ahora';
-  if(diff < 3600) return Math.floor(diff / 60) + 'm';
-  if(diff < 86400) return Math.floor(diff / 3600) + 'h';
-  return Math.floor(diff / 86400) + 'd';
+  const diff = Math.floor((Date.now() - then.getTime()) / 1000);
+  if(diff < 0)      return 'ahora';
+  if(diff < 60)     return 'ahora';
+  if(diff < 3600)   return Math.floor(diff / 60) + ' min';
+  if(diff < 86400)  return Math.floor(diff / 3600) + ' h';
+  if(diff < 604800) return Math.floor(diff / 86400) + ' d';
+  return then.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
 }
 
 function escapeHtml(s){
-  if(s === null || s === undefined) return '';
-  return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  if(s == null) return '';
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
-// MODAL helpers
-function showModal(title, bodyHTML, footHTML){
-  document.getElementById('modal-title').textContent = title;
-  document.getElementById('modal-body').innerHTML = bodyHTML;
-  document.getElementById('modal-foot').innerHTML = footHTML || '<button class="btn ghost" onclick="closeModal()">Cerrar</button>';
-  document.getElementById('modal-overlay').classList.add('show');
-}
-function closeModal(){
-  document.getElementById('modal-overlay').classList.remove('show');
-}
-document.getElementById('modal-overlay')?.addEventListener('click', (e) => {
-  if(e.target.id === 'modal-overlay') closeModal();
-});
-
-// Expose
-window.ARIA = ARIA;
-window.openAria = openAria;
-window.closeAria = closeAria;
-window.filterAria = filterAria;
+// ═══════════════ Legacy bridges (otros archivos llaman) ═══════════════
+// Estos wrappers mantienen compatibilidad con app.js + realtime.js
 window.renderAriaList = renderAriaList;
 window.updateAriaBadge = updateAriaBadge;
-window.approveSuggestion = approveSuggestion;
-window.rejectSuggestion = rejectSuggestion;
-window.unrejectSuggestion = unrejectSuggestion;
-window.editSuggestion = editSuggestion;
-window.saveSuggestionEdit = saveSuggestionEdit;
-window.showModal = showModal;
-window.closeModal = closeModal;
 window.escapeHtml = escapeHtml;
-window.formatTimeAgo = formatTimeAgo;
+
+// v2.1.43 — solo escuchamos rt:notifications. ia_suggestions ya no
+// alimenta el drawer (vive solo en panel ARIA Inbox / Reglas).
+const _onRtNotifications = () => { loadNotifications(); };
+const _onRtDisconnect = () => {
+  window.removeEventListener('rt:notifications', _onRtNotifications);
+  window.removeEventListener('rt:disconnect',    _onRtDisconnect);
+};
+window.addEventListener('rt:notifications', _onRtNotifications);
+window.addEventListener('rt:disconnect',    _onRtDisconnect);

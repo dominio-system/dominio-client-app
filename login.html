@@ -3,6 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Sprint 1D · Content Security Policy para login window -->
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'self';
+  script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net;
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+  font-src 'self' data: https://fonts.gstatic.com;
+  img-src 'self' data: https:;
+  connect-src 'self' https://ywlyuuddqitduqtdttgo.supabase.co wss://ywlyuuddqitduqtdttgo.supabase.co;
+  frame-src 'none';
+  object-src 'none';
+  base-uri 'self';
+  form-action 'self';
+">
 <title>Dominio System — Acceso</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
@@ -307,8 +320,10 @@
 
 <div class="version" id="versionBadge">v1.0.0</div>
 
-<!-- Supabase CDN -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<!-- Supabase CDN (SRI-pinned v2.45.4) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"
+        integrity="sha384-GFr3yTh5lJznCbZfpTtXnwboFsxqtTQoeTZCRHhE0579KrRmlCzen5AA8ohaB5ug"
+        crossorigin="anonymous"></script>
 
 <script>
 // ── Supabase config ─────────────────────────────────────────────────────────
@@ -413,7 +428,7 @@ async function doReset() {
   btn.innerHTML = '<span class="spinner"></span>Enviando...';
 
   const { error } = await sb.auth.resetPasswordForEmail(email, {
-    redirectTo: 'https://app.dominiosystem.com/reset',
+    redirectTo: 'https://www.dominiosystem.com/reset',
   });
 
   if (error) {

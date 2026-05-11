@@ -35,7 +35,36 @@ contextBridge.exposeInMainWorld('electronAPI', {
   openExternal: (url) => ipcRenderer.send('open-external', url),
 
   // Auto-updater
-  onUpdateAvailable:  (cb) => ipcRenderer.on('update-available',  () => cb()),
-  onUpdateDownloaded: (cb) => ipcRenderer.on('update-downloaded',  () => cb()),
+  onUpdateAvailable:    (cb) => ipcRenderer.on('update-available',     (_, info) => cb(info)),
+  onUpdateNotAvailable: (cb) => ipcRenderer.on('update-not-available', (_, info) => cb(info)),
+  onUpdateDownloaded:   (cb) => ipcRenderer.on('update-downloaded',    (_, info) => cb(info)),
+  onUpdateProgress:     (cb) => ipcRenderer.on('update-progress',      (_, info) => cb(info)),
+  onUpdateError:        (cb) => ipcRenderer.on('update-error',         (_, info) => cb(info)),
   installUpdate: () => ipcRenderer.send('install-update'),
+  checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
+  getAppVersion: () => ipcRenderer.invoke('get-app-version'),
+  getArch: () => ipcRenderer.invoke('get-arch'),
+
+  // Sentry bridge (capturar errores de renderer vía main process)
+  sentryCapture: (err) => {
+    try {
+      // Reduce Error a payload serializable (Error objects no pasan bien por IPC)
+      const payload = err instanceof Error
+        ? { name: err.name, message: err.message, stack: err.stack }
+        : { name: 'Error', message: String(err), stack: null };
+      ipcRenderer.send('sentry:capture-exception', payload);
+    } catch (_) { /* noop */ }
+  },
+  sentryMessage: (msg, level = 'info') => {
+    try { ipcRenderer.send('sentry:capture-message', { message: msg, level }); }
+    catch (_) { /* noop */ }
+  },
+  sentrySetUser: (user) => {
+    try { ipcRenderer.send('sentry:set-user', user); }
+    catch (_) { /* noop */ }
+  },
+  sentrySetTag: (key, value) => {
+    try { ipcRenderer.send('sentry:set-tag', { key, value }); }
+    catch (_) { /* noop */ }
+  },
 });

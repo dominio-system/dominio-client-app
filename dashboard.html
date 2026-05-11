@@ -2,21 +2,50 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Dominio</title>
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Sprint 1D · Content Security Policy
+     Bloquea inyección de scripts externos, frames, objects.
+     Permite solo: self, Supabase (REST + WS), jsDelivr (Chart+SDK), Google Fonts, Meta Graph. -->
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'self';
+  script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net;
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+  font-src 'self' data: https://fonts.gstatic.com;
+  img-src 'self' data: https:;
+  connect-src 'self' https://ywlyuuddqitduqtdttgo.supabase.co wss://ywlyuuddqitduqtdttgo.supabase.co https://n8n-production-d3a5.up.railway.app https://graph.facebook.com https://api.resend.com;
+  frame-src 'none';
+  object-src 'none';
+  base-uri 'self';
+  form-action 'self';
+">
+<title>Dominio System</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Geist+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<!-- CDN scripts (SRI-pinned) -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"
+        integrity="sha384-e6nUZLBkQ86NJ6TVVKAeSaK8jWa3NhkYWZFomE39AvDbQWeie9PlQqM3pmYW5d1g"
+        crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"
+        integrity="sha384-GFr3yTh5lJznCbZfpTtXnwboFsxqtTQoeTZCRHhE0579KrRmlCzen5AA8ohaB5ug"
+        crossorigin="anonymous"></script>
+<!-- jsPDF + AutoTable · v2.1.17 para export PDF branded en Historial de pagos -->
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"
+        integrity="sha384-en/ztfPSRkGfME4KIm05joYXynqzUgbsG5nMrj/xEFAHXkeZfO3yMK8QQ+mP7p1/"
+        crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js"
+        integrity="sha384-Xl/CUCfJbzsngMp0CFxkmF0VW/8C160IsGujqeQlIhaGxKz2+JsIGORFqtCPeldF"
+        crossorigin="anonymous"></script>
 <style>
 :root{
-  --bg:#0c0c0c;--sidebar:#0f0f0f;--card:#141414;--card2:#1a1a1a;--card3:#1e1e1e;
+  /* Paleta dark · alineada 1:1 al mockup C (audit final) */
+  --bg:#0a0a0a;--sidebar:#0f0f0f;--card:#111111;--card2:#161616;--card3:#1a1a1a;
   --border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.12);
-  --accent:#e8e8e8;
+  --accent:#ffffff;
   --success:#6fcf97;--success-s:rgba(111,207,151,0.10);
-  --warn:#f2c94c;--warn-s:rgba(242,201,76,0.10);
+  --warn:#c9a878;--warn-s:rgba(201,168,120,0.10);
   --danger:#eb5757;--danger-s:rgba(235,87,87,0.10);
-  --aria:#e8e8e8;--aria-s:rgba(232,232,232,0.06);--aria-border:rgba(232,232,232,0.18);
-  --text:#f0f0f0;--text2:#aaaaaa;--text3:#777777;
-  --sidebar-w:232px;--sidebar-wc:56px;
+  --info:#8a9aa8;--info-s:rgba(138,154,168,0.08);
+  --aria:#ffffff;--aria-s:rgba(255,255,255,0.05);--aria-border:rgba(255,255,255,0.18);
+  --text:#f5f5f5;--text2:#a8a8a8;--text3:#888888;--text4:#666666;
   --aria-drawer-w:380px;
 }
 /* LIGHT THEME OVERRIDE */
@@ -24,25 +53,25 @@ body.theme-light{
   --bg:#f4f4f4;--sidebar:#ffffff;--card:#ffffff;--card2:#ececec;--card3:#e0e0e0;
   --border:rgba(0,0,0,0.08);--border2:rgba(0,0,0,0.15);
   --accent:#111111;
+  --warn:#b8956a;--warn-s:rgba(184,149,106,0.12);
   --text:#111111;--text2:#555;--text3:#999;
   --aria:#111111;--aria-s:rgba(0,0,0,0.05);--aria-border:rgba(0,0,0,0.15);
 }
 body.theme-light input,body.theme-light textarea,body.theme-light select{
   color:#111!important;background:#fff!important;border-color:rgba(0,0,0,0.15)!important;
 }
-body.theme-light .aria-fab{background:#111;color:#fff;}
-body.theme-light .aria-fab:hover{background:#000;}
+/* v2.1.45 — FAB es siempre negro/blanco, sin override por theme */
 body.theme-light .btn.primary{background:#111;color:#fff;border-color:#111;}
 body.theme-light .btn.primary:hover{background:#000;}
 body.theme-light .logo-icon img{filter:none;}
 
 *{margin:0;padding:0;box-sizing:border-box;}
-body{background:var(--bg);color:var(--text);font-family:'Geist',sans-serif;display:flex;height:100vh;overflow:hidden;font-size:13px;-webkit-font-smoothing:antialiased;transition:background-color 200ms,color 200ms;}
+body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,-apple-system,sans-serif;display:flex;flex-direction:column;height:100vh;overflow:hidden;font-size:13px;-webkit-font-smoothing:antialiased;transition:background-color 200ms,color 200ms;}
 
 /* Tabs sistema para Settings */
 .tabs-nav{display:flex;gap:2px;background:var(--card);border:1px solid var(--border);border-radius:7px;padding:3px;margin-bottom:16px;overflow-x:auto;}
 .tabs-nav::-webkit-scrollbar{display:none;}
-.tab-btn{flex:1;min-width:fit-content;padding:7px 14px;border:0;background:transparent;color:var(--text3);cursor:pointer;border-radius:5px;font-size:11px;font-family:'Geist',sans-serif;font-weight:500;white-space:nowrap;transition:all 120ms;}
+.tab-btn{flex:1;min-width:fit-content;padding:7px 14px;border:0;background:transparent;color:var(--text3);cursor:pointer;border-radius:5px;font-size:11px;font-family:'Inter',system-ui,-apple-system,sans-serif;font-weight:500;white-space:nowrap;transition:all 120ms;}
 .tab-btn:hover{color:var(--text2);}
 .tab-btn.active{background:var(--card3);color:var(--text);}
 .tab-pane{display:none;}
@@ -51,108 +80,153 @@ body{background:var(--bg);color:var(--text);font-family:'Geist',sans-serif;displ
 /* DRAG REGION (macOS) */
 .drag-region{position:fixed;top:0;left:0;right:0;height:28px;-webkit-app-region:drag;z-index:1000;pointer-events:none;}
 
-/* ============= SIDEBAR ============= */
-.sidebar{width:var(--sidebar-w);min-width:var(--sidebar-w);background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:28px 0 0;transition:width 220ms cubic-bezier(.4,0,.2,1),min-width 220ms cubic-bezier(.4,0,.2,1);position:relative;}
-body.sb-collapsed .sidebar{width:var(--sidebar-wc);min-width:var(--sidebar-wc);}
-.logo-area{padding:0 16px 14px;border-bottom:1px solid var(--border);height:62px;display:flex;align-items:center;position:relative;}
-.logo-badge{display:flex;align-items:center;gap:10px;overflow:hidden;}
-.logo-icon{width:30px;height:30px;min-width:30px;border-radius:6px;background:var(--card2);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;overflow:hidden;}
+/* ============= TOP NAV ============= */
+.topnav{background:var(--sidebar);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;flex-shrink:0;padding-top:28px;}
+.topnav-row1{display:flex;align-items:center;padding:10px 20px;gap:18px;border-bottom:1px solid var(--border);}
+.topnav-row2{display:flex;align-items:center;padding:0 14px;gap:2px;overflow:visible;}
+
+/* Logo */
+.logo-badge{display:flex;align-items:center;gap:10px;flex-shrink:0;cursor:default;}
+.logo-icon{width:30px;height:30px;border-radius:6px;background:var(--card2);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;}
 .logo-icon img{width:100%;height:100%;object-fit:cover;}
-.logo-txt{display:flex;flex-direction:column;transition:opacity 150ms;}
-body.sb-collapsed .logo-txt{opacity:0;pointer-events:none;}
-.logo-text{font-size:13px;font-weight:600;letter-spacing:-0.2px;white-space:nowrap;}
-.logo-sub{font-size:8px;color:var(--text3);letter-spacing:2px;font-family:'Geist Mono',monospace;margin-top:2px;white-space:nowrap;}
-.collapse-btn{position:absolute;right:-11px;top:20px;width:22px;height:22px;background:var(--card2);border:1px solid var(--border2);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:10px;color:var(--text3);z-index:100;}
-.collapse-btn:hover{color:var(--text);background:var(--card3);}
-.collapse-btn svg{transition:transform 220ms;}
-body.sb-collapsed .collapse-btn svg{transform:rotate(180deg);}
+.logo-txt{display:flex;flex-direction:column;line-height:1;min-width:0;}
+.logo-text{font-size:13px;font-weight:600;letter-spacing:-0.2px;color:var(--text);line-height:1.1;white-space:nowrap;}
+.logo-sub{font-size:8px;color:var(--text3);letter-spacing:1.6px;font-family:'Geist Mono',monospace;margin-top:3px;text-transform:uppercase;white-space:nowrap;line-height:1;}
+.logo-plan-line{font-size:9px;color:var(--text2);font-family:'Geist Mono',monospace;letter-spacing:0.4px;margin-top:4px;white-space:nowrap;font-weight:500;}
 
-.nav-scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:10px 8px;}
-.nav-scroll::-webkit-scrollbar{width:4px;}
-.nav-scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+/* Search global (centro de topnav-row1) */
+.topnav-search{position:relative;flex:1;max-width:480px;display:flex;align-items:center;}
+.topnav-search .search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text3);display:flex;pointer-events:none;}
+.topnav-search input{width:100%;padding:8px 56px 8px 32px;background:var(--card2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:12px;font-family:inherit;transition:border-color 140ms,background 140ms;}
+.topnav-search input::placeholder{color:var(--text3);}
+.topnav-search input:focus{outline:none;border-color:var(--border2);background:var(--card3);}
+.topnav-search .search-kbd{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:9px;font-family:'Geist Mono',monospace;background:var(--card3);border:1px solid var(--border2);border-radius:4px;padding:2px 6px;color:var(--text3);pointer-events:none;}
 
-.nav-group{margin-bottom:4px;}
-.group-head{display:flex;align-items:center;padding:8px 10px 6px;cursor:pointer;user-select:none;border-radius:5px;gap:6px;transition:background 120ms;}
-.group-head:hover{background:var(--card2);}
-.group-chev{width:10px;height:10px;display:flex;align-items:center;justify-content:center;color:var(--text3);transition:transform 180ms;flex-shrink:0;}
-.group-chev svg{width:8px;height:8px;}
-.group-label{font-size:9px;letter-spacing:1.8px;color:var(--text3);font-family:'Geist Mono',monospace;text-transform:uppercase;flex:1;white-space:nowrap;transition:opacity 150ms;}
-body.sb-collapsed .group-label,body.sb-collapsed .group-chev{opacity:0;pointer-events:none;}
-body.sb-collapsed .group-head{justify-content:center;padding:4px 0;}
-.nav-group.closed .group-chev{transform:rotate(-90deg);}
-.nav-group.closed .group-items{max-height:0;opacity:0;pointer-events:none;}
-.group-items{max-height:500px;overflow:hidden;transition:max-height 260ms cubic-bezier(.4,0,.2,1),opacity 180ms;padding-top:2px;}
+/* Crumb oculto (queda en DOM solo por compat con app.js que escribe crumb-current/date) */
+.topnav-crumb-hidden{display:none;}
 
-.nav-item{display:flex;align-items:center;gap:10px;padding:6px 10px 6px 24px;border-radius:5px;cursor:pointer;font-size:12px;color:var(--text2);font-weight:500;margin-bottom:1px;position:relative;white-space:nowrap;transition:background 120ms,color 120ms;}
-.nav-item:hover{background:var(--card2);color:var(--text);}
-.nav-item.active{background:var(--card2);color:var(--accent);}
-.nav-item.active::before{content:'';position:absolute;left:12px;top:50%;transform:translateY(-50%);width:3px;height:14px;background:var(--accent);border-radius:2px;}
-.nav-icon{width:14px;height:14px;display:flex;align-items:center;justify-content:center;color:currentColor;opacity:0.7;flex-shrink:0;}
-.nav-icon svg{width:13px;height:13px;}
-.nav-text{flex:1;transition:opacity 150ms;overflow:hidden;text-overflow:ellipsis;}
-.nav-badge{font-size:9px;padding:1px 6px;border-radius:10px;font-family:'Geist Mono',monospace;background:var(--card3);color:var(--text3);transition:opacity 150ms;}
-.nav-badge.alert{background:var(--danger-s);color:var(--danger);}
-.nav-badge.new{background:var(--aria-s);color:var(--aria);}
-body.sb-collapsed .nav-item{justify-content:center;padding:8px 0;}
-body.sb-collapsed .nav-item.active::before{left:4px;}
-body.sb-collapsed .nav-text,body.sb-collapsed .nav-badge{opacity:0;width:0;padding:0;pointer-events:none;overflow:hidden;}
-body.sb-collapsed .nav-item:hover::after{content:attr(data-label);position:absolute;left:calc(100% + 8px);top:50%;transform:translateY(-50%);background:var(--card3);border:1px solid var(--border2);padding:5px 10px;border-radius:5px;font-size:11px;color:var(--text);white-space:nowrap;z-index:200;font-family:'Geist',sans-serif;box-shadow:0 4px 12px rgba(0,0,0,0.3);}
-body.sb-collapsed .nav-group .group-items{max-height:500px!important;opacity:1!important;pointer-events:auto!important;}
-body.sb-collapsed .nav-group:not(:last-child){border-bottom:1px solid var(--border);margin-bottom:6px;padding-bottom:6px;}
+/* Actions */
+.topnav-actions{display:flex;align-items:center;gap:8px;flex-shrink:0;}
 
-.sidebar-footer{padding:10px 14px;border-top:1px solid var(--border);display:flex;align-items:center;gap:9px;}
-.user-avatar{width:28px;height:28px;min-width:28px;border-radius:50%;background:var(--card2);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--text2);}
-.user-info{display:flex;flex-direction:column;gap:1px;overflow:hidden;transition:opacity 150ms;}
-body.sb-collapsed .user-info{opacity:0;width:0;}
-.user-name{font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;}
-.user-plan{font-size:9px;color:var(--text3);font-family:'Geist Mono',monospace;white-space:nowrap;}
-.sidebar-foot-actions{margin-left:auto;display:flex;gap:2px;}
-.foot-btn{background:transparent;border:0;color:var(--text3);cursor:pointer;padding:5px;border-radius:4px;display:flex;align-items:center;justify-content:center;transition:color 120ms,background 120ms;}
-.foot-btn:hover{color:var(--text);background:var(--card2);}
-.foot-btn.danger:hover{color:var(--danger);}
-body.sb-collapsed .sidebar-foot-actions{display:none;}
+/* Avatar dropdown trigger */
+.user-menu{position:relative;}
+.user-avatar-btn{width:30px;height:30px;border-radius:50%;background:var(--card2);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--text2);cursor:pointer;overflow:hidden;padding:0;transition:border-color 120ms;}
+.user-avatar-btn:hover{border-color:var(--text3);}
+.user-avatar-btn img{width:100%;height:100%;object-fit:cover;}
+.user-menu-dropdown{position:absolute;top:calc(100% + 6px);right:0;background:var(--card);border:1px solid var(--border2);border-radius:7px;min-width:200px;box-shadow:0 10px 30px rgba(0,0,0,0.5);padding:6px;z-index:300;display:none;}
+.user-menu.open .user-menu-dropdown{display:block;}
+.user-menu-info{padding:10px 12px;border-bottom:1px solid var(--border);margin-bottom:4px;}
+.user-menu-info .name{font-size:13px;font-weight:600;color:var(--text);}
+.user-menu-info .plan{font-size:10px;color:var(--text3);font-family:'Geist Mono',monospace;margin-top:3px;}
+.user-menu-item{display:flex;align-items:center;gap:8px;padding:8px 10px;font-size:12px;color:var(--text2);cursor:pointer;border-radius:5px;border:0;background:transparent;width:100%;text-align:left;font-family:inherit;}
+.user-menu-item:hover{background:var(--card2);color:var(--text);}
+.user-menu-item.danger:hover{color:var(--danger);}
+.user-menu-item svg{width:14px;height:14px;flex-shrink:0;}
+
+/* Nav group buttons (row 2 — Commit 4.5: dropdowns por hover/click) */
+.nav-group-wrap{position:relative;display:inline-block;}
+.nav-group-btn{padding:11px 14px;font-size:12px;color:var(--text2);cursor:pointer;border:0;background:transparent;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;transition:color 140ms,background 140ms;font-family:inherit;font-weight:500;}
+.nav-group-btn.active{color:var(--text);border-bottom-color:var(--accent);}
+.nav-group-btn .caret{font-size:9px;color:var(--text3);transition:transform 180ms;display:inline-block;}
+
+/* Hover/open: ambos disparan el mismo estilo del botón */
+.nav-group-wrap:hover .nav-group-btn,
+.nav-group-wrap.open .nav-group-btn{color:var(--text);background:var(--card2);}
+.nav-group-wrap:hover .nav-group-btn .caret,
+.nav-group-wrap.open .nav-group-btn .caret{transform:rotate(180deg);color:var(--text);}
+
+/* Dropdown del grupo */
+.nav-group-dropdown{position:absolute;top:calc(100% + 4px);left:0;min-width:240px;background:var(--card);border:1px solid var(--border2);border-radius:8px;box-shadow:0 12px 32px rgba(0,0,0,0.55), 0 2px 8px rgba(0,0,0,0.35);padding:6px;z-index:300;opacity:0;visibility:hidden;transform:translateY(-6px);transition:opacity 140ms ease, transform 140ms cubic-bezier(.18,.89,.32,1.28), visibility 140ms;}
+
+/* Bridge invisible que cubre el gap de 4px entre botón y dropdown
+   (evita que el hover se rompa al cruzar el espacio) */
+.nav-group-dropdown::before{
+  content:'';
+  position:absolute;
+  top:-6px; left:0; right:0;
+  height:6px;
+  background:transparent;
+}
+
+/* Hover y .open abren el dropdown */
+.nav-group-wrap:hover .nav-group-dropdown,
+.nav-group-wrap.open .nav-group-dropdown{
+  opacity:1;
+  visibility:visible;
+  transform:translateY(0);
+}
+
+/* Nav link (dentro del dropdown) */
+.nav-link{padding:9px 12px;font-size:12px;color:var(--text2);cursor:pointer;border:0;background:transparent;white-space:nowrap;display:flex;align-items:center;gap:9px;transition:color 120ms,background 120ms;font-family:inherit;font-weight:500;border-radius:5px;width:100%;text-align:left;position:relative;}
+.nav-link:hover:not(.active){color:var(--text);background:var(--card2);}
+.nav-link.active{color:var(--text);background:var(--card2);}
+.nav-link.active::before{content:'';position:absolute;left:3px;top:50%;transform:translateY(-50%);width:2px;height:14px;background:var(--accent);border-radius:1px;}
+.nav-link .nav-icon{width:13px;height:13px;display:flex;align-items:center;justify-content:center;opacity:0.7;flex-shrink:0;color:var(--text2);}
+.nav-link:hover .nav-icon,.nav-link.active .nav-icon{opacity:1;color:var(--text);}
+.nav-link .nav-icon svg{width:13px;height:13px;}
+.nav-link .nav-badge{font-size:9px;padding:1px 6px;border-radius:10px;font-family:'Geist Mono',monospace;background:var(--card3);color:var(--text3);margin-left:auto;}
+.nav-link .nav-badge.alert{background:var(--danger-s);color:var(--danger);}
+.nav-link .nav-badge.new{background:var(--aria-s);color:var(--aria);}
+.nav-link .nav-badge.live{background:var(--success-s);color:var(--success);}
+.nav-link .nav-badge.enterprise-lock{background:rgba(232,232,232,0.08);color:var(--text3);font-size:8px;padding:2px 6px;border:1px solid var(--border);}
 
 /* ============= WRAPPER ============= */
-.wrapper{display:flex;flex-direction:column;flex:1;overflow:hidden;min-width:0;padding-top:28px;transition:margin-right 260ms;}
-body.aria-open .wrapper{margin-right:var(--aria-drawer-w);}
-.topbar{height:50px;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0;}
-.crumb{font-size:11px;color:var(--text3);display:flex;align-items:center;gap:6px;}
-.crumb .sep{color:var(--text3);font-size:9px;opacity:0.5;}
-.crumb .current{color:var(--text);font-weight:600;}
-.crumb .date{color:var(--text3);font-size:10px;margin-left:6px;font-family:'Geist Mono',monospace;}
-.top-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
+.wrapper{display:flex;flex-direction:column;flex:1;overflow:hidden;min-width:0;}
+/* v2.1.43 — eliminado el margin-right en aria-open. El drawer ya no
+   empuja el contenido, ahora flota encima como popover. */
+.top-right{display:flex;align-items:center;gap:8px;}
 .period-tabs{display:flex;gap:2px;background:var(--card);border:1px solid var(--border);border-radius:5px;padding:2px;}
 .period-tab{padding:3px 9px;font-size:10px;color:var(--text3);cursor:pointer;border-radius:3px;font-family:'Geist Mono',monospace;transition:all 120ms;}
 .period-tab:hover{color:var(--text2);}
 .period-tab.active{background:var(--card3);color:var(--text);}
 .pill{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-family:'Geist Mono',monospace;padding:4px 10px;border-radius:20px;letter-spacing:0.5px;}
 .pill-ok{background:var(--success-s);color:var(--success);border:1px solid rgba(111,207,151,0.2);}
-.pill-warn{background:var(--warn-s);color:var(--warn);border:1px solid rgba(242,201,76,0.2);}
+.pill-warn{background:var(--warn-s);color:var(--warn);border:1px solid rgba(201,168,120,0.2);}
 .pill-aria{background:var(--aria-s);color:var(--aria);border:1px solid rgba(232,232,232,0.2);cursor:pointer;}
 .pill-dot{width:5px;height:5px;border-radius:50%;background:currentColor;animation:pulse 1.6s infinite;}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.35;}}
 
-.bell{position:relative;width:32px;height:32px;border:1px solid var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:var(--card);color:var(--text2);}
+.bell{position:relative;width:32px;height:32px;border:1px solid var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:var(--card);color:var(--text2);transition:all 160ms;}
 .bell:hover{color:var(--text);border-color:var(--border2);}
 .bell-dot{position:absolute;top:5px;right:6px;width:6px;height:6px;border-radius:50%;background:var(--danger);display:none;}
 .bell.has-notif .bell-dot{display:block;}
+
+/* Notification bell (campana del topbar — reemplaza FAB flotante) */
+.notif-bell{color:var(--text);}
+.notif-bell:hover{background:var(--card2);border-color:var(--border2);}
+.notif-bell svg{display:block;transition:transform 220ms cubic-bezier(.4,1.5,.5,1);transform-origin:50% 0;}
+.notif-bell:hover svg{transform:rotate(15deg);}
+.notif-bell:active svg{transform:rotate(-8deg);}
+/* Animación inicial de saludo — wiggle sutil cada 8s si hay notificaciones */
+.notif-bell.has-notif svg{animation:bell-wiggle 1.2s ease-in-out 0.5s 1;}
+@keyframes bell-wiggle{
+  0%,100%{transform:rotate(0);}
+  15%{transform:rotate(14deg);}
+  30%{transform:rotate(-10deg);}
+  45%{transform:rotate(7deg);}
+  60%{transform:rotate(-4deg);}
+  75%{transform:rotate(2deg);}
+}
+.bell-badge{position:absolute;top:-5px;right:-5px;min-width:17px;height:17px;border-radius:9px;background:var(--danger);color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px;border:2px solid var(--sidebar);box-sizing:border-box;line-height:1;}
 
 /* ============= CONTENT ============= */
 .content{flex:1;overflow-y:auto;padding:20px;}
 .content::-webkit-scrollbar{width:6px;}
 .content::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
 
-.page-head{margin-bottom:16px;display:flex;align-items:flex-end;gap:14px;}
-.page-title{font-size:20px;font-weight:600;color:var(--text);letter-spacing:-0.3px;}
-.page-sub{font-size:10px;color:var(--text3);font-family:'Geist Mono',monospace;letter-spacing:0.6px;margin-top:3px;}
-.page-actions{margin-left:auto;display:flex;gap:8px;}
+/* Page header (Commit 6.5: title 28px alineado al mockup) */
+.page-head{margin-bottom:20px;display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;}
+.page-title{font-size:28px;font-weight:700;color:var(--text);letter-spacing:-0.6px;line-height:1.1;}
+.page-sub{font-size:11px;color:var(--text3);font-family:'Geist Mono',monospace;letter-spacing:1.2px;margin-top:6px;text-transform:uppercase;}
+.page-actions{margin-left:auto;display:flex;gap:8px;align-items:center;}
 
 .sec-head{display:flex;align-items:center;gap:10px;margin:22px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--border);}
 .sec-label{font-size:9px;letter-spacing:2px;color:var(--text3);font-family:'Geist Mono',monospace;text-transform:uppercase;}
 .sec-title{font-size:13px;font-weight:600;color:var(--text);}
 .sec-meta{font-size:10px;color:var(--text3);font-family:'Geist Mono',monospace;margin-left:auto;}
 
-.btn{padding:6px 12px;font-size:11px;font-weight:500;border-radius:5px;border:1px solid var(--border2);background:var(--card2);color:var(--text);cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-family:inherit;}
+/* Buttons (Commit 6.5: padding +50%, mejor tipografía) */
+.btn{padding:8px 14px;font-size:12px;font-weight:500;border-radius:6px;border:1px solid var(--border2);background:var(--card2);color:var(--text);cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-family:inherit;transition:all 140ms;}
 .btn:hover{background:var(--card3);}
 .btn.primary{background:var(--accent);color:#000;border-color:var(--accent);}
 .btn.primary:hover{background:#fff;}
@@ -163,24 +237,157 @@ body.aria-open .wrapper{margin-right:var(--aria-drawer-w);}
 .btn.success{background:var(--success-s);border-color:rgba(111,207,151,0.3);color:var(--success);}
 .btn.danger{background:var(--danger-s);border-color:rgba(235,87,87,0.3);color:var(--danger);}
 
-.kpi-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px;}
+/* KPI cards (Commit 6.5: alineado al mockup) */
+.kpi-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:14px;}
 .kpi-strip.five{grid-template-columns:repeat(5,1fr);}
-.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px 16px;transition:border-color 150ms;}
+.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px 20px;transition:border-color 150ms;}
 .kpi-card:hover{border-color:var(--border2);}
-.kpi-label{font-size:8px;letter-spacing:1.5px;color:var(--text3);font-family:'Geist Mono',monospace;text-transform:uppercase;margin-bottom:6px;font-weight:600;}
-.kpi-value{font-size:24px;font-weight:600;letter-spacing:-1px;font-family:'Geist Mono',monospace;color:var(--text);line-height:1.1;}
-.kpi-trend{font-size:9px;color:var(--text3);margin-top:5px;font-family:'Geist Mono',monospace;}
+.kpi-label{font-size:10px;letter-spacing:1.5px;color:var(--text3);font-family:'Geist Mono',monospace;text-transform:uppercase;margin-bottom:8px;font-weight:500;}
+.kpi-value{font-size:28px;font-weight:700;letter-spacing:-0.6px;font-family:'Geist Mono',monospace;color:var(--text);line-height:1.05;}
+.kpi-trend{font-size:11px;color:var(--text3);margin-top:6px;font-family:'Geist Mono',monospace;}
 .kpi-trend.up{color:var(--success);}
 .kpi-trend.down{color:var(--danger);}
 
-.panel{background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden;}
-.panel-head{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+/* Panels (Commit 6.5: radius 10px) */
+.panel{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.panel-head{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
 .panel-title{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:1.2px;font-family:'Geist Mono',monospace;}
-.panel-sub{font-size:9px;color:var(--text3);margin-left:auto;font-family:'Geist Mono',monospace;}
-.panel-body{padding:14px;}
+.panel-sub{font-size:10px;color:var(--text3);margin-left:auto;font-family:'Geist Mono',monospace;letter-spacing:0.5px;}
+.panel-body{padding:16px;}
 
-.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-.grid-side{display:grid;grid-template-columns:1fr 320px;gap:12px;}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+
+/* v2.3.3 — grid-side con altura locked y breakpoints responsivos.
+   Ambas columnas heredan height:480px para que chart y panel Próximas Citas
+   queden SIEMPRE paralelos sin importar cuántas citas haya en la lista.
+   Breakpoints alineados a window sizes reales de Electron (min 900, default 1280). */
+.grid-side{display:grid;grid-template-columns:1fr 420px;gap:14px;height:480px;}
+@media (min-width:1800px){ .grid-side{grid-template-columns:1fr 460px;} }
+@media (max-width:1399px) and (min-width:1200px){ .grid-side{grid-template-columns:1fr 400px;} }
+@media (max-width:1199px) and (min-width:1000px){ .grid-side{grid-template-columns:1fr 360px;} }
+@media (max-width:999px){ .grid-side{grid-template-columns:1fr 340px;} }
+
+/* Próximas citas · panel locked + scroll interno */
+.next-section{min-width:0;display:flex;flex-direction:column;height:100%;}
+.next-section .sec-head{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;flex-shrink:0;}
+.next-section .sec-label{font-family:'Geist Mono',monospace;font-size:9px;letter-spacing:1.4px;color:var(--text3);text-transform:uppercase;}
+.next-section .sec-title{font-size:13px;font-weight:600;color:var(--text);}
+.next-panel{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;min-width:0;flex:1;min-height:0;}
+.next-head{padding:13px 15px 11px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-shrink:0;}
+.next-title-block{min-width:0;flex:1;}
+.next-title{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--text);}
+.next-title svg{width:14px;height:14px;color:var(--text2);flex-shrink:0;}
+.next-sub{font-family:'Geist Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:1.4px;text-transform:uppercase;margin-top:4px;}
+.chip-live{display:inline-flex;align-items:center;gap:7px;font-family:'Geist Mono',monospace;font-size:10px;font-weight:500;color:var(--success);background:var(--success-s);border:1px solid rgba(111,207,151,0.25);padding:4px 9px;border-radius:99px;letter-spacing:0.4px;white-space:nowrap;}
+.chip-live .pulse{width:6px;height:6px;border-radius:50%;background:var(--success);position:relative;}
+.chip-live .pulse::after{content:'';position:absolute;inset:-3px;border-radius:50%;background:var(--success);opacity:0.5;animation:next-pulse 1.6s ease-out infinite;}
+@keyframes next-pulse{0%{transform:scale(0.7);opacity:0.5;}100%{transform:scale(2);opacity:0;}}
+.next-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--border);border-bottom:1px solid var(--border);flex-shrink:0;}
+.next-stat{background:var(--card);padding:10px 13px;}
+.next-stat-label{font-family:'Geist Mono',monospace;font-size:8.5px;letter-spacing:1.4px;color:var(--text3);text-transform:uppercase;}
+.next-stat-val{font-size:18px;font-weight:700;color:var(--text);font-family:'Geist Mono',monospace;margin-top:3px;letter-spacing:-0.4px;}
+.next-stat-val .unit{font-size:10px;color:var(--text3);font-weight:500;letter-spacing:0;}
+@media (max-width:999px){.next-stats{grid-template-columns:1fr;}.next-stat{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;}.next-stat-val{font-size:15px;margin-top:0;}}
+.list-wrap{position:relative;flex:1;min-height:0;display:flex;flex-direction:column;}
+.list-wrap::before,.list-wrap::after{content:'';position:absolute;left:0;right:0;height:14px;pointer-events:none;z-index:2;transition:opacity 180ms;}
+.list-wrap::before{top:0;background:linear-gradient(to bottom,var(--card),transparent);}
+.list-wrap::after{bottom:0;background:linear-gradient(to top,var(--card),transparent);}
+.list-wrap.no-scroll-top::before{opacity:0;}
+.list-wrap.no-scroll-bottom::after{opacity:0;}
+.next-list{padding:7px;display:flex;flex-direction:column;gap:6px;flex:1;min-height:0;overflow-y:auto;scrollbar-gutter:stable;}
+.next-list::-webkit-scrollbar{width:6px;}
+.next-list::-webkit-scrollbar-track{background:transparent;}
+.next-list::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+.next-list::-webkit-scrollbar-thumb:hover{background:var(--text4);}
+.next-empty{padding:40px 16px;text-align:center;color:var(--text3);font-size:11.5px;line-height:1.6;}
+.cita-card{background:var(--card2);border:1px solid var(--border);border-left:2px solid var(--success);border-radius:7px;padding:10px 11px;display:flex;align-items:center;gap:9px;transition:background 140ms,border-color 140ms;min-width:0;flex-shrink:0;}
+.cita-card:hover{background:var(--card3);}
+.cita-card.tomorrow{border-left-color:var(--info);}
+.cita-card.brand-new{animation:cita-slide-in 460ms ease-out;}
+@keyframes cita-slide-in{from{opacity:0;transform:translateY(-8px);background:var(--success-s);}to{opacity:1;transform:translateY(0);background:var(--card2);}}
+.cita-card-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#2a2a2a,#1a1a1a);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--text);flex-shrink:0;}
+.cita-card-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;}
+.cita-card-row1{display:flex;align-items:center;gap:6px;min-width:0;}
+.cita-card-name{font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
+.cita-tag{font-family:'Geist Mono',monospace;font-size:8px;font-weight:600;letter-spacing:0.7px;padding:2px 5px;border-radius:3px;flex-shrink:0;}
+.cita-tag.hoy{background:var(--success-s);color:var(--success);}
+.cita-tag.tomorrow{background:var(--info-s);color:var(--info);}
+.cita-card-row2{display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--text2);min-width:0;}
+.cita-card-hora{font-family:'Geist Mono',monospace;font-size:10px;color:var(--text);font-weight:500;flex-shrink:0;}
+.cita-card-sep{color:var(--text4);flex-shrink:0;}
+.cita-card-svc{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1;}
+.cita-card-actions{display:flex;gap:4px;flex-shrink:0;}
+.btn-cita{width:26px;height:26px;border-radius:5px;background:var(--card3);border:1px solid var(--border);color:var(--text2);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 140ms;padding:0;}
+.btn-cita:hover{background:#222;color:var(--text);border-color:var(--border2);}
+.btn-cita svg{width:12px;height:12px;}
+.next-foot{padding:9px 13px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:10px;color:var(--text3);font-family:'Geist Mono',monospace;letter-spacing:0.6px;flex-shrink:0;}
+.foot-status{display:flex;align-items:center;gap:6px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.foot-status .dot-rt{width:6px;height:6px;border-radius:50%;background:var(--success);box-shadow:0 0 6px var(--success);flex-shrink:0;}
+.foot-link{color:var(--text2);cursor:pointer;text-decoration:none;flex-shrink:0;}
+.foot-link:hover{color:var(--text);}
+
+/* Modales del panel Próximas Citas (info timeline + chat WhatsApp) */
+.pc-modal-back{position:fixed;inset:0;background:rgba(0,0,0,0.65);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:200;padding:20px;animation:pc-fade 160ms ease-out;}
+.pc-modal-back.open{display:flex;}
+@keyframes pc-fade{from{opacity:0}to{opacity:1}}
+.pc-modal{background:var(--card);border:1px solid var(--border2);border-radius:10px;width:100%;max-width:440px;max-height:88vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,0.6);animation:pc-slide 200ms ease-out;}
+@keyframes pc-slide{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.pc-modal-head{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.pc-modal-title{font-size:13px;font-weight:600;color:var(--text);}
+.pc-modal-sub{font-family:'Geist Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:1.4px;text-transform:uppercase;margin-top:3px;}
+.pc-modal-close{width:26px;height:26px;border-radius:5px;background:var(--card2);border:1px solid var(--border);color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:300;line-height:1;padding:0;transition:all 140ms;}
+.pc-modal-close:hover{color:var(--text);background:var(--card3);}
+.pc-modal-body{padding:16px;overflow-y:auto;flex:1;}
+.pc-modal-foot{padding:11px 16px;border-top:1px solid var(--border);display:flex;gap:7px;justify-content:flex-end;flex-wrap:wrap;}
+.pc-tl-paciente{display:flex;align-items:center;gap:10px;padding:10px 11px;background:var(--card2);border:1px solid var(--border);border-radius:7px;margin-bottom:16px;min-width:0;}
+.pc-tl-paciente .av{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#2a2a2a,#1a1a1a);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;}
+.pc-tl-paciente .meta{flex:1;min-width:0;}
+.pc-tl-paciente .nombre{font-size:12.5px;font-weight:600;color:var(--text);}
+.pc-tl-paciente .sub{font-size:10.5px;color:var(--text2);margin-top:2px;}
+.pc-timeline{position:relative;padding-left:22px;}
+.pc-timeline::before{content:'';position:absolute;left:7px;top:6px;bottom:6px;width:1px;background:linear-gradient(to bottom,var(--success),var(--text2),var(--warn));opacity:0.35;}
+.pc-tl-step{position:relative;padding-bottom:16px;}
+.pc-tl-step:last-child{padding-bottom:0;}
+.pc-tl-dot{position:absolute;left:-22px;top:3px;width:14px;height:14px;border-radius:50%;background:var(--card);border:2px solid;display:flex;align-items:center;justify-content:center;}
+.pc-tl-dot.t1{border-color:var(--success);}
+.pc-tl-dot.t2{border-color:var(--text2);}
+.pc-tl-dot.t3{border-color:var(--warn);}
+.pc-tl-dot .core{width:4px;height:4px;border-radius:50%;}
+.pc-tl-dot.t1 .core{background:var(--success);}
+.pc-tl-dot.t2 .core{background:var(--text2);}
+.pc-tl-dot.t3 .core{background:var(--warn);}
+.pc-tl-label{font-size:9px;font-family:'Geist Mono',monospace;letter-spacing:1.2px;text-transform:uppercase;color:var(--text3);margin-bottom:3px;}
+.pc-tl-time{font-size:12.5px;font-weight:600;color:var(--text);font-family:'Geist Mono',monospace;}
+.pc-tl-detail{font-size:11px;color:var(--text2);margin-top:3px;line-height:1.5;word-wrap:break-word;}
+.pc-cap-card{margin-top:16px;padding:13px;background:var(--aria-s);border:1px solid var(--aria-border);border-radius:7px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.pc-cap-meta{min-width:0;flex:1;}
+.pc-cap-label{font-size:9px;font-family:'Geist Mono',monospace;letter-spacing:1.4px;text-transform:uppercase;color:var(--text2);}
+.pc-cap-val{font-size:20px;font-weight:700;color:var(--text);font-family:'Geist Mono',monospace;margin-top:3px;}
+.pc-cap-sub{font-size:10.5px;color:var(--text3);margin-top:4px;line-height:1.4;}
+.pc-chat-head{display:flex;align-items:center;gap:10px;padding:9px 11px;background:var(--card2);border:1px solid var(--border);border-radius:7px;margin-bottom:12px;min-width:0;}
+.pc-chat-head .av{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#2a2a2a,#1a1a1a);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;position:relative;flex-shrink:0;}
+.pc-chat-head .av::after{content:'';position:absolute;bottom:0;right:0;width:9px;height:9px;border-radius:50%;background:var(--success);border:2px solid var(--card);}
+.pc-chat-head .meta{flex:1;min-width:0;}
+.pc-chat-head .nombre{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pc-chat-head .estado{font-size:9.5px;color:var(--success);margin-top:1px;font-family:'Geist Mono',monospace;letter-spacing:0.3px;}
+.pc-chat-thread{display:flex;flex-direction:column;gap:7px;max-height:340px;overflow-y:auto;padding-right:4px;}
+.pc-chat-thread::-webkit-scrollbar{width:4px;}
+.pc-chat-thread::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+.pc-bubble{max-width:80%;padding:7px 10px;border-radius:9px;font-size:11.5px;line-height:1.45;word-wrap:break-word;}
+.pc-bubble .t{display:block;font-size:8.5px;color:var(--text4);margin-top:4px;font-family:'Geist Mono',monospace;letter-spacing:0.3px;}
+.pc-bubble.in{background:var(--card2);border:1px solid var(--border);align-self:flex-start;border-bottom-left-radius:3px;}
+.pc-bubble.out{background:var(--success-s);border:1px solid rgba(111,207,151,0.20);align-self:flex-end;border-bottom-right-radius:3px;}
+.pc-bubble.out .by{display:inline-block;font-size:8.5px;color:var(--success);font-family:'Geist Mono',monospace;letter-spacing:0.5px;margin-bottom:3px;text-transform:uppercase;font-weight:600;}
+.pc-chat-cita{align-self:center;width:92%;background:var(--success-s);border:1px solid rgba(111,207,151,0.25);border-radius:7px;padding:9px 11px;text-align:center;margin:4px 0;}
+.pc-chat-cita .lbl{font-size:8.5px;font-family:'Geist Mono',monospace;letter-spacing:1.4px;color:var(--success);text-transform:uppercase;}
+.pc-chat-cita .v{font-size:11.5px;font-weight:600;color:var(--text);margin-top:3px;}
+
+/* v2.3.3 — Flechas back/forward del topbar (navegacion entre vistas) */
+.nav-arrows{display:flex;gap:4px;align-items:center;flex-shrink:0;}
+.nav-arrow{width:28px;height:28px;border-radius:6px;background:var(--card2);border:1px solid var(--border);color:var(--text3);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 140ms;padding:0;}
+.nav-arrow:hover:not(:disabled){background:var(--card3);color:var(--text);border-color:var(--border2);}
+.nav-arrow:disabled{opacity:0.35;cursor:not-allowed;}
+.nav-arrow svg{width:13px;height:13px;}
 
 /* Executive brief (narrative IA) */
 .brief{background:linear-gradient(135deg,var(--card),var(--card2));border:1px solid var(--border2);border-radius:10px;padding:20px;margin-bottom:16px;position:relative;overflow:hidden;}
@@ -226,45 +433,163 @@ body.aria-open .wrapper{margin-right:var(--aria-drawer-w);}
 
 /* Funnel */
 .funnel-container{display:flex;flex-direction:column;gap:8px;padding:14px;}
-.funnel-row{display:grid;grid-template-columns:140px 1fr 60px 50px 28px;gap:12px;align-items:center;}
+.funnel-row{display:grid;grid-template-columns:140px 1fr 50px 72px 28px;gap:12px;align-items:center;}
 .funnel-label{font-size:11px;color:var(--text2);font-weight:500;}
 .funnel-bar{height:26px;border-radius:4px;background:var(--card2);position:relative;overflow:hidden;}
 .funnel-bar-fill{height:100%;background:rgba(111,207,151,0.6);border-radius:4px;transition:width 400ms;}
 .funnel-bar-fill.drop{background:rgba(235,87,87,0.6);}
-.funnel-count{font-size:11px;font-weight:600;color:var(--text);text-align:right;font-family:'Geist Mono',monospace;}
-.funnel-pct{font-size:9px;color:var(--text3);text-align:right;font-family:'Geist Mono',monospace;}
+.funnel-bar-fill.fuga{background:rgba(235,87,87,0.55);}
+.funnel-count{font-size:12px;font-weight:600;color:var(--text);text-align:right;font-family:'Geist Mono',monospace;}
+.funnel-pct{display:flex;flex-direction:column;align-items:flex-end;gap:1px;}
+.funnel-pct-total{font-size:10px;color:var(--text2);font-family:'Geist Mono',monospace;font-weight:500;}
+.funnel-pct-abs{font-size:9px;color:var(--text3);font-family:'Geist Mono',monospace;}
+.funnel-pct-abs.drop{color:var(--danger);}
+.funnel-pct-abs.ok{color:var(--success);}
 .funnel-ia-hint{padding:8px 14px;background:var(--aria-s);border-left:2px solid var(--aria);margin:4px 14px;border-radius:0 4px 4px 0;font-size:11px;color:var(--text2);}
 .funnel-ia-hint strong{color:var(--aria);}
 
-/* Agenda calendar */
-.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;padding:14px;}
-.cal-cell{min-height:70px;background:var(--card2);border:1px solid var(--border);border-radius:4px;padding:6px;font-size:11px;cursor:pointer;position:relative;}
+/* Agenda calendar (Commit · agenda redesign: neutral palette) */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;padding:12px;}
+.cal-cell{min-height:62px;background:var(--card2);border:1px solid transparent;border-radius:5px;padding:6px;font-size:11px;cursor:pointer;position:relative;transition:background 140ms,border-color 140ms;}
 .cal-cell:hover{background:var(--card3);}
-.cal-cell.today{border-color:var(--accent);}
-.cal-cell.has-appt{background:rgba(111,207,151,0.08);border-color:rgba(111,207,151,0.2);}
-.cal-day{font-size:10px;color:var(--text3);font-family:'Geist Mono',monospace;}
+.cal-cell.today{background:rgba(255,255,255,0.06);border-color:var(--accent);}
+.cal-cell.has-appt{background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.06);}
+.cal-cell.has-appt-busy{background:rgba(255,255,255,0.07);border-color:rgba(255,255,255,0.10);}
+.cal-day{font-size:10px;color:var(--text);font-weight:600;font-family:'Geist Mono',monospace;}
+.cal-cell-count{position:absolute;bottom:6px;right:6px;font-size:9px;font-family:'Geist Mono',monospace;color:var(--text2);font-weight:600;}
 .cal-appt{font-size:9px;margin-top:4px;padding:2px 4px;background:var(--success-s);color:var(--success);border-radius:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.cal-head{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;padding:0 14px 6px;font-size:9px;color:var(--text3);font-family:'Geist Mono',monospace;letter-spacing:1.5px;text-transform:uppercase;}
+.cal-head{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;padding:0 12px 8px;font-size:9px;color:var(--text3);font-family:'Geist Mono',monospace;letter-spacing:1.5px;text-transform:uppercase;text-align:center;}
+
+/* Lista del día (panel derecho de Agenda) */
+.agenda-today-list{padding:6px;max-height:480px;overflow-y:auto;}
+.agenda-today-list::-webkit-scrollbar{width:4px;}
+.agenda-today-list::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+.agenda-today-item{padding:10px 12px;border:1px solid var(--border);border-radius:7px;margin-bottom:6px;display:flex;align-items:center;gap:10px;transition:background 120ms,border-color 120ms;cursor:pointer;}
+.agenda-today-item:hover{background:var(--card2);border-color:var(--border2);}
+.agenda-today-item .icon{width:28px;height:28px;border-radius:6px;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
+.agenda-today-item .info{flex:1;min-width:0;}
+.agenda-today-item .title{font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.agenda-today-item .meta{font-size:10px;color:var(--text3);margin-top:2px;}
 
 /* Score pill */
 .score-pill{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;font-size:10px;font-family:'Geist Mono',monospace;font-weight:600;}
 .score-hot{background:var(--danger-s);color:var(--danger);}
 .score-warm{background:var(--warn-s);color:var(--warn);}
-.score-cold{background:var(--card2);color:var(--text3);}
+.score-cold{background:rgba(138,154,168,0.10);color:#8a9aa8;}
 
 /* ============= ARIA DRAWER ============= */
-.aria-fab{position:fixed;bottom:20px;right:20px;width:56px;height:56px;border-radius:28px;background:var(--accent);border:none;color:#000;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;font-family:'Geist',sans-serif;letter-spacing:-0.5px;box-shadow:0 8px 24px rgba(0,0,0,0.5);z-index:500;transition:transform 200ms,box-shadow 200ms;}
-.aria-fab:hover{transform:scale(1.05);box-shadow:0 12px 32px rgba(0,0,0,0.6);background:#fff;}
+/* v2.1.45 — FAB negro completo, icono blanco solid filled (Opción 2 · oscuro).
+   Independiente del theme (dark/light siempre se ve igual). */
+.aria-fab{
+  position:fixed;
+  bottom:20px;
+  right:20px;
+  width:56px;
+  height:56px;
+  border-radius:28px;
+  background:#111;
+  border:1px solid #1f1f1f;
+  color:#fff;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow:0 8px 24px rgba(0,0,0,0.5);
+  z-index:500;
+  transition:transform 200ms, box-shadow 200ms, background 160ms;
+}
+.aria-fab:hover{
+  transform:scale(1.05);
+  box-shadow:0 12px 32px rgba(0,0,0,0.7);
+  background:#000;
+}
+.aria-fab svg{display:block;}
+.aria-fab:hover svg{transform:rotate(8deg);transition:transform 200ms;}
 .aria-fab-badge{position:absolute;top:-4px;right:-4px;min-width:22px;height:22px;border-radius:11px;background:var(--danger);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 6px;border:2px solid var(--bg);}
 body.aria-open .aria-fab{display:none;}
 
-.aria-drawer{position:fixed;right:-420px;top:0;bottom:0;width:var(--aria-drawer-w);background:var(--sidebar);border-left:1px solid var(--border);display:flex;flex-direction:column;z-index:400;transition:right 260ms cubic-bezier(.4,0,.2,1);}
-body.aria-open .aria-drawer{right:0;}
-.aria-head{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;padding-top:38px;}
-.aria-badge-icon{width:32px;height:32px;border-radius:8px;background:var(--aria-s);border:1px solid rgba(232,232,232,0.25);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:var(--aria);}
-.aria-title{flex:1;font-size:13px;font-weight:600;}
-.aria-title span{display:block;font-size:9px;color:var(--text3);font-family:'Geist Mono',monospace;letter-spacing:1.5px;margin-top:2px;}
-.aria-close{background:transparent;border:0;color:var(--text3);cursor:pointer;width:28px;height:28px;border-radius:5px;display:flex;align-items:center;justify-content:center;}
+/* v2.1.43 — popover flotante anclado al FAB.
+   Antes: side drawer 380px que empujaba el .wrapper (margin-right).
+   Ahora: floating popover que aparece justo encima del FAB sin tocar layout. */
+.aria-drawer{
+  position:fixed;
+  /* v2.1.55 — Anclado al bell del topnav (post-migración a top-nav).
+     Antes colgaba del FAB (bottom-right); ahora cuelga del topnav-row1. */
+  top:96px; /* 28px drag + ~60px topnav-row1 + 8px gap */
+  right:14px;
+  width:380px;
+  max-width:calc(100vw - 40px);
+  max-height:min(1080px, calc(100vh - 120px));
+  background:var(--sidebar);
+  border:1px solid var(--border);
+  border-radius:14px;
+  box-shadow:0 20px 60px rgba(0,0,0,0.55), 0 4px 12px rgba(0,0,0,0.35);
+  display:flex;
+  flex-direction:column;
+  z-index:400;
+  opacity:0;
+  transform:translateY(-8px) scale(0.97);
+  transform-origin:top right;
+  pointer-events:none;
+  transition:opacity 180ms ease, transform 200ms cubic-bezier(.18,.89,.32,1.28);
+}
+body.aria-open .aria-drawer{
+  opacity:1;
+  transform:translateY(0) scale(1);
+  pointer-events:auto;
+}
+/* Overlay invisible para click-outside-to-close. NO oscurece el dashboard. */
+.aria-overlay{
+  position:fixed; inset:0;
+  background:transparent;
+  z-index:399;
+  pointer-events:none;
+}
+body.aria-open .aria-overlay{ pointer-events:auto; }
+
+.aria-head{
+  padding:14px 16px;
+  border-bottom:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-shrink:0;
+}
+.aria-title{flex:1;font-size:13px;font-weight:600;line-height:1.2;}
+.aria-title span{
+  display:block;
+  font-size:9px;
+  color:var(--text3);
+  font-family:'Geist Mono',monospace;
+  letter-spacing:1.2px;
+  margin-top:3px;
+  text-transform:uppercase;
+}
+.aria-mark-read{
+  background:transparent;
+  border:none;
+  color:var(--text3);
+  cursor:pointer;
+  padding:5px 9px;
+  font-size:10px;
+  font-family:'Geist Mono',monospace;
+  letter-spacing:0.5px;
+  border-radius:5px;
+}
+.aria-mark-read:hover{color:var(--text);background:var(--card2);}
+.aria-close{
+  background:transparent;
+  border:0;
+  color:var(--text3);
+  cursor:pointer;
+  width:28px;
+  height:28px;
+  border-radius:5px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:14px;
+}
 .aria-close:hover{color:var(--text);background:var(--card2);}
 
 .aria-filter{padding:10px 18px;border-bottom:1px solid var(--border);display:flex;gap:6px;overflow-x:auto;}
@@ -276,7 +601,18 @@ body.aria-open .aria-drawer{right:0;}
 .aria-list::-webkit-scrollbar{width:4px;}
 .aria-list::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
 
-.aria-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:10px;transition:border-color 150ms;}
+.aria-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:8px;transition:background 150ms,border-color 150ms;cursor:pointer;position:relative;}
+.aria-card:hover{background:var(--card2);border-color:var(--border2);}
+.aria-card.unread{border-left:2px solid var(--aria);}
+.aria-card-dismiss{position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:11px;border:none;background:transparent;color:var(--text3);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;line-height:1;opacity:0;transition:opacity 150ms,background 150ms,color 150ms;}
+.aria-card:hover .aria-card-dismiss{opacity:1;}
+.aria-card-dismiss:hover{background:var(--danger-s);color:var(--danger);}
+.aria-notif-row{display:flex;align-items:flex-start;gap:10px;}
+.aria-notif-icon{flex-shrink:0;width:28px;height:28px;border-radius:8px;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:14px;}
+.aria-notif-body{flex:1;min-width:0;padding-right:16px;}
+.aria-notif-title{font-size:12px;font-weight:500;color:var(--text);line-height:1.4;}
+.aria-notif-meta{font-size:10px;color:var(--text3);font-family:'Geist Mono',monospace;margin-top:3px;letter-spacing:0.3px;}
+.aria-notif-body-text{font-size:11px;color:var(--text2);line-height:1.5;margin-top:5px;}
 .aria-card:hover{border-color:rgba(232,232,232,0.3);}
 .aria-card-head{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;}
 .aria-type-icon{width:28px;height:28px;border-radius:7px;background:var(--card2);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;}
@@ -285,6 +621,11 @@ body.aria-open .aria-drawer{right:0;}
 .aria-confidence{font-size:9px;padding:1px 6px;border-radius:4px;font-family:'Geist Mono',monospace;font-weight:600;margin-left:auto;background:var(--aria-s);color:var(--aria);flex-shrink:0;}
 .aria-reasoning{font-size:11px;color:var(--text2);line-height:1.5;margin-bottom:10px;padding:8px 10px;background:var(--card2);border-radius:5px;border-left:2px solid var(--aria);}
 .aria-payload{font-size:10px;color:var(--text3);font-family:'Geist Mono',monospace;margin-bottom:10px;padding:6px 8px;background:var(--card2);border-radius:4px;border:1px dashed var(--border);word-break:break-all;max-height:60px;overflow-y:auto;}
+/* Pretty payload details — reemplaza el JSON crudo anterior */
+.aria-details{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin-bottom:10px;padding:10px 12px;background:var(--card2);border-radius:6px;border:1px solid var(--border);}
+.aria-detail-row{display:contents;}
+.aria-detail-label{font-size:10px;color:var(--text3);font-family:'Geist Mono',monospace;text-transform:uppercase;letter-spacing:0.5px;padding-top:3px;}
+.aria-detail-value{font-size:12px;color:var(--text);line-height:1.5;word-break:break-word;}
 .aria-actions{display:flex;gap:6px;}
 .aria-actions .btn{flex:1;justify-content:center;font-size:10px;padding:6px 8px;}
 
@@ -314,14 +655,26 @@ body.aria-open .aria-drawer{right:0;}
 .modal-body{padding:16px 20px;overflow-y:auto;flex:1;}
 .modal-foot{padding:12px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;}
 .field{margin-bottom:12px;}
-.field-label{font-size:9px;letter-spacing:1.5px;color:var(--text3);font-family:'Geist Mono',monospace;margin-bottom:5px;text-transform:uppercase;}
-.field-input,.field-select,.field-textarea{width:100%;background:var(--card2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-family:inherit;font-size:12px;outline:none;}
-.field-input:focus,.field-select:focus,.field-textarea:focus{border-color:var(--border2);}
+/* .field-label definido más abajo (Commit · campañas polish) */
+.field-input,.field-select,.field-textarea{width:100%;background:var(--card2);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:7px;font-family:inherit;font-size:13px;outline:none;transition:border-color 140ms,background 140ms;}
+.field-input:focus,.field-select:focus,.field-textarea:focus{border-color:var(--border2);background:var(--card3);}
+.field-input::placeholder,.field-textarea::placeholder{color:var(--text3);}
+.field-label{font-size:9px;color:var(--text3);font-family:'Geist Mono',monospace;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;font-weight:500;}
 .field-textarea{resize:vertical;min-height:80px;}
 
 /* ═══════════ ARIA SECTION ═══════════ */
-.aria-hero{background:linear-gradient(135deg,var(--card),var(--card2));border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px;display:flex;align-items:center;gap:16px;position:relative;overflow:hidden;}
+/* ARIA Hero — typography alineada al mockup (tokens del dashboard) */
+.aria-hero{background:linear-gradient(135deg,var(--card),var(--card2));border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:16px;display:flex;align-items:center;gap:18px;position:relative;overflow:hidden;}
 .aria-hero::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);}
+.aria-hero .aria-avatar-big{width:56px;height:56px;border-radius:14px;background:var(--accent);color:#000;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:24px;flex-shrink:0;}
+.aria-hero .aria-info{flex:1;min-width:0;}
+.aria-hero .aria-info-title{font-size:22px;font-weight:700;letter-spacing:-0.5px;color:var(--text);line-height:1.15;}
+.aria-hero .aria-info-sub{font-size:11px;color:var(--text3);font-family:'Geist Mono',monospace;letter-spacing:1.2px;text-transform:uppercase;margin-top:6px;}
+.aria-hero .aria-status-row{display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap;}
+.aria-hero .aria-quick-stats{display:flex;gap:14px;flex-shrink:0;}
+.aria-hero .stat-mini{padding:10px 14px;background:var(--card2);border:1px solid var(--border);border-radius:8px;text-align:center;min-width:80px;}
+.aria-hero .stat-val{font-size:24px;font-weight:700;letter-spacing:-0.5px;font-family:'Geist Mono',monospace;color:var(--text);line-height:1.05;}
+.aria-hero .stat-lbl{font-size:9px;color:var(--text3);font-family:'Geist Mono',monospace;letter-spacing:1.5px;text-transform:uppercase;margin-top:4px;}
 .aria-avatar-big{width:56px;height:56px;border-radius:14px;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#000;font-size:22px;font-weight:700;letter-spacing:-1px;flex-shrink:0;}
 .aria-info{flex:1;}
 .aria-info-title{font-size:18px;font-weight:600;letter-spacing:-0.3px;}
@@ -339,29 +692,38 @@ body.aria-open .aria-drawer{right:0;}
 .stat-lbl{font-size:8px;color:var(--text3);font-family:'Geist Mono',monospace;letter-spacing:1.2px;text-transform:uppercase;margin-top:2px;}
 
 /* ARIA tabs */
-.aria-tabs{display:flex;gap:2px;background:var(--card);border:1px solid var(--border);border-radius:7px;padding:3px;margin-bottom:14px;}
-.aria-tab{flex:1;padding:9px 14px;border:0;background:transparent;color:var(--text3);cursor:pointer;border-radius:5px;font-size:12px;font-family:'Geist',sans-serif;font-weight:500;transition:all 120ms;}
-.aria-tab:hover{color:var(--text2);}
+.aria-tabs{display:inline-flex;gap:2px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:4px;margin:18px 0 14px;width:fit-content;}
+.aria-tab{padding:8px 16px;border:0;background:transparent;color:var(--text2);cursor:pointer;border-radius:5px;font-size:12px;font-family:'Inter',system-ui,-apple-system,sans-serif;font-weight:500;transition:all 140ms;}
+.aria-tab:hover:not(.active){color:var(--text);}
 .aria-tab.active{background:var(--card3);color:var(--text);}
 .aria-tab-pane{display:none;}
 .aria-tab-pane.active{display:block;}
 
 /* Conversaciones */
-.conv-wrap{display:grid;grid-template-columns:340px 1fr;gap:12px;height:calc(100vh - 340px);min-height:460px;}
-.conv-list{background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden;display:flex;flex-direction:column;}
-.conv-filters{display:flex;gap:4px;padding:10px 12px;border-bottom:1px solid var(--border);overflow-x:auto;}
-.conv-filters::-webkit-scrollbar{display:none;}
-.conv-filter-btn{flex-shrink:0;padding:4px 10px;border:1px solid var(--border);background:transparent;color:var(--text3);border-radius:12px;font-size:10px;font-family:'Geist Mono',monospace;cursor:pointer;white-space:nowrap;}
+/* Conversaciones layout (Commit ARIA · alineado al mockup) */
+.conv-wrap{display:grid;grid-template-columns:320px 1fr;gap:14px;height:calc(100vh - 360px);min-height:480px;}
+
+/* Filtros de conversaciones — chips arriba (separados del list, en card propio) */
+.conv-filter-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:12px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+.conv-filter-btn{padding:5px 11px;border:1px solid var(--border);background:transparent;color:var(--text2);border-radius:999px;font-size:11px;font-family:'Geist Mono',monospace;cursor:pointer;white-space:nowrap;letter-spacing:0.3px;transition:all 140ms;display:inline-flex;align-items:center;gap:5px;}
+.conv-filter-btn:hover:not(.active){color:var(--text);border-color:var(--border2);}
 .conv-filter-btn.active{background:var(--card3);border-color:var(--border2);color:var(--text);}
-.conv-search-wrap{padding:8px 12px;border-bottom:1px solid var(--border);}
-.conv-search-wrap input{width:100%;background:var(--card2);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:5px;font-family:inherit;font-size:11px;outline:none;}
+.conv-filter-btn .count{font-size:10px;color:var(--text3);}
+.conv-filter-btn.active .count{color:var(--text2);}
+
+.conv-list{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;}
+.conv-search-wrap{padding:10px 12px;border-bottom:1px solid var(--border);}
+.conv-search-wrap input{width:100%;background:var(--card2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-family:inherit;font-size:12px;outline:none;transition:border-color 140ms;}
+.conv-search-wrap input:focus{border-color:var(--border2);}
 .conv-items{flex:1;overflow-y:auto;}
 .conv-items::-webkit-scrollbar{width:4px;}
 .conv-items::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
-.conv-item{padding:12px 14px;border-bottom:1px solid var(--border);cursor:pointer;display:flex;gap:10px;}
+.conv-item{padding:11px 14px;border-bottom:1px solid var(--border);cursor:pointer;display:flex;gap:11px;align-items:center;transition:background 120ms;}
 .conv-item:hover{background:var(--card2);}
-.conv-item.active{background:var(--card2);border-left:2px solid var(--accent);padding-left:12px;}
-.conv-avatar{width:36px;height:36px;border-radius:50%;background:var(--card3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--text2);font-weight:600;font-size:12px;flex-shrink:0;position:relative;}
+.conv-item.active{background:var(--card2);}
+.conv-item.active::before{content:'';position:absolute;left:0;width:2px;height:calc(100% - 12px);top:6px;background:var(--accent);border-radius:1px;}
+.conv-item{position:relative;}
+.conv-avatar{width:34px;height:34px;border-radius:50%;background:var(--card3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--text2);font-weight:600;font-size:11px;flex-shrink:0;position:relative;}
 .conv-avatar-dot{position:absolute;bottom:0;right:0;width:10px;height:10px;border-radius:50%;background:var(--success);border:2px solid var(--card);}
 .conv-avatar-dot.paused{background:var(--warn);}
 .conv-avatar-dot.escalated{background:var(--danger);}
@@ -382,7 +744,7 @@ body.aria-open .aria-drawer{right:0;}
 .chat-who-name{font-size:13px;font-weight:600;}
 .chat-who-meta{font-size:10px;color:var(--text3);margin-top:2px;font-family:'Geist Mono',monospace;}
 .chat-status-banner{padding:8px 16px;background:var(--aria-s);border-bottom:1px solid var(--aria-border);font-size:10px;color:var(--text2);display:flex;align-items:center;gap:8px;}
-.chat-status-banner.paused{background:var(--warn-s);border-bottom-color:rgba(242,201,76,0.15);}
+.chat-status-banner.paused{background:var(--warn-s);border-bottom-color:rgba(201,168,120,0.15);}
 .chat-msgs{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:10px;}
 .chat-msgs::-webkit-scrollbar{width:4px;}
 .chat-msgs::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
@@ -440,7 +802,7 @@ body.aria-open .aria-drawer{right:0;}
 .help-step-n{width:22px;height:22px;border-radius:11px;background:var(--card2);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;flex-shrink:0;font-family:'Geist Mono',monospace;color:var(--text2);}
 .help-step-body{flex:1;font-size:11px;color:var(--text2);line-height:1.5;}
 .help-step-body strong{color:var(--text);}
-.pricing-note{padding:10px 12px;background:var(--warn-s);border:1px solid rgba(242,201,76,0.15);border-radius:6px;font-size:10px;color:var(--text2);line-height:1.5;margin-top:10px;}
+.pricing-note{padding:10px 12px;background:var(--warn-s);border:1px solid rgba(201,168,120,0.15);border-radius:6px;font-size:10px;color:var(--text2);line-height:1.5;margin-top:10px;}
 .pricing-note strong{color:var(--warn);}
 
 /* Wizard para conexión desconectada */
@@ -452,25 +814,7 @@ body.aria-open .aria-drawer{right:0;}
 .wiz-step.active{background:var(--card3);color:var(--text);}
 .wiz-step.done{color:var(--success);}
 
-/* WhatsApp webview (legacy para fallback) */
-.wa-wrap{display:grid;grid-template-columns:1fr 320px;gap:12px;height:calc(100vh - 140px);}
-.wa-webview{background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden;position:relative;}
-.wa-webview webview{width:100%;height:100%;}
-.wa-sidebar{background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden;display:flex;flex-direction:column;}
-
-/* Coach Dominio */
-.coach-hero{background:linear-gradient(135deg,var(--card),var(--card2));border:1px solid var(--border2);border-radius:10px;padding:24px;margin-bottom:16px;}
-.coach-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;background:var(--aria-s);border:1px solid rgba(232,232,232,0.3);border-radius:20px;font-size:10px;font-family:'Geist Mono',monospace;color:var(--aria);letter-spacing:1.2px;margin-bottom:14px;}
-.coach-title{font-size:22px;font-weight:600;letter-spacing:-0.3px;margin-bottom:6px;}
-.coach-sub{font-size:12px;color:var(--text2);line-height:1.6;max-width:580px;}
-.coach-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px;padding-top:18px;border-top:1px dashed var(--border);}
-
-/* Dominio Index gauge */
-.gauge-container{text-align:center;padding:30px 20px;}
-.gauge-score{font-size:56px;font-weight:700;letter-spacing:-2px;color:var(--success);font-family:'Geist Mono',monospace;line-height:1;}
-.gauge-max{font-size:18px;color:var(--text3);}
-.gauge-label{font-size:11px;color:var(--text2);margin-top:10px;}
-.gauge-rank{font-size:10px;color:var(--aria);font-family:'Geist Mono',monospace;letter-spacing:1.5px;text-transform:uppercase;margin-top:8px;}
+/* CSS .coach-* y .gauge-* eliminado v2.2.1 — Coach Dominio + Dominio Index descartados en v2.2.0 (mockup C). */
 
 /* Toggle switch */
 .switch{position:relative;display:inline-block;width:36px;height:20px;}
@@ -479,16 +823,6 @@ body.aria-open .aria-drawer{right:0;}
 .slider:before{content:"";position:absolute;height:14px;width:14px;left:2px;bottom:2px;background:var(--text3);border-radius:50%;transition:.2s;}
 .switch input:checked + .slider{background:var(--success-s);border-color:rgba(111,207,151,0.4);}
 .switch input:checked + .slider:before{transform:translateX(16px);background:var(--success);}
-
-/* WhatsApp QR connection */
-.wa-connect-banner{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 16px;display:flex;align-items:center;gap:12px;margin-bottom:12px;}
-.wa-connect-icon{width:36px;height:36px;border-radius:8px;background:#25d366;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;}
-.wa-connect-body{flex:1;}
-.wa-connect-title{font-size:13px;font-weight:600;color:var(--text);}
-.wa-connect-sub{font-size:11px;color:var(--text2);margin-top:2px;line-height:1.4;}
-.wa-connect-status{font-size:10px;padding:5px 10px;border-radius:10px;font-family:'Geist Mono',monospace;letter-spacing:1px;display:flex;align-items:center;gap:5px;}
-.wa-connect-status.on{background:var(--success-s);color:var(--success);}
-.wa-connect-status.off{background:var(--warn-s);color:var(--warn);}
 
 /* Email confirmation badge in agenda */
 .email-chip{display:inline-flex;align-items:center;gap:4px;font-size:9px;padding:2px 6px;border-radius:4px;background:var(--card3);color:var(--text3);font-family:'Geist Mono',monospace;letter-spacing:0.5px;}
@@ -501,235 +835,1047 @@ body.aria-open .aria-drawer{right:0;}
 .empty-title{font-size:14px;font-weight:500;color:var(--text2);margin-bottom:4px;}
 .empty-sub{font-size:11px;color:var(--text3);}
 
+/* ROI tabs (Publicidad / Ingresos) */
+.roi-tabs{display:flex;gap:2px;padding:0;margin:0 0 14px;background:var(--card2);border:1px solid var(--border);border-radius:8px;width:fit-content;}
+.roi-tab{background:transparent;border:0;padding:8px 16px;font-size:12px;color:var(--text3);cursor:pointer;border-radius:6px;transition:all 140ms;font-family:inherit;font-weight:500;}
+.roi-tab:hover{color:var(--text2);}
+.roi-tab.active{background:var(--card3);color:var(--text);border:1px solid var(--border2);}
+.roi-tab-pane{display:none;}
+.roi-tab-pane.active{display:block;}
+
+/* Ingresos · range selector */
+.ingresos-range{display:flex;gap:6px;margin-bottom:14px;}
+.ingresos-range-btn{background:transparent;border:1px solid var(--border);padding:6px 12px;font-size:11px;color:var(--text3);cursor:pointer;border-radius:20px;font-family:'Geist Mono',monospace;letter-spacing:0.5px;transition:all 140ms;}
+.ingresos-range-btn:hover{color:var(--text2);border-color:var(--border2);}
+.ingresos-range-btn.active{background:var(--card2);color:var(--text);border-color:var(--border2);}
+
+/* Ingresos · breakdown rows (método pago + top servicios) */
+.ing-row{display:grid;grid-template-columns:1fr auto;gap:12px;padding:9px 0;border-bottom:1px solid var(--border);align-items:center;}
+.ing-row:last-child{border-bottom:0;}
+.ing-row-label{font-size:12px;color:var(--text2);}
+.ing-row-amount{font-family:'Geist Mono',monospace;font-size:12px;color:var(--text);font-weight:600;}
+.ing-row-bar{grid-column:1/-1;height:3px;background:var(--card2);border-radius:2px;overflow:hidden;margin-top:2px;}
+.ing-row-bar-fill{height:100%;background:var(--success);transition:width 400ms;}
+.ing-method-badge{display:inline-block;padding:2px 7px;border-radius:10px;font-size:9px;font-family:'Geist Mono',monospace;letter-spacing:0.8px;text-transform:uppercase;margin-right:6px;color:var(--text3);background:var(--card2);}
+.ing-method-badge.efectivo{background:rgba(111,207,151,0.08);color:var(--success);}
+.ing-method-badge.tarjeta{background:rgba(46,144,250,0.08);color:#5ba9ff;}
+.ing-method-badge.transferencia{background:rgba(147,112,219,0.08);color:#a58aff;}
+.ing-method-badge.stripe{background:rgba(201,168,120,0.08);color:var(--warn);}
+
+/* ═══════════════ CAMPAÑAS · Template cards (panel principal) ═══════════════ */
+.camp-tpl-card{padding:16px;background:var(--card);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:all 140ms;}
+.camp-tpl-card:hover{border-color:var(--border2);background:var(--card2);}
+.camp-tpl-icon{font-size:22px;margin-bottom:10px;}
+.camp-tpl-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:5px;letter-spacing:-0.2px;}
+.camp-tpl-desc{font-size:11px;color:var(--text2);line-height:1.55;margin-bottom:10px;}
+.camp-tpl-meta{font-size:9px;color:var(--text3);font-family:'Geist Mono',monospace;letter-spacing:1.5px;text-transform:uppercase;}
+.camp-tpl-meta span{color:var(--text);font-weight:600;}
+
+/* Campaign builder modal · steps (alineado al mockup) */
+.camp-step{padding:16px;border:1px solid var(--border);border-radius:10px;background:var(--card);margin-bottom:12px;}
+.camp-step-title{font-size:10px;color:var(--text3);font-family:'Geist Mono',monospace;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px;font-weight:500;}
+
+/* Audience preview (filter pre-armed) */
+.camp-audience-preview{padding:12px 14px;background:var(--card2);border:1px solid var(--border);border-radius:8px;font-size:12px;color:var(--text2);margin-top:10px;line-height:1.5;}
+.camp-audience-preview strong{color:var(--text);font-size:18px;font-weight:700;font-family:'Geist Mono',monospace;letter-spacing:-0.3px;}
+
+/* Discount controls */
+.camp-discount-row{display:flex;gap:10px;align-items:center;margin-top:8px;flex-wrap:wrap;}
+
+/* Custom leads list (modo personalizado) */
+#camp-custom-leads label:hover{background:var(--card2);}
+#camp-custom-leads label:last-child{border-bottom:0;}
+#camp-custom-leads input[type="checkbox"]{accent-color:var(--accent);width:14px;height:14px;cursor:pointer;}
+
+/* ═══════════════ HERO METRIC (Commit 6.5 design polish) ═══════════════ */
+.hero-metric{background:linear-gradient(135deg,var(--card),var(--card2));border:1px solid var(--border);border-radius:14px;padding:28px;margin-bottom:18px;}
+.hero-eyebrow{font-size:11px;color:var(--text3);font-family:'Geist Mono',monospace;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px;}
+.hero-value{font-size:52px;font-weight:700;letter-spacing:-1.6px;line-height:1;font-family:'Geist Mono',monospace;color:var(--text);}
+.hero-value .sub{font-size:18px;color:var(--text3);font-weight:500;margin-left:8px;letter-spacing:0;}
+.hero-trend{margin-top:14px;display:flex;align-items:center;gap:12px;font-size:13px;color:var(--text2);flex-wrap:wrap;}
+.hero-trend .up{color:var(--success);font-weight:600;}
+.hero-trend .down{color:var(--danger);font-weight:600;}
+
+/* ═══════════════ ARIA · TAB CONTACTOS (v2.3.0) ═══════════════ */
+.contactos-banner{display:flex;align-items:center;gap:14px;padding:14px 16px;background:linear-gradient(135deg,var(--info-s),rgba(255,255,255,0.02));border:1px solid rgba(138,154,168,0.2);border-radius:10px;margin-top:14px;}
+.contactos-banner-icon{width:32px;height:32px;border-radius:8px;background:var(--info-s);color:var(--info);border:1px solid rgba(138,154,168,0.2);display:flex;align-items:center;justify-content:center;font-size:16px;font-family:'Geist Mono',monospace;font-weight:700;flex-shrink:0;}
+.contactos-banner-text{flex:1;}
+.contactos-banner-title{font-size:12px;font-weight:600;color:var(--text);}
+.contactos-banner-desc{font-size:11px;color:var(--text2);margin-top:3px;line-height:1.5;}
+.contacto-tag-chip{display:inline-block;padding:1px 6px;margin:1px 2px 1px 0;border-radius:4px;font-size:9px;font-family:'Geist Mono',monospace;background:var(--card3);border:1px solid var(--border);color:var(--text2);}
+.contacto-source-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:4px;font-size:9px;font-family:'Geist Mono',monospace;letter-spacing:0.5px;}
+.contacto-source-badge.auto{background:var(--info-s);color:var(--info);border:1px solid rgba(138,154,168,0.2);}
+.contacto-source-badge.manual{background:var(--card3);color:var(--text2);border:1px solid var(--border);}
+
+/* ═══════════════ ARIA SUGGESTION CARDS (Commit 6.5 design polish) ═══════════════ */
+.aria-suggestions-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin:22px 0 12px;padding-bottom:10px;border-bottom:1px solid var(--border);}
+.aria-suggestions-title{font-size:14px;font-weight:600;color:var(--text);}
+.aria-suggestions-sub{font-size:9px;color:var(--text3);font-family:'Geist Mono',monospace;letter-spacing:1.5px;text-transform:uppercase;margin-top:4px;}
+
+.suggestion-card{padding:14px;background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:10px;border-left:2px solid transparent;transition:border-color 140ms;}
+.suggestion-card.priority-hot{border-left-color:#fff;}
+.suggestion-card.priority-warn{border-left-color:var(--warn);}
+.suggestion-card.priority-info{border-left-color:#8a9aa8;}
+.suggestion-card-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px;}
+.suggestion-card-body{font-size:11px;color:var(--text2);line-height:1.55;}
+.suggestion-card-actions{display:flex;gap:6px;margin-top:10px;}
+.suggestion-card-actions .btn{font-size:11px;padding:6px 12px;}
+
+/* ═══════════════ CSS BARS CHART (Commit 6 mockup migration) ═══════════════ */
+.bar-chart{height:180px;display:flex;align-items:flex-end;gap:3px;padding:8px 0 4px;position:relative;}
+.bar-chart .bar{flex:1;background:linear-gradient(to top,var(--text),var(--text2));border-radius:2px 2px 0 0;min-height:3px;cursor:pointer;position:relative;transition:opacity 140ms,outline 80ms;}
+.bar-chart .bar:hover{opacity:1;outline:1px solid var(--accent);outline-offset:1px;}
+.bar-chart .bar.dim{background:linear-gradient(to top,var(--text3),var(--text3));opacity:0.5;}
+.bar-chart .bar.empty{background:transparent;border:1px dashed var(--border2);min-height:6px;height:6px!important;cursor:default;opacity:0.5;}
+.bar-chart .bar.empty:hover{outline:none;opacity:0.7;}
+.bar-chart .bar.today{background:linear-gradient(to top,var(--accent),var(--text));outline:1px solid var(--accent);outline-offset:1px;}
+.bar-chart .bar.today::after{content:'';position:absolute;top:-7px;left:50%;transform:translateX(-50%);width:5px;height:5px;border-radius:50%;background:var(--accent);box-shadow:0 0 6px rgba(232,232,232,0.6);}
+
+/* Tooltip · DENTRO del chart-wrap (sin translate up) para evitar clip por overflow:hidden del .panel */
+.bar-tooltip{position:absolute;background:var(--card3);border:1px solid var(--border2);border-radius:7px;padding:8px 12px;font-size:11px;color:var(--text);pointer-events:none;transform:translateX(-50%);white-space:nowrap;opacity:0;transition:opacity 120ms;z-index:10;box-shadow:0 6px 18px rgba(0,0,0,0.5);top:8px;}
+.bar-tooltip.show{opacity:1;}
+.bar-tooltip .bt-date{color:var(--text3);font-family:'Geist Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;}
+.bar-tooltip .bt-value{font-size:14px;font-weight:700;font-family:'Geist Mono',monospace;}
+.bar-tooltip .bt-meta{color:var(--text3);font-size:10px;margin-top:2px;}
+/* Sin flecha hacia abajo (al estar arriba del chart con bars debajo, la flecha apuntaría a la barra) */
+.bar-tooltip::after{content:'';position:absolute;bottom:-5px;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:var(--border2);}
+
+.bar-axis{display:flex;justify-content:space-between;font-size:9px;color:var(--text3);font-family:'Geist Mono',monospace;letter-spacing:0.5px;margin-top:4px;padding-top:6px;border-top:1px solid var(--border);}
+
+/* Month navigator (en sec-head) */
+.month-nav{display:inline-flex;align-items:center;gap:2px;background:var(--card2);border:1px solid var(--border);border-radius:6px;padding:2px;}
+.month-nav button{background:transparent;border:0;color:var(--text2);cursor:pointer;padding:4px 9px;border-radius:4px;font-size:11px;font-family:inherit;min-width:24px;}
+.month-nav button:hover:not(:disabled){background:var(--card3);color:var(--text);}
+.month-nav button:disabled{opacity:0.3;cursor:not-allowed;}
+.month-nav .current{font-size:11px;font-weight:600;color:var(--text);padding:4px 10px;min-width:100px;text-align:center;font-family:'Geist Mono',monospace;}
+.month-nav button.today-btn{font-size:9px;color:var(--text3);padding:4px 7px;border-left:1px solid var(--border);margin-left:2px;letter-spacing:0.5px;text-transform:uppercase;}
+
+/* ═══════════════ AVATAR (Commit 5 mockup migration) ═══════════════ */
+
+/* Panel en Settings → Perfil */
+.avatar-row{display:flex;align-items:center;gap:18px;}
+.avatar-large-wrap{position:relative;flex-shrink:0;}
+.avatar-large{width:88px;height:88px;border-radius:50%;background:linear-gradient(135deg,var(--card2),var(--card3));border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:700;color:var(--text2);overflow:hidden;letter-spacing:-1px;}
+.avatar-large img{width:100%;height:100%;object-fit:cover;}
+.avatar-edit-btn{position:absolute;bottom:-2px;right:-2px;width:28px;height:28px;border-radius:50%;background:var(--card3);border:2px solid var(--bg);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 140ms,color 140ms;padding:0;}
+.avatar-edit-btn:hover{background:var(--accent);color:#000;}
+.avatar-info{flex:1;min-width:0;}
+.avatar-info-name{font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px;}
+.avatar-info-help{font-size:11px;color:var(--text3);margin-bottom:12px;line-height:1.5;}
+.avatar-info-actions{display:flex;gap:6px;flex-wrap:wrap;}
+.avatar-info-actions .btn.ghost.danger{color:var(--danger);}
+.avatar-info-actions .btn.ghost.danger:hover{border-color:var(--danger);}
+
+/* Modal */
+.avatar-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);opacity:0;pointer-events:none;transition:opacity 200ms;z-index:500;backdrop-filter:blur(4px);}
+.avatar-modal-overlay.open{opacity:1;pointer-events:auto;}
+.avatar-modal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.96);width:480px;max-width:92vw;max-height:90vh;background:var(--card);border:1px solid var(--border2);border-radius:14px;box-shadow:0 30px 80px rgba(0,0,0,0.6);z-index:510;opacity:0;pointer-events:none;transition:opacity 220ms ease,transform 220ms cubic-bezier(.18,.89,.32,1.28);overflow:hidden;display:flex;flex-direction:column;}
+.avatar-modal.open{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1);}
+
+.avatar-modal-head{padding:18px 20px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:14px;}
+.avatar-modal-head>div:first-child{flex:1;}
+.avatar-modal-title{font-size:15px;font-weight:600;color:var(--text);}
+.avatar-modal-sub{font-size:11px;color:var(--text3);margin-top:3px;}
+.avatar-modal-close{background:transparent;border:0;color:var(--text2);cursor:pointer;font-size:18px;padding:4px 10px;border-radius:5px;line-height:1;}
+.avatar-modal-close:hover{background:var(--card2);color:var(--text);}
+
+/* Tabs dentro del modal */
+.avatar-tabs{display:flex;gap:2px;background:var(--card2);border-bottom:1px solid var(--border);padding:6px 14px 0;}
+.avatar-tab-btn{padding:8px 14px;border:0;background:transparent;color:var(--text3);cursor:pointer;font-size:12px;font-family:inherit;border-bottom:2px solid transparent;margin-bottom:-1px;font-weight:500;transition:color 140ms;}
+.avatar-tab-btn:hover:not(.active){color:var(--text);}
+.avatar-tab-btn.active{color:var(--text);border-bottom-color:var(--accent);}
+.avatar-tab-pane{display:none;padding:20px;}
+.avatar-tab-pane.active{display:block;}
+
+/* File picker dropzone */
+.avatar-dropzone{border:2px dashed var(--border2);border-radius:10px;padding:36px 24px;text-align:center;cursor:pointer;transition:border-color 140ms,background 140ms;}
+.avatar-dropzone:hover,.avatar-dropzone.dragover{border-color:var(--accent);background:var(--card2);}
+.avatar-dropzone-icon{font-size:36px;margin-bottom:10px;opacity:0.7;}
+.avatar-dropzone-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;}
+.avatar-dropzone-sub{font-size:11px;color:var(--text2);margin-bottom:14px;}
+.avatar-dropzone-hint{font-size:10px;color:var(--text3);font-family:'Geist Mono',monospace;letter-spacing:0.5px;}
+
+/* Camera */
+.avatar-camera-wrap{position:relative;width:100%;aspect-ratio:1;background:#000;border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);}
+.avatar-camera-wrap video{width:100%;height:100%;object-fit:cover;}
+.avatar-camera-frame{position:absolute;inset:14px;border:2px solid rgba(255,255,255,0.7);border-radius:50%;pointer-events:none;box-shadow:0 0 0 9999px rgba(0,0,0,0.55);}
+.avatar-camera-status{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);color:#fff;font-size:10px;font-family:'Geist Mono',monospace;padding:5px 10px;border-radius:4px;}
+.avatar-camera-controls{margin-top:14px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
+
+/* Preview + crop stage */
+.avatar-preview-stage{padding:20px;border-top:1px solid var(--border);text-align:center;}
+.avatar-preview-title{font-size:10px;color:var(--text3);font-family:'Geist Mono',monospace;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px;}
+.avatar-preview-circle{width:200px;height:200px;border-radius:50%;overflow:hidden;margin:0 auto 12px;border:1px solid var(--border2);background:var(--card2);}
+.avatar-preview-circle canvas{width:100%;height:100%;display:block;}
+.avatar-preview-meta{font-size:10px;color:var(--text3);font-family:'Geist Mono',monospace;letter-spacing:0.5px;margin-bottom:14px;}
+.avatar-preview-actions{display:flex;gap:8px;justify-content:center;}
+
+/* Loading durante upload */
+.avatar-loading{position:absolute;inset:0;background:rgba(20,20,20,0.85);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;font-size:12px;color:var(--text2);z-index:10;backdrop-filter:blur(4px);}
+.avatar-spinner{width:34px;height:34px;border:3px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:avatar-spin 700ms linear infinite;}
+@keyframes avatar-spin{to{transform:rotate(360deg);}}
+
+/* Cuando hay foto cargada en topbar/avatar dropdown */
+.user-avatar-btn img{width:100%;height:100%;object-fit:cover;}
+
 </style>
 </head>
 <body>
 
 <div class="drag-region"></div>
 
-<!-- SIDEBAR -->
-<aside class="sidebar">
-  <div class="logo-area">
+<!-- ═══════════════ TOP NAV ═══════════════ -->
+<header class="topnav">
+  <!-- ROW 1: Logo + crumb + actions (avatar dropdown reemplaza el sidebar-footer) -->
+  <div class="topnav-row1">
     <div class="logo-badge">
-      <div class="logo-icon"><img src="assets/icon.png" alt="Dominio"></div>
+      <div class="logo-icon"><img src="assets/icon.png" alt="Dominio System"></div>
       <div class="logo-txt">
-        <div class="logo-text">Dominio</div>
-        <div class="logo-sub" id="client-plan">CARGANDO...</div>
-      </div>
-    </div>
-  </div>
-  <div class="collapse-btn" onclick="toggleSidebar()"><svg width="8" height="8" viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M5 1L2 4l3 3"/></svg></div>
-
-  <div class="nav-scroll">
-
-    <div class="nav-group" data-group="home">
-      <div class="group-head" onclick="toggleGroup('home')"><div class="group-chev"><svg viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3l2 2 2-2"/></svg></div><div class="group-label">Home</div></div>
-      <div class="group-items">
-        <div class="nav-item active" data-view="brief" data-label="Executive Brief" onclick="go('brief')"><span class="nav-icon"><svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M2 2h9v9h-9z"/><path d="M4 5h5M4 7h5M4 9h3"/></svg></span><span class="nav-text">Executive Brief</span></div>
+        <div class="logo-text">Dominio System</div>
+        <div class="logo-sub">automation plattform</div>
       </div>
     </div>
 
-    <div class="nav-group" data-group="rendimiento">
-      <div class="group-head" onclick="toggleGroup('rendimiento')"><div class="group-chev"><svg viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3l2 2 2-2"/></svg></div><div class="group-label">Rendimiento</div></div>
-      <div class="group-items">
-        <div class="nav-item" data-view="funnel" data-label="Funnel + Diagnóstico" onclick="go('funnel')"><span class="nav-icon"><svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M1.5 2h10l-3 4v5l-4-1V6z"/></svg></span><span class="nav-text">Funnel Diagnóstico</span></div>
-        <div class="nav-item" data-view="roi" data-label="ROI & Resultados" onclick="go('roi')"><span class="nav-icon"><svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M1.5 10l3-3 2.5 2.5 4-5"/></svg></span><span class="nav-text">ROI & Resultados</span></div>
-      </div>
-    </div>
-
-    <div class="nav-group" data-group="actividad">
-      <div class="group-head" onclick="toggleGroup('actividad')"><div class="group-chev"><svg viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3l2 2 2-2"/></svg></div><div class="group-label">Actividad</div></div>
-      <div class="group-items">
-        <div class="nav-item" data-view="agenda" data-label="Agenda Inteligente" onclick="go('agenda')"><span class="nav-icon"><svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="1.5" y="2.5" width="10" height="9" rx="1"/><path d="M4 1v3M9 1v3M1.5 5.5h10"/></svg></span><span class="nav-text">Agenda</span><span class="nav-badge" id="appt-count">—</span></div>
-        <div class="nav-item" data-view="leads" data-label="Leads con Score" onclick="go('leads')"><span class="nav-icon"><svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="6.5" cy="4.5" r="2.5"/><path d="M2 11.5c0-2 2-3.5 4.5-3.5s4.5 1.5 4.5 3.5"/></svg></span><span class="nav-text">Leads</span><span class="nav-badge" id="leads-count">—</span></div>
-        <div class="nav-item" data-view="crm" data-label="CRM 360" onclick="go('crm')"><span class="nav-icon"><svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M2 3h9v8h-9z"/><path d="M4 5h5M4 7h5M4 9h3"/></svg></span><span class="nav-text">CRM 360</span></div>
-      </div>
-    </div>
-
-    <div class="nav-group" data-group="mensajeria">
-      <div class="group-head" onclick="toggleGroup('mensajeria')"><div class="group-chev"><svg viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3l2 2 2-2"/></svg></div><div class="group-label">Mensajería</div></div>
-      <div class="group-items">
-        <div class="nav-item" data-view="campaigns" data-label="Campaigns Creator" onclick="go('campaigns')"><span class="nav-icon"><svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M1.5 6.5l5-3 5 5-5 2zM1.5 6.5l3 3"/></svg></span><span class="nav-text">Campaigns</span><span class="nav-badge new">IA</span></div>
-        <div class="nav-item" data-view="aria" data-label="ARIA" onclick="go('aria')"><span class="nav-icon"><span style="display:inline-block;width:13px;height:13px;border-radius:3px;background:var(--accent);color:#000;font-weight:700;font-size:9px;display:flex;align-items:center;justify-content:center;">A</span></span><span class="nav-text">ARIA</span><span class="nav-badge live">LIVE</span></div>
-      </div>
-    </div>
-
-    <div class="nav-group closed" data-group="premium">
-      <div class="group-head" onclick="toggleGroup('premium')"><div class="group-chev"><svg viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3l2 2 2-2"/></svg></div><div class="group-label">Premium</div></div>
-      <div class="group-items">
-        <div class="nav-item" data-view="coach" data-label="Coach Dominio" onclick="go('coach')"><span class="nav-icon"><svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M6.5 1.5l1.5 3 3.5.5-2.5 2.5.5 3.5-3-1.5-3 1.5.5-3.5L1.5 5l3.5-.5z"/></svg></span><span class="nav-text">Coach Dominio</span></div>
-        <div class="nav-item" data-view="reports" data-label="Reportes" onclick="go('reports')"><span class="nav-icon"><svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M3 1.5h7v10h-7z"/><path d="M5 4h3M5 6.5h3M5 9h2"/></svg></span><span class="nav-text">Reportes</span></div>
-        <div class="nav-item" data-view="dindex" data-label="Dominio Index" onclick="go('dindex')"><span class="nav-icon"><svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="6.5" cy="6.5" r="5"/><path d="M6.5 6.5l3-3"/></svg></span><span class="nav-text">Dominio Index</span></div>
-      </div>
-    </div>
-
-    <div class="nav-group closed" data-group="cuenta">
-      <div class="group-head" onclick="toggleGroup('cuenta')"><div class="group-chev"><svg viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3l2 2 2-2"/></svg></div><div class="group-label">Cuenta</div></div>
-      <div class="group-items">
-        <div class="nav-item" data-view="sla" data-label="SLA Dashboard" onclick="go('sla')"><span class="nav-icon"><svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="6.5" cy="6.5" r="5"/><path d="M6.5 3.5v3l2 2"/></svg></span><span class="nav-text">SLA</span></div>
-        <div class="nav-item" data-view="billing" data-label="Facturación" onclick="go('billing')"><span class="nav-icon"><svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M3 1.5h7v10l-1.5-1-1 1-1-1-1 1-1-1-1.5 1z"/></svg></span><span class="nav-text">Facturación</span></div>
-      </div>
-    </div>
-
-  </div>
-
-  <div class="sidebar-footer">
-    <div class="user-avatar" id="client-initial">?</div>
-    <div class="user-info">
-      <div class="user-name" id="client-name">cargando...</div>
-      <div class="user-plan" id="client-empresa">—</div>
-    </div>
-    <div class="sidebar-foot-actions">
-      <button class="foot-btn" onclick="go('settings')" title="Configuración">
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="7" cy="7" r="1.8"/><path d="M7 1v1.5M7 11.5V13M13 7h-1.5M2.5 7H1M11.2 2.8l-1 1M3.8 10.2l-1 1M11.2 11.2l-1-1M3.8 3.8l-1-1"/></svg>
+    <!-- v2.3.3 — Flechas back/forward de navegación entre vistas -->
+    <div class="nav-arrows">
+      <button class="nav-arrow" id="nav-back" onclick="navBack()" disabled title="Volver a la vista anterior (⌘[)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
       </button>
-      <button class="foot-btn danger" onclick="logout()" title="Cerrar sesión">
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M5 2H3v10h2M9 4l3 3-3 3M12 7H6"/></svg>
+      <button class="nav-arrow" id="nav-fwd" onclick="navForward()" disabled title="Avanzar a la siguiente vista (⌘])">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
       </button>
     </div>
+
+    <!-- Búsqueda global (cosmética hasta wireup; placeholder igual al mockup) -->
+    <div class="topnav-search">
+      <span class="search-icon">
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="5.5" cy="5.5" r="3.5"/><path d="M11 11l-3-3"/></svg>
+      </span>
+      <input type="text" id="topnav-search-input" placeholder="Buscar paciente, cita, lead, comando…" autocomplete="off">
+      <kbd class="search-kbd">⌘K</kbd>
+    </div>
+
+    <!-- Crumb oculto por compat con app.js (writes a crumb-current y crumb-date) -->
+    <div class="topnav-crumb-hidden" aria-hidden="true">
+      <span id="crumb-current">Executive Brief</span>
+      <span id="crumb-date">—</span>
+    </div>
+
+    <div class="topnav-actions top-right">
+      <span class="logo-plan-line" id="logo-plan-pill" title="Tu plan actual">Plan PRO</span>
+      <div class="pill pill-ok"><span class="pill-dot"></span>SISTEMA ACTIVO</div>
+
+      <!-- Campana de notificaciones (reemplaza el FAB flotante) -->
+      <button class="bell notif-bell" id="notif-bell" onclick="openAria()" title="Notificaciones" aria-label="Notificaciones">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12 2a6 6 0 0 0-6 6c0 6-2.5 8-2.5 8h17S18 14 18 8a6 6 0 0 0-6-6zM10 19a2 2 0 0 0 4 0z"/>
+        </svg>
+        <span class="bell-badge" id="aria-badge" style="display:none;">0</span>
+      </button>
+
+      <button class="bell" id="help-btn" onclick="openSupport()" title="Soporte y ayuda"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="7" cy="7" r="5.5"/><path d="M5.3 5.3a1.7 1.7 0 113.4 0c0 1.2-1.7 1.4-1.7 2.7"/><circle cx="7" cy="10.2" r="0.5" fill="currentColor"/></svg></button>
+
+      <!-- Avatar dropdown (reemplaza sidebar-footer) -->
+      <div class="user-menu" id="user-menu">
+        <button class="user-avatar-btn" id="user-avatar-btn" onclick="toggleUserMenu()" title="Mi cuenta">
+          <span id="client-initial">?</span>
+        </button>
+        <div class="user-menu-dropdown">
+          <div class="user-menu-info">
+            <div class="name" id="client-name">cargando...</div>
+            <div class="plan" id="client-empresa">—</div>
+          </div>
+          <button class="user-menu-item" onclick="go('settings');closeUserMenu()">
+            <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="7" cy="7" r="1.8"/><path d="M7 1v1.5M7 11.5V13M13 7h-1.5M2.5 7H1M11.2 2.8l-1 1M3.8 10.2l-1 1M11.2 11.2l-1-1M3.8 3.8l-1-1"/></svg>
+            Configuración
+          </button>
+          <button class="user-menu-item danger" onclick="logout()">
+            <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M5 2H3v10h2M9 4l3 3-3 3M12 7H6"/></svg>
+            Cerrar sesión
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
-</aside>
+
+  <!-- ROW 2: Nav agrupado en 6 menús desplegables (Commit 4.5) -->
+  <nav class="topnav-row2" id="topnav-bar">
+
+    <!-- HOME -->
+    <div class="nav-group-wrap" data-group="home">
+      <button class="nav-group-btn" onclick="toggleNavGroup('home', this)" aria-haspopup="true">
+        Home <span class="caret">▾</span>
+      </button>
+      <div class="nav-group-dropdown">
+        <button class="nav-link" data-view="brief" data-label="Resumen" onclick="go('brief');closeAllNavGroups()">
+          <span class="nav-icon"><svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M2 2h9v9h-9z"/><path d="M4 5h5M4 7h5M4 9h3"/></svg></span>
+          Resumen
+        </button>
+      </div>
+    </div>
+
+    <!-- RENDIMIENTO -->
+    <div class="nav-group-wrap" data-group="rendimiento">
+      <button class="nav-group-btn" onclick="toggleNavGroup('rendimiento', this)" aria-haspopup="true">
+        Rendimiento <span class="caret">▾</span>
+      </button>
+      <div class="nav-group-dropdown">
+        <button class="nav-link" data-view="funnel" data-label="Funnel + Diagnóstico" onclick="go('funnel');closeAllNavGroups()">
+          <span class="nav-icon"><svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M1.5 2h10l-3 4v5l-4-1V6z"/></svg></span>
+          Funnel + Diagnóstico
+        </button>
+        <button class="nav-link" data-view="ingresos" data-label="Ingresos" onclick="go('ingresos');closeAllNavGroups()">
+          <span class="nav-icon"><svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M1.5 10l3-3 2.5 2.5 4-5"/></svg></span>
+          Ingresos
+        </button>
+      </div>
+    </div>
+
+    <!-- ACTIVIDAD -->
+    <div class="nav-group-wrap" data-group="actividad">
+      <button class="nav-group-btn" onclick="toggleNavGroup('actividad', this)" aria-haspopup="true">
+        Actividad <span class="caret">▾</span>
+      </button>
+      <div class="nav-group-dropdown">
+        <button class="nav-link" data-view="agenda" data-label="Agenda Inteligente" onclick="go('agenda');closeAllNavGroups()">
+          <span class="nav-icon"><svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="1.5" y="2.5" width="10" height="9" rx="1"/><path d="M4 1v3M9 1v3M1.5 5.5h10"/></svg></span>
+          Agenda
+          <span class="nav-badge" id="appt-count">—</span>
+        </button>
+        <!-- v2.3.0 · Leads con Score reemplazado por Contactos en ARIA section.
+             View data-view="leads" sigue accesible para fallback/n8n, pero oculto del menu. -->
+        <button class="nav-link" data-view="leads" data-label="Leads con Score" onclick="go('leads');closeAllNavGroups()" style="display:none;">
+          <span class="nav-icon"><svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="6.5" cy="4.5" r="2.5"/><path d="M2 11.5c0-2 2-3.5 4.5-3.5s4.5 1.5 4.5 3.5"/></svg></span>
+          Leads con Score
+          <span class="nav-badge" id="leads-count">—</span>
+        </button>
+        <button class="nav-link" data-view="crm" data-label="CRM 360" onclick="go('crm');closeAllNavGroups()">
+          <span class="nav-icon"><svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M2 3h9v8h-9z"/><path d="M4 5h5M4 7h5M4 9h3"/></svg></span>
+          CRM 360
+        </button>
+        <button class="nav-link" data-view="aria" data-label="ARIA" onclick="go('aria');closeAllNavGroups()">
+          <span class="nav-icon"><span style="display:inline-block;width:13px;height:13px;border-radius:3px;background:var(--accent);color:#000;font-weight:700;font-size:9px;display:flex;align-items:center;justify-content:center;">A</span></span>
+          ARIA
+          <span class="nav-badge live">LIVE</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- MARKETING -->
+    <div class="nav-group-wrap" data-group="marketing">
+      <button class="nav-group-btn" onclick="toggleNavGroup('marketing', this)" aria-haspopup="true">
+        Marketing <span class="caret">▾</span>
+      </button>
+      <div class="nav-group-dropdown">
+        <button class="nav-link" data-view="campaigns" data-label="Campaigns Creator" onclick="go('campaigns');closeAllNavGroups()">
+          <span class="nav-icon"><svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M1.5 6.5l5-3 5 5-5 2zM1.5 6.5l3 3"/></svg></span>
+          Campañas
+          <span class="nav-badge new">IA</span>
+        </button>
+        <button class="nav-link" data-view="publicidad" data-label="Publicidad" onclick="go('publicidad');closeAllNavGroups()">
+          <span class="nav-icon"><svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M2 4l9-2v9l-9-2zM2 4v5"/></svg></span>
+          Publicidad
+          <span class="nav-badge new">ADS</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- CUENTA -->
+    <div class="nav-group-wrap" data-group="cuenta">
+      <button class="nav-group-btn" onclick="toggleNavGroup('cuenta', this)" aria-haspopup="true">
+        Cuenta <span class="caret">▾</span>
+      </button>
+      <div class="nav-group-dropdown">
+        <button class="nav-link" data-view="reports" data-label="Reportes" onclick="go('reports');closeAllNavGroups()">
+          <span class="nav-icon"><svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M3 1.5h7v10h-7z"/><path d="M5 4h3M5 6.5h3M5 9h2"/></svg></span>
+          Reportes mensuales
+        </button>
+        <button class="nav-link" data-view="billing" data-label="Facturación" onclick="go('billing');closeAllNavGroups()">
+          <span class="nav-icon"><svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M3 1.5h7v10l-1.5-1-1 1-1-1-1 1-1-1-1.5 1z"/></svg></span>
+          Facturación
+        </button>
+      </div>
+    </div>
+
+  </nav>
+</header>
 
 <!-- MAIN -->
 <div class="wrapper">
-  <div class="topbar">
-    <div class="crumb"><span>Dominio</span><span class="sep">›</span><span class="current" id="crumb-current">Executive Brief</span><span class="date" id="crumb-date">—</span></div>
-    <div class="top-right">
-      <div class="period-tabs"><div class="period-tab">7D</div><div class="period-tab active">30D</div><div class="period-tab">90D</div><div class="period-tab">YTD</div></div>
-      <div class="pill pill-ok"><span class="pill-dot"></span>SISTEMA ACTIVO</div>
-      <button class="bell" id="bell-btn" onclick="toggleNotifications()"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M7 2v1M11 10H3l1-3V5a3 3 0 016 0v2zM5 10a2 2 0 004 0"/></svg><span class="bell-dot"></span></button>
-    </div>
-  </div>
 
   <div class="content">
 
     <!-- EXECUTIVE BRIEF -->
     <div class="view active" data-view="brief">
-      <div class="page-head"><div><div class="page-title" id="brief-greet">Tu resumen de hoy</div><div class="page-sub">ANALYSIS · POWERED BY ARIA</div></div><div class="page-actions"><button class="btn ghost" onclick="requestReport()">⟱ Descargar reporte</button></div></div>
-
-      <div class="brief">
-        <div class="brief-head">
-          <div class="brief-icon">A</div>
-          <div><div class="brief-title">ARIA · Executive Brief</div><div style="font-size:9px;color:var(--text3);font-family:'Geist Mono',monospace;margin-top:2px;">ANÁLISIS DE 30 DÍAS</div></div>
-          <div class="brief-meta" id="brief-date">—</div>
+      <div class="page-head">
+        <div>
+          <div class="page-title" id="brief-greet">Tu resumen de hoy</div>
+          <div class="page-sub" id="brief-date">Cargando…</div>
         </div>
-        <div class="brief-body" id="brief-narrative">Analizando tu data...</div>
-        <div class="brief-actions">
-          <button class="btn aria" onclick="openAria()">Ver sugerencias</button>
-          <button class="btn ghost" onclick="go('funnel')">Ir al funnel →</button>
+        <div class="page-actions">
+          <button class="btn ghost" id="brief-refresh-btn" onclick="refreshBrief()" title="Refrescar Executive Brief">↻ Actualizar</button>
         </div>
       </div>
+
+      <!-- HERO METRIC: ingresos del mes (Commit 6.5) -->
+      <div class="hero-metric">
+        <div class="hero-eyebrow">Ingresos del mes · <span id="hero-month-label">—</span></div>
+        <div class="hero-value">$<span id="hero-revenue-value">—</span><span class="sub" id="hero-currency">MXN</span></div>
+        <div class="hero-trend">
+          <span class="up" id="hero-revenue-delta">—</span>
+          <span id="hero-revenue-delta-label">vs mes anterior</span>
+          <span style="color:var(--text3);">·</span>
+          <span id="hero-revenue-projection">Proyección final del mes: —</span>
+        </div>
+      </div>
+
+      <!-- Narrative oculto pero conservado por compat con app.js (writes a brief-narrative) -->
+      <div id="brief-narrative" style="display:none;"></div>
 
       <div class="kpi-strip">
-        <div class="kpi-card"><div class="kpi-label">LEADS 30D</div><div class="kpi-value" id="brief-leads">—</div><div class="kpi-trend up">total recibidos</div></div>
-        <div class="kpi-card"><div class="kpi-label">CITAS</div><div class="kpi-value" id="brief-citas">—</div><div class="kpi-trend">confirmadas</div></div>
-        <div class="kpi-card"><div class="kpi-label">CONVERSIÓN</div><div class="kpi-value" id="brief-conv">—</div><div class="kpi-trend">lead → cita</div></div>
-        <div class="kpi-card"><div class="kpi-label">ARIA PENDIENTES</div><div class="kpi-value" id="brief-aria" style="color:var(--aria);">—</div><div class="kpi-trend">revisa tu drawer</div></div>
+        <div class="kpi-card"><div class="kpi-label">LEADS · MES</div><div class="kpi-value" id="brief-leads">—</div><div class="kpi-trend up" id="brief-leads-trend">—</div></div>
+        <div class="kpi-card"><div class="kpi-label">CITAS CONFIRMADAS</div><div class="kpi-value" id="brief-citas">—</div><div class="kpi-trend up" id="brief-citas-trend">↑ <span id="brief-conv">—</span> conversión</div></div>
+        <div class="kpi-card"><div class="kpi-label">ARIA CERRÓ</div><div class="kpi-value" id="brief-aria">—</div><div class="kpi-trend" id="brief-aria-revenue">—</div></div>
+        <div class="kpi-card"><div class="kpi-label">TICKET PROMEDIO</div><div class="kpi-value" id="brief-ticket">—</div><div class="kpi-trend up" id="brief-ticket-trend">—</div></div>
       </div>
 
-      <div class="sec-head"><span class="sec-label">TENDENCIA</span><span class="sec-title">Evolución últimos 6 meses</span></div>
-      <div class="panel"><div class="chart-wrap"><canvas id="chart-brief"></canvas></div></div>
+      <!-- GRID 2:1 — Chart + ARIA Sugerencias del día (Commit 6.5) -->
+      <div class="grid-side" style="margin-top:18px;">
+        <!-- Columna izquierda: chart de ingresos del mes -->
+        <div>
+          <div class="sec-head">
+            <span class="sec-label">TENDENCIA</span>
+            <span class="sec-title">Ingresos diarios · <span id="brief-chart-month-label">—</span></span>
+            <span class="sec-meta" id="brief-chart-meta">—</span>
+            <div class="month-nav" style="margin-left:auto;">
+              <button id="brief-month-prev" onclick="briefChangeMonth(-1)" title="Mes anterior">‹</button>
+              <span class="current" id="brief-month-current">—</span>
+              <button id="brief-month-next" onclick="briefChangeMonth(1)" title="Mes siguiente">›</button>
+              <button class="today-btn" onclick="briefGoToCurrentMonth()" title="Mes actual">Hoy</button>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="chart-wrap" style="position:relative;padding:14px 18px;">
+              <div class="bar-chart" id="chart-brief"></div>
+              <div class="bar-tooltip" id="chart-brief-tooltip" aria-hidden="true">
+                <div class="bt-date">—</div>
+                <div class="bt-value">—</div>
+                <div class="bt-meta">—</div>
+              </div>
+              <div class="bar-axis" id="chart-brief-axis">
+                <span id="brief-axis-start">1</span>
+                <span id="brief-axis-mid">15</span>
+                <span id="brief-axis-end">30</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- v2.3.3 — Columna derecha: PRÓXIMAS CITAS (reemplazo de ARIA Sugerencias)
+             Altura locked al chart (480px) · scroll interno solo en la lista de citas ·
+             header/stats/footer estáticos · realtime via window.loadProximasCitas que
+             ya se dispara desde realtime.js debounceCall('appt-brief', loadBriefData). -->
+        <div class="next-section">
+          <div class="sec-head">
+            <span class="sec-label">HOY Y MAÑANA</span>
+            <span class="sec-title">Próximas citas</span>
+          </div>
+          <div class="next-panel">
+            <div class="next-head">
+              <div class="next-title-block">
+                <div class="next-title">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  ARIA agendó
+                </div>
+                <div class="next-sub">Próximas 48 horas</div>
+              </div>
+              <span class="chip-live"><span class="pulse"></span><span id="next-count">— citas</span></span>
+            </div>
+            <div class="next-stats">
+              <div class="next-stat">
+                <div class="next-stat-label">Captación promedio</div>
+                <div class="next-stat-val"><span id="next-avg-capture">—</span><span class="unit"> min</span></div>
+              </div>
+              <div class="next-stat">
+                <div class="next-stat-label">Cierre por ARIA</div>
+                <div class="next-stat-val"><span id="next-aria-pct">—</span><span class="unit"> %</span></div>
+              </div>
+            </div>
+            <div class="list-wrap" id="next-list-wrap">
+              <div class="next-list" id="next-list">
+                <div class="next-empty">Cargando próximas citas…</div>
+              </div>
+            </div>
+            <div class="next-foot">
+              <span class="foot-status"><span class="dot-rt"></span>Live · sync <span id="next-last-sync">—</span></span>
+              <a class="foot-link" onclick="go('agenda')">Ver agenda →</a>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- FUNNEL -->
     <div class="view" data-view="funnel">
-      <div class="page-head"><div><div class="page-title">Funnel Diagnóstico</div><div class="page-sub">DIAGNÓSTICO CON ARIA · IDENTIFICA PUNTOS DE FUGA</div></div></div>
+      <div class="page-head">
+        <div>
+          <div class="page-title">Funnel + Diagnóstico</div>
+          <div class="page-sub">Diagnóstico con ARIA · identifica puntos de fuga</div>
+        </div>
+        <div class="page-actions">
+          <button class="btn ghost" id="funnel-refresh-btn" onclick="refreshFunnel()" title="Refrescar funnel">↻ Actualizar</button>
+        </div>
+      </div>
+
+      <!-- Funnel principal: etapas de conversión del mes seleccionado -->
       <div class="panel">
-        <div class="panel-head"><div class="panel-title">Etapas de conversión</div><div class="panel-sub">últimos 30 días</div></div>
+        <div class="panel-head" style="display:flex;align-items:center;gap:12px;">
+          <div>
+            <div class="panel-title">Etapas de conversión · <span id="funnel-month-label">—</span></div>
+            <div class="panel-sub" id="funnel-range-label" style="margin-left:0;margin-top:3px;letter-spacing:1.5px;font-size:9px;text-transform:uppercase;">cargando…</div>
+          </div>
+          <div class="month-nav" style="margin-left:auto;">
+            <button id="funnel-month-prev" onclick="funnelChangeMonth(-1)" title="Mes anterior">‹</button>
+            <span class="current" id="funnel-month-current">—</span>
+            <button id="funnel-month-next" onclick="funnelChangeMonth(1)" title="Mes siguiente">›</button>
+            <button class="today-btn" onclick="funnelGoToCurrentMonth()" title="Mes actual">Hoy</button>
+          </div>
+        </div>
         <div class="funnel-container" id="funnel-container"></div>
+      </div>
+
+      <!-- Grid 1:1 — Fuga por etapa + Recomendación (alineado al mockup) -->
+      <div class="grid-2" style="margin-top:14px;">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">Fuga · agendamiento a pago</div>
+              <div class="panel-sub" id="funnel-fuga-sub" style="margin-left:0;margin-top:3px;letter-spacing:1.5px;font-size:9px;text-transform:uppercase;">canceladas + no-show por etapa</div>
+            </div>
+          </div>
+          <div class="funnel-container" id="funnel-fuga-container"></div>
+        </div>
+
+        <div class="panel" style="background:linear-gradient(135deg,var(--card),var(--card2));border-left:2px solid var(--warn);">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">⚠ Punto de fuga detectado</div>
+              <div class="panel-sub" style="margin-left:0;margin-top:3px;letter-spacing:1.5px;font-size:9px;text-transform:uppercase;">Recomendación de ARIA</div>
+            </div>
+          </div>
+          <div class="panel-body">
+            <p id="funnel-recommendation" style="font-size:13px;color:var(--text2);line-height:1.7;">
+              ARIA está analizando tu funnel para identificar el punto de mayor fuga…
+            </p>
+            <button class="btn primary" style="margin-top:14px;width:100%;justify-content:center;" onclick="go('aria')">Ir a ARIA · Automatización →</button>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- ROI -->
-    <div class="view" data-view="roi">
-      <div class="page-head"><div><div class="page-title">ROI & Resultados</div><div class="page-sub">ATRIBUCIÓN · BENCHMARK DE INDUSTRIA</div></div></div>
+    <!-- INGRESOS (sección independiente · v2.1.24 — antes era tab dentro de ROI) -->
+    <div class="view" data-view="ingresos">
+      <div class="page-head">
+        <div>
+          <div class="page-title">Ingresos</div>
+          <div class="page-sub">Revenue · métodos de pago · historial</div>
+        </div>
+        <div class="page-actions">
+          <button class="btn ghost" id="ing-refresh-btn" onclick="refreshIngresos()" title="Refrescar ingresos">↻ Actualizar</button>
+        </div>
+      </div>
+
       <div class="kpi-strip">
-        <div class="kpi-card"><div class="kpi-label">GASTO PUBLICITARIO</div><div class="kpi-value" id="roi-spend">—</div><div class="kpi-trend">últimos 30d</div></div>
-        <div class="kpi-card"><div class="kpi-label">INGRESOS GENERADOS</div><div class="kpi-value" id="roi-rev">—</div><div class="kpi-trend up">total</div></div>
-        <div class="kpi-card"><div class="kpi-label">ROAS</div><div class="kpi-value" id="roi-roas">—</div><div class="kpi-trend">return on ad spend</div></div>
-        <div class="kpi-card"><div class="kpi-label">NUEVOS CLIENTES</div><div class="kpi-value" id="roi-nuevos">—</div><div class="kpi-trend">adquiridos</div></div>
+        <div class="kpi-card"><div class="kpi-label">HOY</div><div class="kpi-value" id="ing-hoy">—</div><div class="kpi-trend" id="ing-hoy-trend">—</div></div>
+        <div class="kpi-card"><div class="kpi-label">ESTA SEMANA</div><div class="kpi-value" id="ing-semana">—</div><div class="kpi-trend" id="ing-semana-trend">—</div></div>
+        <div class="kpi-card"><div class="kpi-label">ESTE MES</div><div class="kpi-value" id="ing-mes">—</div><div class="kpi-trend" id="ing-mes-trend">—</div></div>
+        <div class="kpi-card"><div class="kpi-label">YTD</div><div class="kpi-value" id="ing-year">—</div><div class="kpi-trend">año en curso</div></div>
       </div>
-      <div class="sec-head"><span class="sec-label">BENCHMARK</span><span class="sec-title">Tu performance vs industria</span></div>
-      <div class="panel panel-body">
-        <div id="bench-body">Cargando benchmark...</div>
+
+      <!-- KPIs por método de pago (auto-calculados desde paid appointments) -->
+      <div class="sec-head" style="margin-top:18px;">
+        <span class="sec-label">DESGLOSE</span>
+        <span class="sec-title">Por método de pago</span>
+        <span class="sec-meta" id="ing-metodos-count">—</span>
       </div>
+      <div class="kpi-strip" style="grid-template-columns:repeat(3,1fr);">
+        <div class="kpi-card">
+          <div class="kpi-label">💵 EFECTIVO</div>
+          <div class="kpi-value" id="ing-cash-val">—</div>
+          <div class="kpi-trend" id="ing-cash-trend">—</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">💳 TARJETA</div>
+          <div class="kpi-value" id="ing-card-val">—</div>
+          <div class="kpi-trend" id="ing-card-trend">—</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">🏦 TRANSFERENCIA</div>
+          <div class="kpi-value" id="ing-transfer-val">—</div>
+          <div class="kpi-trend" id="ing-transfer-trend">—</div>
+        </div>
+      </div>
+
+      <!-- Chart: Evolución por mes (CSS bars con navegación de meses) -->
+      <div class="sec-head" style="margin-top:18px;">
+        <span class="sec-label">TENDENCIA</span>
+        <span class="sec-title">Evolución por mes · <span id="ing-chart-month-label">—</span></span>
+        <span class="sec-meta" id="ing-chart-meta">—</span>
+        <div class="month-nav" style="margin-left:auto;">
+          <button id="ing-month-prev" onclick="ingresosChangeMonth(-1)" title="Mes anterior">‹</button>
+          <span class="current" id="ing-month-current">—</span>
+          <button id="ing-month-next" onclick="ingresosChangeMonth(1)" title="Mes siguiente">›</button>
+          <button class="today-btn" onclick="ingresosGoToCurrentMonth()" title="Mes actual">Hoy</button>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="chart-wrap" style="position:relative;padding:14px 18px;">
+          <div class="bar-chart" id="chart-ingresos"></div>
+          <div class="bar-tooltip" id="chart-ingresos-tooltip" aria-hidden="true">
+            <div class="bt-date">—</div>
+            <div class="bt-value">—</div>
+            <div class="bt-meta">—</div>
+          </div>
+          <div class="bar-axis">
+            <span id="ing-axis-start">1</span>
+            <span id="ing-axis-mid">15</span>
+            <span id="ing-axis-end">30</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:14px;">
+        <div class="panel-head" style="flex-wrap:wrap;gap:10px;">
+          <div>
+            <div class="panel-title">Historial de pagos</div>
+            <div class="panel-sub" id="hp-count" style="margin-left:0;margin-top:3px;letter-spacing:1.5px;font-size:9px;text-transform:uppercase;">—</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-left:auto;">
+            <span style="font-size:10px;color:var(--text3);font-family:'Geist Mono',monospace;letter-spacing:0.5px;">DESDE</span>
+            <input type="date" id="hp-from" class="field-input" style="width:auto;padding:6px 8px;font-size:11px;">
+            <span style="font-size:10px;color:var(--text3);">→</span>
+            <span style="font-size:10px;color:var(--text3);font-family:'Geist Mono',monospace;letter-spacing:0.5px;">HASTA</span>
+            <input type="date" id="hp-to" class="field-input" style="width:auto;padding:6px 8px;font-size:11px;">
+            <button class="btn ghost" style="font-size:11px;padding:6px 12px;" onclick="loadHistorialPagos()" title="Aplicar rango">Aplicar</button>
+            <button class="btn ghost" style="font-size:11px;padding:6px 12px;" onclick="exportHistorialCSV()" title="Para contadores · se importa en Excel/Numbers/Google Sheets">📥 CSV</button>
+            <button class="btn primary" style="font-size:11px;padding:6px 12px;" onclick="exportHistorialPDF()" title="Reporte branded · ideal para enviar al cliente o archivar">📄 PDF</button>
+          </div>
+        </div>
+        <table class="tbl"><thead><tr><th>Fecha pago</th><th>Cliente</th><th>Servicio</th><th>Monto</th><th>Método</th><th>Estado</th></tr></thead><tbody id="hp-tbody"></tbody></table>
+      </div>
+    </div>
+
+    <!-- PUBLICIDAD (sección nueva · v2.1.24) -->
+    <div class="view" data-view="publicidad">
+      <div class="page-head">
+        <div>
+          <div class="page-title">Publicidad</div>
+          <div class="page-sub">Tus campañas · ARIA cierra los leads</div>
+        </div>
+        <div class="page-actions">
+          <button class="btn ghost" id="pub-refresh-btn" onclick="refreshPublicidad()" title="Refrescar Publicidad">↻ Actualizar</button>
+          <button class="btn primary" onclick="openNewAdCampaign()">+ Nueva campaña</button>
+        </div>
+      </div>
+
+      <!-- Month navigator (igual al de Ingresos · auto-mes) -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+        <span class="sec-label" style="color:var(--text3);font-family:'Geist Mono',monospace;letter-spacing:1.5px;font-size:9px;text-transform:uppercase;">Periodo</span>
+        <span style="color:var(--text);font-weight:600;font-size:13px;" id="pub-month-label">—</span>
+        <div class="month-nav" style="margin-left:auto;">
+          <button id="pub-month-prev" onclick="pubChangeMonth(-1)" title="Mes anterior">‹</button>
+          <span class="current" id="pub-month-current">—</span>
+          <button id="pub-month-next" onclick="pubChangeMonth(1)" title="Mes siguiente">›</button>
+          <button class="today-btn" onclick="pubGoToCurrentMonth()" title="Mes actual">Hoy</button>
+        </div>
+      </div>
+
+      <div class="kpi-strip" style="grid-template-columns:repeat(3,1fr);">
+        <div class="kpi-card"><div class="kpi-label">LEADS DE ADS</div><div class="kpi-value" id="pub-leads">—</div><div class="kpi-trend" id="pub-leads-trend">del mes</div></div>
+        <div class="kpi-card"><div class="kpi-label">CITAS DE ADS</div><div class="kpi-value" id="pub-citas">—</div><div class="kpi-trend">confirmadas + completadas</div></div>
+        <div class="kpi-card"><div class="kpi-label">REVENUE DE ADS</div><div class="kpi-value" id="pub-revenue" style="color:var(--success);">—</div><div class="kpi-trend">solo de leads pagados</div></div>
+      </div>
+
+      <!-- Tu número WhatsApp para ads (mini · inline) -->
+      <div class="panel" style="margin-top:12px;">
+        <div style="display:flex;align-items:center;gap:10px;padding:7px 12px;flex-wrap:wrap;">
+          <span style="font-size:9px;color:var(--text3);font-family:'Geist Mono',monospace;letter-spacing:1.5px;text-transform:uppercase;flex-shrink:0;">📱 WhatsApp para ads</span>
+          <code id="pub-wa-number" style="font-size:12px;color:var(--text);font-family:'Geist Mono',monospace;letter-spacing:0.3px;background:var(--card2);padding:4px 9px;border-radius:5px;border:1px solid var(--border);">—</code>
+          <button class="btn ghost" style="font-size:10px;padding:4px 8px;flex-shrink:0;" onclick="copyAriaNumber()" title="Copiar al portapapeles">📋</button>
+          <span id="pub-wa-status" style="font-size:9px;color:var(--text3);font-family:'Geist Mono',monospace;letter-spacing:1px;text-transform:uppercase;">—</span>
+          <span style="font-size:10px;color:var(--text3);margin-left:auto;">Pégalo en "WhatsApp Business" al crear el ad en Meta</span>
+        </div>
+      </div>
+
+      <!-- Workflow visual -->
+      <div class="panel" style="margin-top:14px;">
+        <div class="panel-head">
+          <div>
+            <div class="panel-title">Cómo funciona</div>
+            <div class="panel-sub" style="margin-left:0;margin-top:3px;letter-spacing:1.5px;font-size:9px;text-transform:uppercase;">flujo end-to-end</div>
+          </div>
+          <button class="btn ghost" style="margin-left:auto;font-size:11px;" onclick="openMetaAdsManager()" title="Abre Meta Ads Manager en tu navegador">Abrir Meta Ads Manager ↗</button>
+        </div>
+        <div style="padding:10px 12px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:90px;display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--card2);border-radius:7px;border:1px solid var(--border);">
+            <span style="font-size:14px;flex-shrink:0;">📱</span>
+            <div style="min-width:0;"><div style="font-size:11px;font-weight:600;color:var(--text);line-height:1.2;">Tu ad en Meta</div><div style="font-size:9px;color:var(--text3);line-height:1.3;margin-top:2px;">Video + CTA WhatsApp</div></div>
+          </div>
+          <span style="color:var(--text3);font-size:11px;flex-shrink:0;">→</span>
+          <div style="flex:1;min-width:90px;display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--card2);border-radius:7px;border:1px solid var(--border);">
+            <span style="font-size:14px;flex-shrink:0;">💬</span>
+            <div style="min-width:0;"><div style="font-size:11px;font-weight:600;color:var(--text);line-height:1.2;">Lead hace click</div><div style="font-size:9px;color:var(--text3);line-height:1.3;margin-top:2px;">Mensaje pre-llenado</div></div>
+          </div>
+          <span style="color:var(--text3);font-size:11px;flex-shrink:0;">→</span>
+          <div style="flex:1;min-width:90px;display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--aria-s);border-radius:7px;border:1px solid rgba(232,232,232,0.3);">
+            <span style="font-size:14px;flex-shrink:0;color:var(--aria);font-weight:700;">A</span>
+            <div style="min-width:0;"><div style="font-size:11px;font-weight:600;color:var(--text);line-height:1.2;">ARIA conversa</div><div style="font-size:9px;color:var(--text3);line-height:1.3;margin-top:2px;">Detecta + agenda</div></div>
+          </div>
+          <span style="color:var(--text3);font-size:11px;flex-shrink:0;">→</span>
+          <div style="flex:1;min-width:90px;display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--card2);border-radius:7px;border:1px solid var(--border);">
+            <span style="font-size:14px;flex-shrink:0;">📅</span>
+            <div style="min-width:0;"><div style="font-size:11px;font-weight:600;color:var(--text);line-height:1.2;">Cita cerrada</div><div style="font-size:9px;color:var(--text3);line-height:1.3;margin-top:2px;">Realtime al dashboard</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tus campañas activas -->
+      <div class="panel" style="margin-top:14px;">
+        <div class="panel-head">
+          <div>
+            <div class="panel-title">Tus campañas registradas</div>
+            <div class="panel-sub" id="pub-camp-count" style="margin-left:0;margin-top:3px;letter-spacing:1.5px;font-size:9px;text-transform:uppercase;">—</div>
+          </div>
+        </div>
+        <table class="tbl"><thead><tr><th>Campaña</th><th>Plataforma</th><th>Mensaje trigger</th><th>Estado</th><th>Leads</th><th>Cierres</th><th></th></tr></thead><tbody id="pub-camp-tbody"></tbody></table>
+      </div>
+
+      <!-- Historial detallado de pagos generados por ARIA via Publicidad -->
+      <div class="panel" style="margin-top:14px;">
+        <div class="panel-head" style="flex-wrap:wrap;gap:10px;">
+          <div>
+            <div class="panel-title">Pagos generados por ARIA</div>
+            <div class="panel-sub" id="pub-pay-count" style="margin-left:0;margin-top:3px;letter-spacing:1.5px;font-size:9px;text-transform:uppercase;">—</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-left:auto;">
+            <span style="font-size:10px;color:var(--text3);font-family:'Geist Mono',monospace;letter-spacing:0.5px;">DESDE</span>
+            <input type="date" id="pub-pay-from" class="field-input" style="width:auto;padding:6px 8px;font-size:11px;">
+            <span style="font-size:10px;color:var(--text3);">→</span>
+            <span style="font-size:10px;color:var(--text3);font-family:'Geist Mono',monospace;letter-spacing:0.5px;">HASTA</span>
+            <input type="date" id="pub-pay-to" class="field-input" style="width:auto;padding:6px 8px;font-size:11px;">
+            <button class="btn ghost" style="font-size:11px;padding:6px 12px;" onclick="loadAdsPaymentHistory()" title="Aplicar rango">Aplicar</button>
+          </div>
+        </div>
+        <table class="tbl"><thead><tr><th>Fecha pago</th><th>Cliente</th><th>Servicio</th><th>Monto</th><th>Método</th><th>Campaña</th></tr></thead><tbody id="pub-pay-tbody"></tbody></table>
+      </div>
+
+      <!-- Templates de ads -->
+      <div class="panel" style="margin-top:14px;">
+        <div class="panel-head">
+          <div>
+            <div class="panel-title">Templates ARIA-ready para tus videos</div>
+            <div class="panel-sub" style="margin-left:0;margin-top:3px;letter-spacing:1.5px;font-size:9px;text-transform:uppercase;">copy listo para pegar en Meta</div>
+          </div>
+        </div>
+        <div style="padding:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;" id="pub-templates-grid">
+          <!-- Generado por loadPublicidad() -->
+        </div>
+      </div>
+
     </div>
 
     <!-- AGENDA -->
     <div class="view" data-view="agenda">
-      <div class="page-head"><div><div class="page-title">Agenda Inteligente</div><div class="page-sub">REALTIME · SYNC CON MADRE EN VIVO</div></div><div class="page-actions"><button class="btn primary" onclick="openNewAppt()">+ Nueva cita</button></div></div>
-      <div class="panel">
-        <div class="panel-head"><div class="panel-title" id="cal-month">—</div><div class="panel-sub">click en un día para ver detalles</div></div>
-        <div class="cal-head"><div>DOM</div><div>LUN</div><div>MAR</div><div>MIÉ</div><div>JUE</div><div>VIE</div><div>SÁB</div></div>
-        <div class="cal-grid" id="cal-grid"></div>
+      <div class="page-head">
+        <div>
+          <div class="page-title">Agenda Inteligente</div>
+          <div class="page-sub">Vista en tiempo real · Calendario + lista del día</div>
+        </div>
+        <div class="page-actions">
+          <button class="btn ghost" id="agenda-refresh-btn" onclick="refreshAgenda()" title="Refrescar agenda">↻ Actualizar</button>
+          <button class="btn primary" onclick="openNewAppt()">+ Nueva cita</button>
+        </div>
       </div>
-      <div class="sec-head"><span class="sec-label">PRÓXIMAS</span><span class="sec-title">Citas agendadas</span></div>
-      <div class="panel"><table class="tbl"><thead><tr><th>Fecha</th><th>Hora</th><th>Cliente</th><th>Servicio</th><th>Estado</th></tr></thead><tbody id="appt-tbody"></tbody></table></div>
+
+      <!-- 4 KPI cards (alineado al mockup) -->
+      <div class="kpi-strip">
+        <div class="kpi-card"><div class="kpi-label">HOY</div><div class="kpi-value" id="agenda-kpi-hoy">—</div><div class="kpi-trend" id="agenda-kpi-hoy-sub">—</div></div>
+        <div class="kpi-card"><div class="kpi-label">ESTA SEMANA</div><div class="kpi-value" id="agenda-kpi-week">—</div><div class="kpi-trend" id="agenda-kpi-week-sub">—</div></div>
+        <div class="kpi-card"><div class="kpi-label">PENDIENTES CONFIRMAR</div><div class="kpi-value" id="agenda-kpi-pending" style="color:var(--warn);">—</div><div class="kpi-trend">requieren atención</div></div>
+        <div class="kpi-card"><div class="kpi-label">NO-SHOW · 30D</div><div class="kpi-value" id="agenda-kpi-noshow">—</div><div class="kpi-trend up" id="agenda-kpi-noshow-sub">—</div></div>
+      </div>
+
+      <!-- Grid 2:1 — Calendario + Lista del día -->
+      <div class="grid-side" style="margin-top:14px;">
+        <!-- Calendario -->
+        <div class="panel">
+          <div class="panel-head" style="display:flex;align-items:center;gap:10px;">
+            <div class="panel-title" id="cal-month" style="flex:1;">—</div>
+            <div class="month-nav">
+              <button onclick="prevMonth()" title="Mes anterior">‹</button>
+              <button onclick="nextMonth()" title="Mes siguiente">›</button>
+              <button class="today-btn" onclick="goToCurrentMonth()" title="Volver al mes actual">Hoy</button>
+            </div>
+          </div>
+          <div class="cal-head"><div>DOM</div><div>LUN</div><div>MAR</div><div>MIÉ</div><div>JUE</div><div>VIE</div><div>SÁB</div></div>
+          <div class="cal-grid" id="cal-grid"></div>
+        </div>
+
+        <!-- Lista del día -->
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title" id="agenda-today-title">Hoy</div>
+            <div class="panel-sub" id="agenda-today-sub">—</div>
+          </div>
+          <div id="agenda-today-list" class="agenda-today-list">
+            <div class="agenda-today-empty" style="padding:18px;font-size:11px;color:var(--text3);text-align:center;">Sin citas para hoy</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabs Próximas / Históricas / Todas + filtros estado -->
+      <div class="ingresos-range" style="justify-content:space-between;align-items:center;margin-top:18px;flex-wrap:wrap;gap:8px;">
+        <div style="display:flex;gap:6px;">
+          <button class="ingresos-range-btn active" data-ascope="proximas"  onclick="setAgendaTab('proximas')">Próximas</button>
+          <button class="ingresos-range-btn"        data-ascope="historicas" onclick="setAgendaTab('historicas')">Históricas</button>
+          <button class="ingresos-range-btn"        data-ascope="todas"      onclick="setAgendaTab('todas')">Todas</button>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="ingresos-range-btn active" data-aestado="todos"     onclick="setAgendaEstadoFilter('todos')">Todos</button>
+          <button class="ingresos-range-btn"        data-aestado="confirmed" onclick="setAgendaEstadoFilter('confirmed')">Confirmadas</button>
+          <button class="ingresos-range-btn"        data-aestado="pending"   onclick="setAgendaEstadoFilter('pending')">Pendientes</button>
+          <button class="ingresos-range-btn"        data-aestado="completed" onclick="setAgendaEstadoFilter('completed')">Completadas</button>
+          <button class="ingresos-range-btn"        data-aestado="pagadas"   onclick="setAgendaEstadoFilter('pagadas')">Pagadas</button>
+          <button class="ingresos-range-btn"        data-aestado="cancelled" onclick="setAgendaEstadoFilter('cancelled')">Canceladas</button>
+          <button class="ingresos-range-btn"        data-aestado="no_show"   onclick="setAgendaEstadoFilter('no_show')">No-show</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title" id="appt-tbl-title">Citas próximas</div>
+          <div class="panel-sub" id="appt-tbl-sub">—</div>
+        </div>
+        <table class="tbl"><thead><tr><th>Fecha</th><th>Hora</th><th>Cliente</th><th>Servicio</th><th>Estado</th><th></th></tr></thead><tbody id="appt-tbody"></tbody></table>
+      </div>
     </div>
 
     <!-- LEADS CON SCORE -->
+    <!-- v2.1.47 — Leads rediseñado: 5 cols + buscador + filtro fuente + + nuevo lead -->
     <div class="view" data-view="leads">
-      <div class="page-head"><div><div class="page-title">Leads con Score IA</div><div class="page-sub">RANKED POR PROBABILIDAD DE CIERRE · ARIA INTENT SCORING</div></div></div>
-      <div class="panel"><table class="tbl"><thead><tr><th>Score</th><th>Nombre</th><th>WhatsApp</th><th>Fuente</th><th>Estado</th><th>Visitas</th><th>Notas</th></tr></thead><tbody id="leads-tbody"></tbody></table></div>
+      <div class="page-head">
+        <div>
+          <div class="page-title">Leads con Score</div>
+          <div class="page-sub">Ordenados por probabilidad de cierre · contactos + chat + email + agenda</div>
+        </div>
+        <div class="page-actions">
+          <button class="btn primary" onclick="openNewLeadModal()">+ Nuevo lead manual</button>
+        </div>
+      </div>
+
+      <!-- 4 KPI cards (alineado al mockup) -->
+      <div class="kpi-strip">
+        <div class="kpi-card"><div class="kpi-label">TOTAL · <span id="leads-kpi-range-label">30D</span></div><div class="kpi-value" id="leads-kpi-total">—</div><div class="kpi-trend" id="leads-kpi-total-sub">—</div></div>
+        <div class="kpi-card"><div class="kpi-label">HOT</div><div class="kpi-value" id="leads-kpi-hot" style="color:var(--danger);">—</div><div class="kpi-trend" id="leads-kpi-hot-sub">score ≥ 80</div></div>
+        <div class="kpi-card"><div class="kpi-label">WARM</div><div class="kpi-value" id="leads-kpi-warm" style="color:var(--warn);">—</div><div class="kpi-trend">score 50-79</div></div>
+        <div class="kpi-card"><div class="kpi-label">COLD</div><div class="kpi-value" id="leads-kpi-cold" style="color:#8a9aa8;">—</div><div class="kpi-trend">score &lt; 50</div></div>
+      </div>
+
+      <!-- Filtros: search + fuente + rango (todo en 1 fila — alineado al mockup) -->
+      <div style="display:flex;gap:10px;align-items:center;margin-top:14px;flex-wrap:wrap;">
+        <input
+          type="search"
+          id="leads-search"
+          class="field-input"
+          placeholder="🔍 Buscar por nombre…"
+          oninput="leadsSearch(this.value)"
+          style="flex:1;min-width:220px;max-width:340px;"
+        >
+        <div style="display:flex;gap:6px;">
+          <button class="ingresos-range-btn active" data-lfilter="all"    onclick="leadsFilter('all')">Todos</button>
+          <button class="ingresos-range-btn"        data-lfilter="aria"   onclick="leadsFilter('aria')">🤖 ARIA <span class="dim" id="leads-count-aria"></span></button>
+          <button class="ingresos-range-btn"        data-lfilter="manual" onclick="leadsFilter('manual')">✋ Manual <span class="dim" id="leads-count-manual"></span></button>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button class="ingresos-range-btn"        data-lrange="7"   onclick="leadsRange(7)">7D</button>
+          <button class="ingresos-range-btn active" data-lrange="30"  onclick="leadsRange(30)">30D</button>
+          <button class="ingresos-range-btn"        data-lrange="90"  onclick="leadsRange(90)">90D</button>
+          <button class="ingresos-range-btn"        data-lrange="365" onclick="leadsRange(365)">YTD</button>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:10px;">
+        <div class="panel-head">
+          <div class="panel-title">Leads</div>
+          <div class="panel-sub" id="leads-range-label">últimos 30 días</div>
+        </div>
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th style="width:90px;">Score</th>
+              <th>Nombre</th>
+              <th>Teléfono</th>
+              <th>Gmail</th>
+              <th>Fuente</th>
+              <th style="width:140px;">Acción</th>
+            </tr>
+          </thead>
+          <tbody id="leads-tbody"></tbody>
+        </table>
+      </div>
     </div>
 
     <!-- CRM 360 -->
     <div class="view" data-view="crm">
-      <div class="page-head"><div><div class="page-title">CRM 360</div><div class="page-sub">VISTA UNIFICADA DE TUS CLIENTES</div></div></div>
-      <div class="panel"><table class="tbl"><thead><tr><th>Cliente</th><th>Última visita</th><th>Próxima cita</th><th>Visitas totales</th><th>Estado</th><th>Próxima acción</th></tr></thead><tbody id="crm-tbody"></tbody></table></div>
+      <div class="page-head">
+        <div>
+          <div class="page-title">CRM 360</div>
+          <div class="page-sub">Vista unificada de tus clientes · LTV · segmentación · acciones 1:1</div>
+        </div>
+        <div class="page-actions">
+          <button class="btn primary" onclick="openNewClientModal()">+ Cliente</button>
+        </div>
+      </div>
+
+      <!-- 4 KPI cards (alineado al mockup) -->
+      <div class="kpi-strip">
+        <div class="kpi-card"><div class="kpi-label">CLIENTES ACTIVOS</div><div class="kpi-value" id="crm-kpi-active">—</div><div class="kpi-trend" id="crm-kpi-active-sub">—</div></div>
+        <div class="kpi-card"><div class="kpi-label">VIP · 5+ VISITAS</div><div class="kpi-value" id="crm-kpi-vip" style="color:var(--success);">—</div><div class="kpi-trend">tus mejores clientes</div></div>
+        <div class="kpi-card"><div class="kpi-label">INACTIVOS · 90D</div><div class="kpi-value" id="crm-kpi-inactive" style="color:var(--warn);">—</div><div class="kpi-trend">candidatos a reactivar</div></div>
+        <div class="kpi-card"><div class="kpi-label">LTV PROMEDIO</div><div class="kpi-value" id="crm-kpi-ltv">—</div><div class="kpi-trend">por cliente</div></div>
+      </div>
+
+      <!-- Filtros: search + rango (1 fila, alineado al mockup) -->
+      <div style="display:flex;gap:10px;align-items:center;margin-top:14px;flex-wrap:wrap;">
+        <input
+          type="search"
+          id="crm-search"
+          class="field-input"
+          placeholder="🔍 Buscar por nombre o teléfono…"
+          oninput="crmSearch(this.value)"
+          style="flex:1;min-width:220px;max-width:340px;"
+        >
+        <div style="display:flex;gap:6px;">
+          <button class="ingresos-range-btn"        data-crange="30"  onclick="crmRange(30)">30D</button>
+          <button class="ingresos-range-btn active" data-crange="90"  onclick="crmRange(90)">90D</button>
+          <button class="ingresos-range-btn"        data-crange="180" onclick="crmRange(180)">6M</button>
+          <button class="ingresos-range-btn"        data-crange="365" onclick="crmRange(365)">YTD</button>
+          <button class="ingresos-range-btn"        data-crange="0"   onclick="crmRange(0)">Todos</button>
+        </div>
+        <button class="btn ghost" id="crm-refresh-btn" onclick="refreshCRM()" title="Refrescar CRM" style="margin-left:auto;">↻</button>
+      </div>
+
+      <div class="panel" style="margin-top:12px;">
+        <div class="panel-head">
+          <div class="panel-title">Clientes</div>
+          <div class="panel-sub" id="crm-range-label">visitaron en los últimos 90 días</div>
+        </div>
+        <table class="tbl"><thead><tr><th>Cliente</th><th>Última visita</th><th>Próxima cita</th><th>Visitas</th><th>LTV</th><th>Estado</th><th>Acción</th></tr></thead><tbody id="crm-tbody"></tbody></table>
+      </div>
     </div>
 
     <!-- CAMPAIGNS -->
     <div class="view" data-view="campaigns">
-      <div class="page-head"><div><div class="page-title">Campaigns Creator</div><div class="page-sub">WHATSAPP + EMAIL · APRUEBA Y ARIA EJECUTA</div></div><div class="page-actions"><button class="btn primary" onclick="openNewCampaign()">+ Nueva campaña</button></div></div>
-      <div class="panel">
-        <div class="panel-head"><div class="panel-title">WhatsApp Campaigns</div></div>
-        <table class="tbl"><thead><tr><th>Icono</th><th>Nombre</th><th>Tipo</th><th>Segmento</th><th>Enviados</th><th>Leídos</th><th>Respuestas</th><th>Citas</th><th>Estado</th></tr></thead><tbody id="camp-tbody"></tbody></table>
+      <div class="page-head">
+        <div>
+          <div class="page-title">Campañas de Email</div>
+          <div class="page-sub">Email masivo a leads seleccionados · filtros + descuentos</div>
+        </div>
+        <div class="page-actions">
+          <button class="btn ghost" id="campaigns-refresh-btn" onclick="refreshCampaigns()" title="Refrescar campañas">↻ Actualizar</button>
+          <button class="btn primary" onclick="openNewCampaign()">+ Nueva campaña</button>
+        </div>
+      </div>
+
+      <!-- Month nav (igual al resto del dashboard) -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+        <span style="color:var(--text3);font-family:'Geist Mono',monospace;letter-spacing:1.5px;font-size:9px;text-transform:uppercase;">Periodo</span>
+        <span style="color:var(--text);font-weight:600;font-size:13px;" id="campaigns-month-label">—</span>
+        <div class="month-nav" style="margin-left:auto;">
+          <button id="campaigns-month-prev" onclick="campaignsChangeMonth(-1)" title="Mes anterior">‹</button>
+          <span class="current" id="campaigns-month-current">—</span>
+          <button id="campaigns-month-next" onclick="campaignsChangeMonth(1)" title="Mes siguiente">›</button>
+          <button class="today-btn" onclick="campaignsGoToCurrentMonth()" title="Mes actual">Hoy</button>
+        </div>
+      </div>
+
+      <!-- 4 KPI cards -->
+      <div class="kpi-strip">
+        <div class="kpi-card"><div class="kpi-label">CAMPAÑAS ACTIVAS</div><div class="kpi-value" id="camp-kpi-active">—</div><div class="kpi-trend">programadas / draft</div></div>
+        <div class="kpi-card"><div class="kpi-label">EMAILS ENVIADOS</div><div class="kpi-value" id="camp-kpi-sent">—</div><div class="kpi-trend">en el mes</div></div>
+        <div class="kpi-card"><div class="kpi-label">TASA APERTURA</div><div class="kpi-value" id="camp-kpi-open">—</div><div class="kpi-trend up">% que abrieron</div></div>
+        <div class="kpi-card"><div class="kpi-label">CITAS GENERADAS</div><div class="kpi-value" id="camp-kpi-appts" style="color:var(--success);">—</div><div class="kpi-trend">atribuidas a campañas</div></div>
+      </div>
+
+      <!-- Tabla campañas -->
+      <div class="panel" style="margin-top:14px;">
+        <div class="panel-head">
+          <div>
+            <div class="panel-title">Tus campañas</div>
+            <div class="panel-sub" id="campaigns-range-label" style="margin-left:0;margin-top:3px;letter-spacing:1.5px;font-size:9px;text-transform:uppercase;">—</div>
+          </div>
+        </div>
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Audiencia</th>
+              <th>Descuento</th>
+              <th>Enviados</th>
+              <th>Abiertos</th>
+              <th>Citas</th>
+              <th>Estado</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="camp-tbody">
+            <tr><td colspan="8" class="dim" style="text-align:center;padding:20px;">Sin campañas en este mes. Click en una plantilla arriba para empezar.</td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
 
     <!-- ARIA -->
     <div class="view" data-view="aria">
-      <!-- HERO -->
-      <div class="aria-hero">
-        <div class="aria-avatar-big">A</div>
-        <div class="aria-info">
-          <div class="aria-info-title">ARIA · Tu asistente IA en WhatsApp</div>
-          <div class="aria-info-sub">Automatiza respuestas 24/7, agenda citas y captura leads desde WhatsApp Cloud API</div>
-          <div class="aria-status-row" id="aria-status-row">
-            <span class="live-chip" id="aria-live-chip" style="display:none;"><span class="live-dot"></span>LIVE</span>
-            <span class="chip chip-off" id="aria-off-chip"><span class="chip-dot"></span>DESCONECTADO</span>
-            <span class="aria-phone" id="aria-phone-display"></span>
-            <span class="verified-chip" id="aria-verified" style="display:none;">VERIFIED</span>
-            <span class="quality-chip" id="aria-quality" style="display:none;">QUALITY: —</span>
-          </div>
+      <!-- HERO/Page-head alineado al mockup -->
+      <div class="page-head">
+        <div>
+          <div class="page-title">ARIA · Asistente</div>
+          <div class="page-sub" id="aria-page-sub">Live · <span id="aria-conv-count">—</span> conversaciones · WhatsApp <span id="aria-phone-display">—</span></div>
         </div>
-        <div class="aria-quick-stats" id="aria-quick-stats">
-          <div class="stat-mini"><div class="stat-val" id="aria-s-msgs">—</div><div class="stat-lbl">MSGS 24H</div></div>
-          <div class="stat-mini"><div class="stat-val" id="aria-s-auto">—</div><div class="stat-lbl">AUTO-REPLY</div></div>
-          <div class="stat-mini"><div class="stat-val" id="aria-s-citas">—</div><div class="stat-lbl">CITAS</div></div>
+        <div class="page-actions">
+          <span class="pill pill-ok" id="aria-live-chip" style="display:none;"><span class="pill-dot"></span>CONECTADA</span>
+          <span class="pill pill-warn" id="aria-off-chip"><span class="pill-dot"></span>DESCONECTADA</span>
+          <span class="pill pill-info" id="aria-verified" style="display:none;">VERIFICADO</span>
+          <span class="pill" id="aria-quality" style="display:none;background:var(--card2);color:var(--text2);border:1px solid var(--border);">QUALITY: —</span>
         </div>
       </div>
 
-      <!-- TABS -->
+      <!-- 3 KPI cards (alineado al mockup) -->
+      <div class="kpi-strip" style="grid-template-columns:repeat(3,1fr);">
+        <div class="kpi-card"><div class="kpi-label">MENSAJES 24H</div><div class="kpi-value" id="aria-s-msgs">—</div><div class="kpi-trend up" id="aria-s-msgs-trend">últimas 24 horas</div></div>
+        <div class="kpi-card"><div class="kpi-label">AUTO-RESPUESTAS</div><div class="kpi-value" id="aria-s-auto">—</div><div class="kpi-trend up">sin intervención humana</div></div>
+        <div class="kpi-card"><div class="kpi-label">CITAS CERRADAS HOY</div><div class="kpi-value" id="aria-s-citas">—</div><div class="kpi-trend">cerradas por ARIA</div></div>
+      </div>
+
+      <!-- SUB-TABS alineadas al mockup v2.3.0 -->
       <div class="aria-tabs">
-        <button class="aria-tab active" data-atab="conv" onclick="ariaTab('conv')">💬 Conversaciones</button>
-        <button class="aria-tab" data-atab="auto" onclick="ariaTab('auto')">⚙ Automatización</button>
-        <button class="aria-tab" data-atab="conn" onclick="ariaTab('conn')">🔌 Conexión</button>
+        <button class="aria-tab active" data-atab="conv" onclick="ariaTab('conv')">Conversaciones</button>
+        <button class="aria-tab" data-atab="contactos" onclick="ariaTab('contactos')">Contactos <span class="tab-count" id="contactos-count" style="margin-left:6px;color:var(--text3);font-family:'Geist Mono',monospace;font-size:10px;">—</span></button>
+        <button class="aria-tab" data-atab="auto" onclick="ariaTab('auto')">Automatización</button>
+        <button class="aria-tab" data-atab="conn" onclick="ariaTab('conn')">Conexión</button>
       </div>
 
       <!-- TAB CONVERSACIONES -->
       <div class="aria-tab-pane active" data-atab="conv">
+        <!-- Filtros como card aparte arriba (alineado al mockup) -->
+        <div class="conv-filter-card" id="conv-filters">
+          <button class="conv-filter-btn active" data-filter="all" onclick="filterConversations('all')">Todas <span class="count">(<span id="cf-all">0</span>)</span></button>
+          <button class="conv-filter-btn" data-filter="archived" onclick="filterConversations('archived')">📦 Archivadas <span class="count">(<span id="cf-archived">0</span>)</span></button>
+        </div>
         <div class="conv-wrap">
           <div class="conv-list">
-            <div class="conv-filters" id="conv-filters">
-              <button class="conv-filter-btn active" data-filter="all" onclick="filterConversations('all')">TODAS · <span id="cf-all">0</span></button>
-              <button class="conv-filter-btn" data-filter="active" onclick="filterConversations('active')">ACTIVAS · <span id="cf-active">0</span></button>
-              <button class="conv-filter-btn" data-filter="paused" onclick="filterConversations('paused')">PAUSADAS · <span id="cf-paused">0</span></button>
-              <button class="conv-filter-btn" data-filter="escalated" onclick="filterConversations('escalated')">ESCALADAS · <span id="cf-escalated">0</span></button>
-              <button class="conv-filter-btn" data-filter="resolved" onclick="filterConversations('resolved')">RESUELTAS · <span id="cf-resolved">0</span></button>
-            </div>
-            <div class="conv-search-wrap"><input placeholder="Buscar por nombre o teléfono..." oninput="searchConversations(this.value)"></div>
+            <div class="conv-search-wrap"><input placeholder="🔍 Buscar nombre o teléfono…" oninput="searchConversations(this.value)"></div>
             <div class="conv-items" id="conv-items"><div style="padding:40px 20px;text-align:center;color:var(--text3);font-size:11px;">Cargando conversaciones...</div></div>
           </div>
           <div class="chat-panel" id="chat-panel">
@@ -741,109 +1887,129 @@ body.aria-open .aria-drawer{right:0;}
         </div>
       </div>
 
-      <!-- TAB AUTOMATIZACIÓN -->
-      <div class="aria-tab-pane" data-atab="auto">
-        <div class="auto-kpi-grid">
-          <div class="kpi-card"><div class="kpi-label">REGLAS ACTIVAS</div><div class="kpi-value" id="ar-active">0</div></div>
-          <div class="kpi-card"><div class="kpi-label">EJECUCIONES 24H</div><div class="kpi-value" id="ar-exec24">0</div></div>
-          <div class="kpi-card"><div class="kpi-label">AUTO-RESPUESTAS</div><div class="kpi-value" id="ar-autoreply">0%</div></div>
-          <div class="kpi-card"><div class="kpi-label">ESCALADAS HUMANO</div><div class="kpi-value" id="ar-esc" style="color:var(--warn);">0</div></div>
+      <!-- TAB CONTACTOS (v2.3.0 · sprint contactos) -->
+      <div class="aria-tab-pane" data-atab="contactos">
+
+        <!-- Banner info auto-captura -->
+        <div class="contactos-banner">
+          <div class="contactos-banner-icon">i</div>
+          <div class="contactos-banner-text">
+            <div class="contactos-banner-title">Tus contactos crecen automáticamente</div>
+            <div class="contactos-banner-desc">Cada vez que un paciente te escribe, ARIA captura el contacto y lo agrega aquí con todo el contexto. También puedes agregar manualmente para anticipar un seguimiento.</div>
+          </div>
         </div>
 
+        <!-- Toolbar -->
+        <div style="display:flex;gap:10px;align-items:center;margin-top:14px;margin-bottom:12px;flex-wrap:wrap;">
+          <input
+            type="search"
+            id="contactos-search"
+            class="field-input"
+            placeholder="🔍 Buscar por nombre, teléfono o etiqueta…"
+            oninput="contactosSearch && contactosSearch(this.value)"
+            style="flex:1;min-width:220px;max-width:340px;"
+          >
+          <div style="display:flex;gap:6px;">
+            <button class="ingresos-range-btn active" data-cfilter="all"        onclick="contactosFilter && contactosFilter('all')">Todos <span class="dim" id="contactos-count-all"></span></button>
+            <button class="ingresos-range-btn"        data-cfilter="recurrente" onclick="contactosFilter && contactosFilter('recurrente')">Recurrentes <span class="dim" id="contactos-count-rec"></span></button>
+            <button class="ingresos-range-btn"        data-cfilter="nuevo"      onclick="contactosFilter && contactosFilter('nuevo')">Nuevos <span class="dim" id="contactos-count-new"></span></button>
+            <button class="ingresos-range-btn"        data-cfilter="inactivo"   onclick="contactosFilter && contactosFilter('inactivo')">Inactivos <span class="dim" id="contactos-count-inact"></span></button>
+          </div>
+          <button class="btn primary" onclick="openNewContactModal && openNewContactModal()" style="margin-left:auto;">+ Nuevo contacto</button>
+        </div>
+
+        <!-- Tabla de contactos -->
         <div class="panel">
           <div class="panel-head">
-            <div class="panel-title">Reglas configuradas</div>
-            <div class="panel-sub" id="ar-total">0 reglas</div>
-            <button class="btn primary" onclick="openNewRule()">+ Nueva regla</button>
+            <div class="panel-title">Contactos</div>
+            <div class="panel-sub" id="contactos-summary">— contactos</div>
           </div>
-          <div class="rule-row" style="font-size:9px;color:var(--text3);font-family:'Geist Mono',monospace;letter-spacing:1px;text-transform:uppercase;padding-top:10px;padding-bottom:8px;">
-            <div>PRIO</div><div>NOMBRE</div><div>TRIGGER</div><div>ACCIÓN</div><div>EJECUTADAS</div><div>ACTIVA</div>
-          </div>
-          <div id="ar-rules-body"><div style="padding:30px 20px;text-align:center;color:var(--text3);font-size:11px;">Sin reglas aún. Agrega una desde plantillas abajo.</div></div>
+          <table class="tbl">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Teléfono</th>
+                <th>Email</th>
+                <th>Etiquetas</th>
+                <th>Origen</th>
+                <th>Última actividad</th>
+                <th style="width:140px;">Acción</th>
+              </tr>
+            </thead>
+            <tbody id="contactos-tbody">
+              <tr><td colspan="7" class="dim" style="text-align:center;padding:30px 20px;font-size:11px;">Cargando contactos…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TAB AUTOMATIZACIÓN (alineado al mockup) -->
+      <div class="aria-tab-pane" data-atab="auto">
+        <!-- 4 KPI cards -->
+        <div class="kpi-strip">
+          <div class="kpi-card"><div class="kpi-label">REGLAS ACTIVAS</div><div class="kpi-value" id="ar-active">—</div><div class="kpi-trend" id="ar-active-sub">—</div></div>
+          <div class="kpi-card"><div class="kpi-label">EJECUCIONES · 24H</div><div class="kpi-value" id="ar-exec24">—</div><div class="kpi-trend">automatizadas hoy</div></div>
+          <div class="kpi-card"><div class="kpi-label">AUTO-RESPUESTAS</div><div class="kpi-value" id="ar-autoreply">—</div><div class="kpi-trend up">sin escalar</div></div>
+          <div class="kpi-card"><div class="kpi-label">ESCALADAS A HUMANO</div><div class="kpi-value" id="ar-esc" style="color:var(--warn);">—</div><div class="kpi-trend">requieren tu atención</div></div>
         </div>
 
-        <div class="sec-head"><span class="sec-label">PLANTILLAS SUGERIDAS</span><span class="sec-title">Reglas pre-armadas para clínica estética</span><span class="sec-meta">click para agregar</span></div>
-        <div class="panel">
-          <div class="tpl-grid" id="ar-templates"></div>
+        <!-- Card: Reglas de automatización -->
+        <div class="panel" style="margin-top:14px;overflow:visible;">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">Reglas de automatización</div>
+              <div class="panel-sub" style="margin-left:0;margin-top:3px;letter-spacing:1.5px;font-size:9px;text-transform:uppercase;">Ejecutadas en orden de prioridad · <span id="ar-total">0</span></div>
+            </div>
+            <button class="btn primary" onclick="openNewRule()" style="margin-left:auto;">+ Nueva regla</button>
+          </div>
+          <table class="tbl">
+            <thead>
+              <tr>
+                <th style="width:50px;">Prio</th>
+                <th>Nombre</th>
+                <th>Trigger</th>
+                <th>Acción</th>
+                <th style="width:100px;">Ejecutadas</th>
+                <th style="width:70px;">Activa</th>
+              </tr>
+            </thead>
+            <tbody id="ar-rules-body">
+              <tr><td colspan="6" class="dim" style="text-align:center;padding:30px 20px;font-size:11px;">Sin reglas aún. Agrega una desde plantillas abajo.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Card: Plantillas sugeridas -->
+        <div class="panel" style="margin-top:14px;">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">Plantillas sugeridas</div>
+              <div class="panel-sub" style="margin-left:0;margin-top:3px;letter-spacing:1.5px;font-size:9px;text-transform:uppercase;">Reglas pre-armadas para clínica estética</div>
+            </div>
+            <span class="panel-sub" style="margin-left:auto;">click para agregar</span>
+          </div>
+          <div class="panel-body">
+            <div class="tpl-grid" id="ar-templates"></div>
+          </div>
         </div>
       </div>
 
       <!-- TAB CONEXIÓN -->
       <div class="aria-tab-pane" data-atab="conn">
-        <div class="conn-grid" id="conn-grid">
-          <div class="panel">
-            <div class="conn-status-card" id="conn-status-card">
-              <div style="padding:40px 20px;text-align:center;color:var(--text3);font-size:11px;">Cargando estado de conexión...</div>
-            </div>
-          </div>
-          <div>
-            <div class="panel" style="margin-bottom:12px;">
-              <div class="panel-head"><div class="panel-title">Cómo funciona</div></div>
-              <div class="help-card">
-                <div class="help-step"><div class="help-step-n">1</div><div class="help-step-body">Tu número se registra en <strong>Meta Business</strong>, no en WhatsApp personal.</div></div>
-                <div class="help-step"><div class="help-step-n">2</div><div class="help-step-body">Cada mensaje entrante llega por <strong>webhook</strong> a nuestro servidor.</div></div>
-                <div class="help-step"><div class="help-step-n">3</div><div class="help-step-body"><strong>ARIA analiza</strong> el mensaje y aplica reglas automáticamente.</div></div>
-                <div class="help-step"><div class="help-step-n">4</div><div class="help-step-body">Respuesta enviada vía <strong>API oficial</strong> — sin riesgo de ban.</div></div>
-                <div class="help-step"><div class="help-step-n">5</div><div class="help-step-body">Todo queda registrado en tu dashboard en <strong>tiempo real</strong>.</div></div>
-              </div>
-            </div>
-            <div class="panel">
-              <div class="panel-head"><div class="panel-title">Costos de Meta</div></div>
-              <div class="help-card">
-                <div class="help-step" style="border:0;padding:6px 0;"><div class="help-step-body"><strong>1,000 conv/mes</strong> gratis</div></div>
-                <div class="help-step" style="border:0;padding:6px 0;"><div class="help-step-body"><strong>Service (respuestas)</strong> $0.00</div></div>
-                <div class="help-step" style="border:0;padding:6px 0;"><div class="help-step-body"><strong>Marketing</strong> $0.033/conv</div></div>
-                <div class="help-step" style="border:0;padding:6px 0;"><div class="help-step-body"><strong>Auth</strong> $0.0135/conv</div></div>
-                <div class="pricing-note" id="wa-cost-note"><strong>Este mes:</strong> — conversaciones · <strong style="color:var(--success);">$0.00</strong></div>
-              </div>
-            </div>
+        <div class="panel">
+          <div class="conn-status-card" id="conn-status-card">
+            <div style="padding:40px 20px;text-align:center;color:var(--text3);font-size:11px;">Cargando estado de conexión...</div>
           </div>
         </div>
-      </div>
-    </div>
-
-    <!-- COACH -->
-    <div class="view" data-view="coach">
-      <div class="page-head"><div><div class="page-title">Coach Dominio</div><div class="page-sub">TU SOCIO ESTRATÉGICO · REVIEWS SEMANALES</div></div></div>
-      <div class="coach-hero">
-        <div class="coach-badge">⭐ CERTIFIED PARTNER</div>
-        <div class="coach-title">Tu camino al siguiente nivel</div>
-        <div class="coach-sub">Esta semana ARIA detectó 3 oportunidades que pueden generarte <strong style="color:var(--success);">+$2,400</strong> si las ejecutamos juntos. Tu Account Manager agendó una llamada el jueves 11:00 AM para revisarlas.</div>
-        <div class="coach-metrics">
-          <div><div class="kpi-label">META DEL MES</div><div class="kpi-value" style="font-size:18px;">$12,400</div><div class="kpi-trend up">68% completo</div></div>
-          <div><div class="kpi-label">VIDEO SEMANAL</div><div class="kpi-value" style="font-size:14px;">Lunes 10am</div><div class="kpi-trend">próximo: 22 abr</div></div>
-          <div><div class="kpi-label">KICK-OFF Q2</div><div class="kpi-value" style="font-size:14px;">Mar 30 Abr</div><div class="kpi-trend">confirmado</div></div>
-        </div>
-      </div>
-      <div class="grid-2">
-        <div class="panel"><div class="panel-head"><div class="panel-title">Próximas sesiones</div></div><div class="panel-body dim">No hay sesiones agendadas.</div></div>
-        <div class="panel"><div class="panel-head"><div class="panel-title">Últimas reviews</div></div><div class="panel-body dim">Histórico de reviews aparecerá aquí.</div></div>
       </div>
     </div>
 
     <!-- REPORTS -->
     <div class="view" data-view="reports">
-      <div class="page-head"><div><div class="page-title">Reportes Ejecutivos</div><div class="page-sub">GENERADOS AUTOMÁTICAMENTE CADA LUNES 8AM</div></div><div class="page-actions"><button class="btn primary">Generar ahora</button></div></div>
-      <div class="panel"><table class="tbl"><thead><tr><th>Periodo</th><th>Generado</th><th>Tipo</th><th>Tamaño</th><th></th></tr></thead><tbody><tr><td>Marzo 2026</td><td class="dim">1 abr</td><td>Mensual</td><td class="num dim">2.4 MB</td><td><button class="btn ghost">Descargar</button></td></tr><tr><td>Semana 15</td><td class="dim">14 abr</td><td>Semanal</td><td class="num dim">820 KB</td><td><button class="btn ghost">Descargar</button></td></tr></tbody></table></div>
-    </div>
-
-    <!-- DINDEX -->
-    <div class="view" data-view="dindex">
-      <div class="page-head"><div><div class="page-title">Dominio Index</div><div class="page-sub">TU SCORE VS OTROS CLIENTES · GAMIFICATION</div></div></div>
-      <div class="grid-2">
-        <div class="panel"><div class="panel-head"><div class="panel-title">Tu score global</div></div><div class="gauge-container"><div class="gauge-score">78<span class="gauge-max">/100</span></div><div class="gauge-label">Excelente rendimiento</div><div class="gauge-rank">TOP 15% DE CLIENTES</div></div></div>
-        <div class="panel"><div class="panel-head"><div class="panel-title">Badges</div></div><div class="panel-body" style="display:flex;flex-wrap:wrap;gap:8px;"><span class="chip chip-aria">⭐ CERTIFIED</span><span class="chip chip-ok">🎯 100 LEADS</span><span class="chip chip-warn">🚀 GROWTH</span></div></div>
-      </div>
-    </div>
-
-    <!-- SLA -->
-    <div class="view" data-view="sla">
-      <div class="page-head"><div><div class="page-title">SLA Dashboard</div><div class="page-sub">UPTIME · SATISFACCIÓN · CRÉDITOS</div></div></div>
-      <div class="kpi-strip">
-        <div class="kpi-card"><div class="kpi-label">UPTIME 30D</div><div class="kpi-value ok" id="sla-uptime">—</div><div class="kpi-trend up">SLA garantizado 99.9%</div></div>
-        <div class="kpi-card"><div class="kpi-label">SLA SCORE</div><div class="kpi-value ok" id="sla-score">—</div><div class="kpi-trend">dentro del objetivo</div></div>
-        <div class="kpi-card"><div class="kpi-label">NPS</div><div class="kpi-value" id="sla-nps">—</div><div class="kpi-trend">tu última puntuación</div></div>
-        <div class="kpi-card"><div class="kpi-label">CRÉDITOS SLA</div><div class="kpi-value">$0</div><div class="kpi-trend">sin fallos este mes</div></div>
+      <div class="page-head"><div><div class="page-title">Reportes Ejecutivos</div><div class="page-sub">GENERADOS AUTOMÁTICAMENTE EL DÍA 1 DE CADA MES · ENVIADOS POR EMAIL</div></div></div>
+      <div class="panel">
+        <div class="panel-head"><div class="panel-title" id="reports-count">—</div><div class="panel-sub">click en una fila para descargar el PDF</div></div>
+        <table class="tbl"><thead><tr><th>Periodo</th><th>Generado</th><th>Tipo</th><th>Tamaño</th><th></th></tr></thead><tbody id="reports-tbody"></tbody></table>
       </div>
     </div>
 
@@ -862,19 +2028,113 @@ body.aria-open .aria-drawer{right:0;}
 
       <!-- TAB: PERFIL -->
       <div class="tab-pane active" data-tab="perfil">
+
+        <!-- ═════════ FOTO DE PERFIL ═════════ -->
+        <div class="panel" style="margin-bottom:12px;">
+          <div class="panel-head"><div class="panel-title">Foto de perfil</div><div class="panel-sub">Aparece en emails, recibos y firma de mensajes</div></div>
+          <div class="panel-body">
+            <div class="avatar-row">
+              <div class="avatar-large-wrap">
+                <div class="avatar-large" id="avatar-preview">
+                  <span id="avatar-initials">?</span>
+                  <img id="avatar-image" src="" alt="" style="display:none;">
+                </div>
+                <button class="avatar-edit-btn" onclick="openAvatarModal()" title="Cambiar foto">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 11l1-3 6-6 2 2-6 6-3 1zM8 4l2 2"/></svg>
+                </button>
+              </div>
+              <div class="avatar-info">
+                <div class="avatar-info-name" id="avatar-info-name">—</div>
+                <div class="avatar-info-help">PNG, JPG o WebP · máximo 2 MB · cuadrada (400×400 recomendado)</div>
+                <div class="avatar-info-actions">
+                  <button class="btn ghost" onclick="openAvatarModal()" style="font-size:11px;">📤 Subir o tomar foto</button>
+                  <button class="btn ghost danger" id="avatar-remove-btn" onclick="removeAvatar()" style="font-size:11px;display:none;">🗑 Quitar</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="panel">
           <div class="panel-head"><div class="panel-title">Datos del negocio</div></div>
           <div class="panel-body">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-              <div class="field"><div class="field-label">NOMBRE</div><input class="field-input" id="set-nombre"></div>
+              <div class="field"><div class="field-label">TU NOMBRE</div><input class="field-input" id="set-responsable" placeholder="Ej: Ana García"></div>
+              <div class="field"><div class="field-label">TÍTULO PROFESIONAL</div><input class="field-input" id="set-responsable-titulo" placeholder="Ej: Dr., Lic., Mtra. (opcional)"></div>
+              <div class="field"><div class="field-label">NOMBRE INTERNO</div><input class="field-input" id="set-nombre" placeholder="Identificador interno"></div>
               <div class="field"><div class="field-label">EMPRESA</div><input class="field-input" id="set-empresa"></div>
               <div class="field"><div class="field-label">EMAIL DE CONTACTO</div><input class="field-input" id="set-email" type="email"></div>
               <div class="field"><div class="field-label">WHATSAPP</div><input class="field-input" id="set-whatsapp"></div>
               <div class="field"><div class="field-label">INDUSTRIA</div><input class="field-input" id="set-industria"></div>
               <div class="field"><div class="field-label">MONEDA</div><select class="field-select" id="set-moneda"><option value="USD">USD - Dólar</option><option value="MXN">MXN - Peso Mexicano</option><option value="DOP">DOP - Peso Dominicano</option><option value="EUR">EUR - Euro</option><option value="COP">COP - Peso Colombiano</option></select></div>
+              <div class="field">
+                <div class="field-label">ZONA HORARIA DEL LOCAL</div>
+                <select class="field-select" id="set-timezone">
+                  <option value="America/Mexico_City">CDMX / Monterrey / Guadalajara (UTC-6)</option>
+                  <option value="America/Cancun">Cancún / Quintana Roo (UTC-5, sin DST)</option>
+                  <option value="America/Tijuana">Tijuana / BC (UTC-8/-7)</option>
+                  <option value="America/Hermosillo">Hermosillo / Sonora (UTC-7, sin DST)</option>
+                  <option value="America/Mazatlan">Mazatlán / Sinaloa (UTC-7/-6)</option>
+                  <option value="America/Chihuahua">Chihuahua (UTC-7/-6)</option>
+                  <option value="America/Bogota">Bogotá / Lima (UTC-5)</option>
+                  <option value="America/Guatemala">Guatemala / San Salvador (UTC-6)</option>
+                  <option value="America/Tegucigalpa">Tegucigalpa (UTC-6)</option>
+                  <option value="America/Managua">Managua (UTC-6)</option>
+                  <option value="America/Costa_Rica">San José (UTC-6)</option>
+                  <option value="America/Panama">Panamá (UTC-5)</option>
+                  <option value="America/Santo_Domingo">Santo Domingo (UTC-4)</option>
+                  <option value="America/Caracas">Caracas (UTC-4)</option>
+                  <option value="America/Santiago">Santiago de Chile (UTC-4/-3)</option>
+                  <option value="America/Argentina/Buenos_Aires">Buenos Aires (UTC-3)</option>
+                  <option value="America/Asuncion">Asunción (UTC-4/-3)</option>
+                  <option value="America/Montevideo">Montevideo (UTC-3)</option>
+                  <option value="America/Sao_Paulo">São Paulo (UTC-3)</option>
+                  <option value="Europe/Madrid">Madrid (UTC+1/+2)</option>
+                </select>
+                <div class="dim" style="font-size:10px;margin-top:4px;">Determina la hora real del local. Se usa para formatear todas las fechas/horas y para que ARIA y los recordatorios envíen a la hora correcta.</div>
+              </div>
             </div>
-            <button class="btn primary" onclick="saveProfile()">Guardar cambios</button>
           </div>
+        </div>
+
+        <div class="panel" style="margin-top:12px;">
+          <div class="panel-head">
+            <div class="panel-title">Ubicación del negocio</div>
+            <div class="panel-sub">USADA POR ARIA (respuesta "¿dónde están?") + EMAILS DE CONFIRMACIÓN + RECORDATORIOS</div>
+          </div>
+          <div class="panel-body">
+            <div class="field"><div class="field-label">DIRECCIÓN COMPLETA</div><input class="field-input" id="set-direccion" placeholder="Av. Principal 123, Col. Centro"></div>
+            <div style="display:grid;grid-template-columns:2fr 1fr;gap:12px;">
+              <div class="field"><div class="field-label">CIUDAD</div><input class="field-input" id="set-ciudad" placeholder="Ciudad de México"></div>
+              <div class="field"><div class="field-label">CÓDIGO POSTAL</div><input class="field-input" id="set-codigo-postal" placeholder="06100"></div>
+            </div>
+            <div class="field">
+              <div class="field-label">GOOGLE MAPS URL</div>
+              <input class="field-input" id="set-google-maps-url" placeholder="https://maps.google.com/... o https://goo.gl/maps/..." oninput="validateMapsUrl(this)">
+              <div class="dim" style="font-size:10px;margin-top:4px;">Abre tu negocio en Google Maps → botón "Compartir" → copia el link. Se usará en todos los mensajes con ubicación.</div>
+              <div id="maps-validation-msg" style="font-size:10px;margin-top:4px;"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-top:12px;">
+          <div class="panel-head">
+            <div class="panel-title">Horario de atención</div>
+            <div class="panel-sub">USADO POR ARIA RULE "FUERA DE HORARIO" + VALIDACIÓN DE AGENDA</div>
+          </div>
+          <div class="panel-body">
+            <div id="hours-editor" style="display:flex;flex-direction:column;gap:8px;"></div>
+            <div style="margin-top:10px;padding:10px;background:var(--card2);border-radius:6px;font-size:11px;color:var(--text2);line-height:1.5;">
+              <strong style="color:var(--text);">Zona horaria:</strong>
+              <span id="set-timezone-display" style="color:var(--text);margin-left:6px;">—</span>
+              <div style="margin-top:6px;color:var(--text3);">Se configura arriba en <strong>Datos del negocio → Zona horaria del local</strong>. Afecta los recordatorios automáticos 24h antes de cada cita.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel panel-body" style="margin-top:12px;display:flex;gap:10px;">
+          <button class="btn primary" onclick="saveProfile()">Guardar cambios</button>
+          <button class="btn ghost" onclick="loadSettings()">Cancelar</button>
         </div>
       </div>
 
@@ -917,32 +2177,28 @@ body.aria-open .aria-drawer{right:0;}
       <!-- TAB: INTEGRACIONES -->
       <div class="tab-pane" data-tab="integraciones">
         <div class="panel">
-          <div class="panel-head"><div class="panel-title">Servicios conectados</div></div>
+          <div class="panel-head">
+            <div class="panel-title">Integraciones avanzadas</div>
+            <div class="panel-sub">WhatsApp se configura desde <a onclick="go('aria')" style="color:var(--accent);cursor:pointer;text-decoration:underline;">ARIA → Conexión</a></div>
+          </div>
+          <div style="padding:14px 0 6px;">
+            <div style="padding:12px 16px;background:var(--card2);border:1px solid var(--border);border-radius:8px;font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:14px;">
+              💎 <strong style="color:var(--text);">Plan Enterprise</strong> — estas integraciones se activan cuando tu negocio cumple requisitos: LLC formada, integración fiscal US y onboarding white-glove. Si ya tienes los tres, <a href="mailto:hola@dominiosystem.com?subject=Upgrade%20Enterprise" style="color:var(--accent);text-decoration:underline;">escríbenos</a> para iniciar tu upgrade.
+            </div>
+          </div>
           <table class="tbl">
             <tbody>
               <tr>
-                <td style="width:30%;"><strong>WhatsApp Web</strong><div class="dim" style="font-size:10px;">Integración vía QR</div></td>
-                <td><span class="chip chip-warn" id="wa-conn-status"><span class="chip-dot"></span>REVISAR</span></td>
-                <td class="dim">Sesión persistente</td>
-                <td><button class="btn ghost" onclick="go('inbox')">Ir al inbox →</button></td>
+                <td style="width:30%;"><strong>Cobros online con tarjeta</strong><div class="dim" style="font-size:10px;">Stripe · link de pago vía WhatsApp y email</div></td>
+                <td><span class="chip chip-off"><span class="chip-dot"></span>PLAN ENTERPRISE</span></td>
+                <td class="dim">Requiere LLC + Stripe US activo</td>
+                <td><button class="btn ghost" disabled>Enterprise</button></td>
               </tr>
               <tr>
-                <td><strong>n8n Webhook</strong><div class="dim" style="font-size:10px;">Automatizaciones</div></td>
-                <td><span class="chip chip-off" id="n8n-conn-status"><span class="chip-dot"></span>CONFIGURAR</span></td>
-                <td><input class="field-input" id="set-n8n-url" placeholder="https://n8n.up.railway.app/webhook/..." style="font-family:'Geist Mono',monospace;font-size:10px;"></td>
-                <td><button class="btn primary" onclick="saveN8nWebhook()">Guardar</button></td>
-              </tr>
-              <tr>
-                <td><strong>Email Provider</strong><div class="dim" style="font-size:10px;">Resend / SMTP vía n8n</div></td>
-                <td><span class="chip chip-off"><span class="chip-dot"></span>PENDIENTE</span></td>
-                <td class="dim">Próxima iteración</td>
-                <td><button class="btn ghost" disabled>Próximamente</button></td>
-              </tr>
-              <tr>
-                <td><strong>Stripe</strong><div class="dim" style="font-size:10px;">Cobros online (plan Pro)</div></td>
-                <td><span class="chip chip-off"><span class="chip-dot"></span>PLAN PRO</span></td>
-                <td class="dim">Requiere upgrade</td>
-                <td><button class="btn ghost" disabled>Upgrade</button></td>
+                <td><strong>Email provider personalizado</strong><div class="dim" style="font-size:10px;">Envía con tu dominio (no dominiosystem.com)</div></td>
+                <td><span class="chip chip-off"><span class="chip-dot"></span>PLAN ENTERPRISE</span></td>
+                <td class="dim">Requiere verificación DNS del dominio</td>
+                <td><button class="btn ghost" disabled>Enterprise</button></td>
               </tr>
             </tbody>
           </table>
@@ -956,19 +2212,19 @@ body.aria-open .aria-drawer{right:0;}
           <div class="panel-body">
             <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px dashed var(--border);">
               <div><div style="font-size:13px;">Nuevos leads</div><div class="dim" style="font-size:10px;">Toast cuando llega un lead</div></div>
-              <label class="switch"><input type="checkbox" id="notif-leads" checked><span class="slider"></span></label>
+              <label class="switch"><input type="checkbox" id="notif-leads" onchange="saveNotificationPrefs()" checked><span class="slider"></span></label>
             </div>
             <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px dashed var(--border);">
               <div><div style="font-size:13px;">Confirmaciones de cita</div><div class="dim" style="font-size:10px;">Cuando un cliente confirma por email</div></div>
-              <label class="switch"><input type="checkbox" id="notif-confirm" checked><span class="slider"></span></label>
+              <label class="switch"><input type="checkbox" id="notif-confirm" onchange="saveNotificationPrefs()" checked><span class="slider"></span></label>
             </div>
             <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px dashed var(--border);">
               <div><div style="font-size:13px;">Sugerencias de ARIA</div><div class="dim" style="font-size:10px;">Toast cuando ARIA genera sugerencia</div></div>
-              <label class="switch"><input type="checkbox" id="notif-aria" checked><span class="slider"></span></label>
+              <label class="switch"><input type="checkbox" id="notif-aria" onchange="saveNotificationPrefs()" checked><span class="slider"></span></label>
             </div>
             <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;">
-              <div><div style="font-size:13px;">Reporte semanal</div><div class="dim" style="font-size:10px;">Email cada lunes 8am</div></div>
-              <label class="switch"><input type="checkbox" id="notif-report" checked><span class="slider"></span></label>
+              <div><div style="font-size:13px;">Reporte mensual</div><div class="dim" style="font-size:10px;">Email el día 1 de cada mes a las 8am</div></div>
+              <label class="switch"><input type="checkbox" id="notif-report" onchange="saveNotificationPrefs()" checked><span class="slider"></span></label>
             </div>
           </div>
         </div>
@@ -977,6 +2233,24 @@ body.aria-open .aria-drawer{right:0;}
       <!-- TAB: APARIENCIA -->
       <div class="tab-pane" data-tab="apariencia">
         <div class="panel">
+          <div class="panel-head"><div class="panel-title">Seguridad · Cierre de sesión automático</div><div class="panel-sub">PROTECCIÓN POR INACTIVIDAD</div></div>
+          <div class="panel-body">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
+              <div style="flex:1;">
+                <div style="font-size:13px;">Cerrar sesión tras inactividad</div>
+                <div class="dim" style="font-size:10px;margin-top:3px;">Avisamos 60s antes con opción de extender. Rango: 5-120 min.</div>
+              </div>
+              <select class="field-select" id="set-idle-minutes" style="width:140px;" onchange="setIdleMinutes(this.value)">
+                <option value="5">5 minutos</option>
+                <option value="15">15 minutos</option>
+                <option value="30" selected>30 minutos</option>
+                <option value="60">1 hora</option>
+                <option value="120">2 horas</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
           <div class="panel-head"><div class="panel-title">Tema</div></div>
           <div class="panel-body" style="display:flex;gap:10px;">
             <button class="btn" id="theme-dark-btn" onclick="setTheme('dark')">🌙 Dark</button>
@@ -984,10 +2258,24 @@ body.aria-open .aria-drawer{right:0;}
           </div>
         </div>
 
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">Actualizaciones de la app</div><div class="panel-sub" id="app-version-display">v—</div></div>
+          <div class="panel-body">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
+              <div style="flex:1;">
+                <div style="font-size:13px;">Versión instalada</div>
+                <div class="dim" style="font-size:10px;margin-top:3px;">Verificamos cada 4h automáticamente. Cuando haya nueva versión, te avisamos con un toast.</div>
+              </div>
+              <button class="btn ghost" id="check-update-btn" onclick="checkForUpdatesManual()" style="white-space:nowrap;">🔍 Buscar actualizaciones</button>
+            </div>
+          </div>
+        </div>
+
+
         <div class="sec-head"><span class="sec-label">SESIÓN</span><span class="sec-title">Tu cuenta</span></div>
+        <!-- v2.1.47 — botón "Exportar mis datos" eliminado (placeholder sin lógica) -->
         <div class="panel panel-body" style="display:flex;gap:10px;">
           <button class="btn danger" onclick="logout()">Cerrar sesión</button>
-          <button class="btn ghost" disabled>Exportar mis datos</button>
         </div>
       </div>
     </div>
@@ -1001,32 +2289,99 @@ body.aria-open .aria-drawer{right:0;}
         <div class="kpi-card"><div class="kpi-label">PRÓXIMO COBRO</div><div class="kpi-value" style="font-size:14px;" id="bill-next">—</div><div class="kpi-trend">renovación automática</div></div>
         <div class="kpi-card"><div class="kpi-label">FACTURAS PAGADAS</div><div class="kpi-value" id="bill-paid">—</div><div class="kpi-trend up">histórico</div></div>
       </div>
-      <div class="panel" style="margin-top:12px;"><div class="panel-head"><div class="panel-title">Facturas</div></div><table class="tbl"><thead><tr><th>Número</th><th>Periodo</th><th>Monto</th><th>Estado</th><th>Pagada</th><th></th></tr></thead><tbody id="bill-tbody"></tbody></table></div>
+      <!-- v2.1.23 — Banner informativo: facturas vienen por email automático -->
+      <div style="margin-top:12px;padding:10px 14px;background:rgba(232,232,232,0.04);border:1px solid var(--border);border-radius:6px;font-size:11px;color:var(--text2);line-height:1.5;">
+        📧 Recibes tu factura cada mes por email. Si necesitas re-envío contactanos en <a href="mailto:hola@dominiosystem.com?subject=Re-envío%20de%20factura" style="color:var(--accent);text-decoration:underline;">hola@dominiosystem.com</a>.
+      </div>
+      <div class="panel" style="margin-top:12px;"><div class="panel-head"><div class="panel-title">Facturas</div></div><table class="tbl"><thead><tr><th>Número</th><th>Periodo</th><th>Monto</th><th>Estado</th><th>Pagada</th></tr></thead><tbody id="bill-tbody"></tbody></table></div>
     </div>
 
   </div>
 </div>
 
-<!-- ARIA DRAWER -->
-<button class="aria-fab" onclick="openAria()" id="aria-fab">
-  A
-  <span class="aria-fab-badge" id="aria-badge" style="display:none;">0</span>
+<!-- ═══════════════ AVATAR MODAL (Commit 5 mockup migration) ═══════════════ -->
+<div class="avatar-modal-overlay" id="avatar-modal-overlay" onclick="if(event.target===this)closeAvatarModal()"></div>
+<div class="avatar-modal" id="avatar-modal" role="dialog" aria-label="Cambiar foto de perfil">
+  <div class="avatar-modal-head">
+    <div>
+      <div class="avatar-modal-title">Foto de perfil</div>
+      <div class="avatar-modal-sub">Sube una imagen o toma una foto en vivo</div>
+    </div>
+    <button class="avatar-modal-close" onclick="closeAvatarModal()" title="Cerrar">✕</button>
+  </div>
+
+  <!-- Tabs · "Tomar foto" deshabilitado hasta firma Apple Developer (post-LLC) -->
+  <div class="avatar-tabs">
+    <button class="avatar-tab-btn active" data-atab="file" onclick="avatarTab('file')">📁 Desde computadora</button>
+    <button class="avatar-tab-btn" data-atab="camera" onclick="avatarTab('camera')" style="opacity:0.6;">📸 Tomar foto · próximamente</button>
+  </div>
+
+  <!-- TAB: File picker -->
+  <div class="avatar-tab-pane active" data-atab="file">
+    <div class="avatar-dropzone" id="avatar-dropzone" onclick="document.getElementById('avatar-file-input').click()">
+      <input type="file" id="avatar-file-input" accept="image/jpeg,image/png,image/webp" style="display:none;" onchange="handleAvatarFile(this.files[0])">
+      <div class="avatar-dropzone-icon">📤</div>
+      <div class="avatar-dropzone-title">Arrastra tu foto aquí</div>
+      <div class="avatar-dropzone-sub">o haz click para abrir el explorador</div>
+      <div class="avatar-dropzone-hint">PNG · JPG · WebP · máximo 2 MB</div>
+    </div>
+  </div>
+
+  <!-- TAB: Camera capture · DESHABILITADO temporalmente · placeholder explicativo -->
+  <div class="avatar-tab-pane" data-atab="camera">
+    <div style="padding:40px 24px;text-align:center;">
+      <div style="font-size:48px;margin-bottom:14px;opacity:0.5;">📸</div>
+      <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:8px;">Captura desde cámara · próximamente</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.6;max-width:340px;margin:0 auto 18px;">
+        La captura en vivo desde tu cámara estará disponible en una próxima actualización, cuando la app cuente con firma de Apple Developer.
+      </div>
+      <div style="font-size:11px;color:var(--text3);line-height:1.5;max-width:340px;margin:0 auto;padding:10px 14px;background:var(--card2);border:1px solid var(--border);border-radius:7px;">
+        💡 Por ahora puedes subir tu foto desde la pestaña <strong style="color:var(--text);">"Desde computadora"</strong>.
+      </div>
+      <button class="btn ghost" style="margin-top:16px;font-size:11px;" onclick="avatarTab('file')">← Volver a "Desde computadora"</button>
+    </div>
+  </div>
+
+  <!-- PREVIEW + CROP -->
+  <div class="avatar-preview-stage" id="avatar-preview-stage" style="display:none;">
+    <div class="avatar-preview-title">Vista previa · 400×400</div>
+    <div class="avatar-preview-circle">
+      <canvas id="avatar-canvas" width="400" height="400"></canvas>
+    </div>
+    <div class="avatar-preview-meta" id="avatar-preview-meta">—</div>
+    <div class="avatar-preview-actions">
+      <button class="btn ghost" onclick="resetAvatarStage()">← Volver</button>
+      <button class="btn primary" id="avatar-upload-btn" onclick="uploadAvatar()">✓ Guardar foto</button>
+    </div>
+  </div>
+
+  <!-- Loading overlay (durante upload) -->
+  <div class="avatar-loading" id="avatar-loading" style="display:none;">
+    <div class="avatar-spinner"></div>
+    <div id="avatar-loading-text">Subiendo…</div>
+  </div>
+</div>
+
+<!-- v2.1.45 — FAB de notificaciones flotante OBSOLETO (Commit 4 mockup migration).
+     Sustituido por #notif-bell en .topnav-actions. Mantenido oculto por compat,
+     puede borrarse en próximo cleanup. El id="aria-badge" se movió al nuevo bell. -->
+<button class="aria-fab" onclick="openAria()" id="aria-fab" title="Notificaciones" aria-label="Notificaciones" style="display:none;">
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M12 2a6 6 0 0 0-6 6c0 6-2.5 8-2.5 8h17S18 14 18 8a6 6 0 0 0-6-6zM10 19a2 2 0 0 0 4 0z"/>
+  </svg>
+  <span class="aria-fab-badge" id="aria-fab-badge-legacy" style="display:none;">0</span>
 </button>
 
-<aside class="aria-drawer" id="aria-drawer">
+<!-- v2.1.43 — popover flotante anclado al FAB. NO empuja el wrapper. -->
+<aside class="aria-drawer" id="aria-drawer" role="dialog" aria-label="Notificaciones">
   <div class="aria-head">
-    <div class="aria-badge-icon">A</div>
-    <div class="aria-title">ARIA<span>TU ASISTENTE IA · <span id="aria-count">0</span> PENDIENTES</span></div>
-    <button class="aria-close" onclick="closeAria()">✕</button>
-  </div>
-  <div class="aria-filter">
-    <button class="aria-filter-btn active" data-filter="pending" onclick="filterAria('pending')">PENDIENTES</button>
-    <button class="aria-filter-btn" data-filter="approved" onclick="filterAria('approved')">APROBADAS</button>
-    <button class="aria-filter-btn" data-filter="rejected" onclick="filterAria('rejected')">RECHAZADAS</button>
-    <button class="aria-filter-btn" data-filter="executed" onclick="filterAria('executed')">EJECUTADAS</button>
+    <div class="aria-title">Notificaciones<span>actividad reciente · <span id="aria-count">0</span></span></div>
+    <button class="aria-mark-read" onclick="markAllNotifRead()" title="Marcar todas como leídas">LEÍDAS</button>
+    <button class="aria-close" onclick="closeAria()" title="Cerrar">✕</button>
   </div>
   <div class="aria-list" id="aria-list"></div>
 </aside>
+<div class="aria-overlay" id="aria-overlay" onclick="closeAria()"></div>
 
 <!-- TOAST CONTAINER -->
 <div class="toast-container" id="toast-container"></div>
@@ -1040,9 +2395,45 @@ body.aria-open .aria-drawer{right:0;}
   </div>
 </div>
 
+<!-- v2.3.3 — Modales del panel Próximas Citas (Resumen) -->
+<div class="pc-modal-back" id="pc-modal-info">
+  <div class="pc-modal">
+    <div class="pc-modal-head">
+      <div>
+        <div class="pc-modal-title">Detalle de cita</div>
+        <div class="pc-modal-sub" id="pc-info-sub">— · —</div>
+      </div>
+      <button class="pc-modal-close" onclick="pcCloseModal('info')">×</button>
+    </div>
+    <div class="pc-modal-body" id="pc-info-body"></div>
+    <div class="pc-modal-foot">
+      <button class="btn ghost" onclick="pcCloseModal('info')">Cerrar</button>
+      <button class="btn primary" onclick="pcOpenChatFromInfo()">Ver chat</button>
+    </div>
+  </div>
+</div>
+
+<div class="pc-modal-back" id="pc-modal-chat">
+  <div class="pc-modal">
+    <div class="pc-modal-head">
+      <div>
+        <div class="pc-modal-title">Conversación WhatsApp</div>
+        <div class="pc-modal-sub" id="pc-chat-sub">— · —</div>
+      </div>
+      <button class="pc-modal-close" onclick="pcCloseModal('chat')">×</button>
+    </div>
+    <div class="pc-modal-body" id="pc-chat-body"></div>
+    <div class="pc-modal-foot">
+      <button class="btn ghost" onclick="pcCloseModal('chat')">Cerrar</button>
+      <button class="btn primary" onclick="pcGoToAria()">Abrir en ARIA →</button>
+    </div>
+  </div>
+</div>
+
 <script src="assets/js/aria-drawer.js"></script>
 <script src="assets/js/aria-section.js"></script>
 <script src="assets/js/realtime.js"></script>
+<script src="assets/js/idle-logout.js"></script>
 <script src="assets/js/app.js"></script>
 </body>
 </html>
