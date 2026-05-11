@@ -1067,10 +1067,14 @@ window.loadProximasCitas = async function(){
   if(!listEl) return; // vista actual no es brief
 
   try {
-    const todayStr   = window.todayInTZ ? window.todayInTZ() : new Date().toISOString().split('T')[0];
-    const tomorrow   = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+    // v2.3.4 FIX ELECTRON-9 · window.todayInTZ() devuelve un OBJETO {y,m,d,ymd},
+    // no un string. Interpolarlo directo en la URL daba "fecha=gte.[object Object]"
+    // → PostgREST respondía 400. Usamos .ymd para extraer el string YYYY-MM-DD.
+    const todayObj    = window.todayInTZ ? window.todayInTZ() : null;
+    const todayStr    = todayObj?.ymd || new Date().toISOString().slice(0, 10);
+    const tomorrowDate = new Date();
+    tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+    const tomorrowStr = tomorrowDate.toISOString().slice(0, 10);
 
     // 1) Próximas 48h activas (hoy + mañana, excluye canceladas/no-show)
     const proximas = await sbGet('appointments',
