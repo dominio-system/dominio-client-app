@@ -155,8 +155,12 @@ window.handleNotifClick = function(id){
   if(item.link){
     const viewMap = {
       '/agenda': 'agenda',
-      '/leads': 'leads',
-      '/inbox': 'aria', // ARIA section tab Conversaciones
+      // v2.3.5 · /leads y /contactos llevan ambos al tab Contactos de ARIA.
+      // Antes /leads abría la vista 'leads' (oculta del topbar v2.3.0) — UX confuso
+      // porque el cliente la veía sin acceso normal. Ahora se redirige a ARIA → Contactos.
+      '/leads': 'aria:contactos',
+      '/contactos': 'aria:contactos',
+      '/inbox': 'aria', // ARIA section tab Conversaciones (default)
       '/crm': 'crm',
       '/brief': 'brief',
       '/billing': 'billing',
@@ -166,8 +170,12 @@ window.handleNotifClick = function(id){
       '/settings': 'settings',
     };
     const path = (item.link || '').split('?')[0];
-    const view = viewMap[path];
-    if(view && window.go) window.go(view);
+    const target = viewMap[path];
+    if(!target) return;
+    // Soporte target con tab: "aria:contactos" → go('aria') + ariaTab('contactos')
+    const [view, tab] = target.split(':');
+    if(window.go) window.go(view);
+    if(tab && window.ariaTab) setTimeout(() => window.ariaTab(tab), 80);
   }
 };
 

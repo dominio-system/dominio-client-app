@@ -1142,13 +1142,11 @@ body.aria-open .aria-overlay{ pointer-events:auto; }
           Agenda
           <span class="nav-badge" id="appt-count">—</span>
         </button>
-        <!-- v2.3.0 · Leads con Score reemplazado por Contactos en ARIA section.
-             View data-view="leads" sigue accesible para fallback/n8n, pero oculto del menu. -->
-        <button class="nav-link" data-view="leads" data-label="Leads con Score" onclick="go('leads');closeAllNavGroups()" style="display:none;">
-          <span class="nav-icon"><svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="6.5" cy="4.5" r="2.5"/><path d="M2 11.5c0-2 2-3.5 4.5-3.5s4.5 1.5 4.5 3.5"/></svg></span>
-          Leads con Score
-          <span class="nav-badge" id="leads-count">—</span>
-        </button>
+        <!-- v2.3.5 · botón nav-link "Leads con Score" ELIMINADO del topbar.
+             La vista <div data-view="leads"> sigue existiendo en el DOM como fallback
+             para realtime.js que llama loadLeads() — pero ya no se accede desde UI.
+             El badge #leads-count se conserva oculto para que loadBriefData no crashee. -->
+        <span id="leads-count" style="display:none;">—</span>
         <button class="nav-link" data-view="crm" data-label="CRM 360" onclick="go('crm');closeAllNavGroups()">
           <span class="nav-icon"><svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M2 3h9v8h-9z"/><path d="M4 5h5M4 7h5M4 9h3"/></svg></span>
           CRM 360

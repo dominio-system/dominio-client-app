@@ -318,7 +318,8 @@ function handleLeadChange(payload){
   emitChange('leads', payload);
   const { eventType, new: newRow } = payload;
   if(eventType === 'INSERT' && !_wasToastedRecently(`lead-${newRow.id}`)){
-    window.toast?.('🎯 Nuevo lead', newRow.nombre, 'success');
+    // v2.3.5 · "lead" se llama "contacto" en UI (decisión 2026-05-12)
+    window.toast?.('🎯 Nuevo contacto', newRow.nombre, 'success');
   }
   debounceCall('lead-leads',     () => callIfActive('leads',      window.loadLeads));
   debounceCall('lead-crm',       () => callIfActive('crm',        window.loadCRM));

@@ -3364,7 +3364,7 @@ window.refreshLeads = async function(){
   if(btn){ btn.disabled = true; btn.style.opacity = '0.5'; btn.textContent = '…'; }
   try {
     await loadLeads();
-    window.toast && window.toast('✓ Leads actualizados', null, 'success');
+    window.toast && window.toast('✓ Contactos actualizados', null, 'success');
   } catch(err){
     window.toast && window.toast('Error', err.message || 'No se pudo refrescar', 'err');
   } finally {
@@ -3422,7 +3422,7 @@ async function loadLeads(){
     _renderLeads();
   } catch(err){
     console.error('[Leads] error:', err);
-    window.toast?.('Leads no se pudo cargar', err.message || 'Error de conexión', 'err');
+    window.toast?.('Contactos no se pudo cargar', err.message || 'Error de conexión', 'err');
     window.electronAPI?.sentryCapture?.(err);
   }
 }
@@ -3552,7 +3552,7 @@ window.leadsSearch = function(text){
 // Acciones por fila: WhatsApp, Email, Agendar
 window.leadAction = function(type, leadId){
   const lead = _leadsCache.find(l => l.id === leadId);
-  if(!lead){ window.toast?.('Lead no encontrado', null, 'warn'); return; }
+  if(!lead){ window.toast?.('Contacto no encontrado', null, 'warn'); return; }
 
   if(type === 'wa'){
     if(!lead.whatsapp){ return; }
@@ -3620,7 +3620,7 @@ window._confirmDeleteLead = async function(leadId){
     // Quitar del cache local + re-render para feedback inmediato
     _leadsCache = _leadsCache.filter(l => l.id !== leadId);
     _renderLeads();
-    window.toast('✓ Lead eliminado', lead?.nombre || 'Lead borrado de la lista', 'success');
+    window.toast('✓ Contacto eliminado', lead?.nombre || 'Contacto borrado de la lista', 'success');
   } catch(err){
     console.error('[deleteLead] error:', err);
     window.toast('Error', err.message || 'No se pudo eliminar el lead', 'err');
@@ -3695,7 +3695,8 @@ async function _openLeadInAriaChat(lead){
   }, 300);
 }
 
-// v2.1.47 — Modal "+ Nuevo lead manual"
+// v2.1.47 / v2.3.5 — Modal "+ Nuevo contacto manual"
+// (DB sigue siendo tabla `leads`; cambio solo en copy user-facing)
 window.openNewLeadModal = function(){
   const body = `
     <div class="field"><div class="field-label">NOMBRE *</div>
@@ -3718,7 +3719,7 @@ window.openNewLeadModal = function(){
       <textarea class="field-textarea" id="newlead-notes" placeholder="Servicio que le interesa, presupuesto, etc."></textarea>
     </div>
   `;
-  showModal('Nuevo lead manual', body,
+  showModal('Nuevo contacto manual', body,
     '<button class="btn ghost" onclick="closeModal()">Cancelar</button>' +
     '<button class="btn primary" onclick="saveNewLead()">Guardar</button>');
 };
@@ -3765,7 +3766,7 @@ window.saveNewLead = async function(){
         ¿Qué quieres hacer?
       </div>
     `;
-    showModal('Lead duplicado', detail,
+    showModal('Contacto duplicado', detail,
       `<button class="btn ghost" onclick="closeModal()">Cancelar</button>` +
       `<button class="btn primary" onclick="_updateExistingLead('${existing.id}', ${JSON.stringify(email).replace(/"/g, '&quot;')}, ${JSON.stringify(notas).replace(/"/g, '&quot;')}, ${JSON.stringify(fuente).replace(/"/g, '&quot;')})">Actualizar lead existente</button>`
     );
@@ -3784,14 +3785,14 @@ window.saveNewLead = async function(){
       notas: notas || null,
     });
     closeModal();
-    window.toast('✓ Lead creado', `${nombre} agregado a la lista`, 'success');
+    window.toast('✓ Contacto creado', `${nombre} agregado a la lista`, 'success');
     if(typeof window.loadLeads === 'function') window.loadLeads();
   } catch(err){
     console.error('[saveNewLead] error:', err);
     // Fallback por si el pre-check no detectó (race condition con otro insert)
     const msg = (err.message || '').toLowerCase();
     if(msg.includes('duplicate key') || msg.includes('leads_client_whatsapp_uniq')){
-      window.toast('Lead duplicado', 'Ya existe un lead con ese teléfono', 'warn');
+      window.toast('Contacto duplicado', 'Ya existe un contacto con ese telefono', 'warn');
     } else {
       window.toast('Error', err.message || 'No se pudo crear el lead', 'err');
     }
@@ -3812,7 +3813,7 @@ window._updateExistingLead = async function(leadId, newEmail, newNotas, newFuent
     }
     await sbPatch('leads', leadId, patch);
     closeModal();
-    window.toast('✓ Lead actualizado', 'Se aplicaron los cambios al lead existente', 'success');
+    window.toast('✓ Contacto actualizado', 'Se aplicaron los cambios al contacto existente', 'success');
     if(typeof window.loadLeads === 'function') window.loadLeads();
   } catch(err){
     console.error('[_updateExistingLead] error:', err);
@@ -4015,7 +4016,7 @@ window.reactivateClient = async function(leadId, name){
       sbGet('leads', `id=eq.${leadId}&select=nombre,whatsapp,fuente,ultima_visita,created_at,notas,intent_score`),
       sbGet('appointments', `lead_id=eq.${leadId}&estado=eq.completed&select=servicio,paid_at&order=paid_at.desc&limit=1`)
     ]);
-    if(!leads.length){ window.toast?.('Lead no encontrado', null, 'warn'); return; }
+    if(!leads.length){ window.toast?.('Contacto no encontrado', null, 'warn'); return; }
     const lead = leads[0];
     const lastApt = lastApts[0];
     const empresa = window.currentClient?.empresa || 'tu negocio';
