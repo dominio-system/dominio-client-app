@@ -1091,8 +1091,11 @@ window.loadProximasCitas = async function(){
     const primerMsgPorLead = {};
     if(leadIds.length > 0){
       const idsCSV = leadIds.map(id => `"${id}"`).join(',');
+      // v2.3.6 FIX ELECTRON-A · La columna real en whatsapp_messages se llama
+      // `mensaje`, no `body`. Antes el query daba 400 y el panel Proximas Citas
+      // no podia calcular el tiempo de captacion (caia al catch sin metricas).
       const firstMsgs = await sbGet('whatsapp_messages',
-        `lead_id=in.(${idsCSV})&direction=eq.in&select=lead_id,created_at,body&order=created_at.asc&limit=500`
+        `lead_id=in.(${idsCSV})&direction=eq.in&select=lead_id,created_at,mensaje&order=created_at.asc&limit=500`
       );
       // Tomar el primer mensaje por lead (ya viene ordenado asc)
       firstMsgs.forEach(m => {
@@ -1222,7 +1225,7 @@ window.openProximaInfo = async function(id){
 
   const body = document.getElementById('pc-info-body');
   const primerMsgTime = a.primer_msg ? new Date(a.primer_msg.created_at) : null;
-  const primerMsgTxt  = a.primer_msg?.body || '—';
+  const primerMsgTxt  = a.primer_msg?.mensaje || '—'; // v2.3.6 · columna `mensaje`, no `body`
   const creadaTime    = new Date(a.created_at);
   const fmt = t => t ? (window.fmtTimeTZ ? window.fmtTimeTZ(t) : `${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`) : '—';
 
@@ -1297,15 +1300,16 @@ window.openProximaChat = async function(id){
       return;
     }
     const msgs = await sbGet('whatsapp_messages',
-      `lead_id=eq.${a.lead_id}&select=id,direction,body,created_at&order=created_at.asc&limit=50`
+      // v2.3.6 FIX ELECTRON-A · columna `mensaje`, no `body`
+      `lead_id=eq.${a.lead_id}&select=id,direction,mensaje,created_at&order=created_at.asc&limit=50`
     );
     const fmtT = t => {
       const d = new Date(t);
       return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
     };
     const bubbles = msgs.map(m => m.direction === 'in'
-      ? `<div class="pc-bubble in">${_escHtml(m.body || '')}<span class="t">${fmtT(m.created_at)}</span></div>`
-      : `<div class="pc-bubble out"><span class="by">⚡ ARIA</span><br>${_escHtml(m.body || '')}<span class="t">${fmtT(m.created_at)} · enviado</span></div>`
+      ? `<div class="pc-bubble in">${_escHtml(m.mensaje || '')}<span class="t">${fmtT(m.created_at)}</span></div>`
+      : `<div class="pc-bubble out"><span class="by">⚡ ARIA</span><br>${_escHtml(m.mensaje || '')}<span class="t">${fmtT(m.created_at)} · enviado</span></div>`
     ).join('');
     document.getElementById('pc-chat-thread').innerHTML = bubbles + `
       <div class="pc-chat-cita">
