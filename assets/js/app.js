@@ -384,12 +384,170 @@ window.closeModal = function(){
 // ============================================
 // GLOBAL SEARCH (Cmd+K / Ctrl+K)
 // ============================================
+// v2.3.9 — Search bar funcional · omni-search en contactos (leads) + citas
+// + comandos de navegación. Dropdown debajo del input con resultados click-to-action.
 document.addEventListener('keydown', e => {
   if((e.metaKey || e.ctrlKey) && e.key === 'k'){
     e.preventDefault();
     document.getElementById('topnav-search-input')?.focus();
   }
+  if(e.key === 'Escape'){
+    window._closeTopnavSearch?.();
+  }
 });
+
+(function setupTopnavSearch(){
+  if(typeof document === 'undefined') return;
+  // Helper local (en caso de que window.escapeHtml no esté disponible al boot)
+  const esc = (s) => (window.escapeHtml ? window.escapeHtml(s) : String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])));
+  const init = () => {
+    const input = document.getElementById('topnav-search-input');
+    if(!input || input._wired) return;
+    input._wired = true;
+
+    // Container de resultados (creado lazy)
+    let dropdown = null;
+    const ensureDropdown = () => {
+      if(dropdown) return dropdown;
+      dropdown = document.createElement('div');
+      dropdown.id = 'topnav-search-results';
+      dropdown.style.cssText = 'position:absolute;top:100%;left:0;right:0;margin-top:6px;background:var(--card2);border:1px solid var(--border2);border-radius:8px;box-shadow:0 12px 32px rgba(0,0,0,0.55);max-height:380px;overflow-y:auto;z-index:200;display:none;padding:6px;';
+      input.parentElement.style.position = 'relative';
+      input.parentElement.appendChild(dropdown);
+      return dropdown;
+    };
+
+    const renderResults = (items, query) => {
+      const dd = ensureDropdown();
+      if(!items.length){
+        dd.innerHTML = `<div style="padding:14px;font-size:11.5px;color:var(--text3);text-align:center;">Sin resultados para "${esc(query)}"</div>`;
+      } else {
+        dd.innerHTML = items.map((it, i) => `
+          <div class="search-result-item" data-action='${esc(JSON.stringify(it.action))}' style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:6px;cursor:pointer;transition:background 120ms;${i > 0 ? 'border-top:1px solid var(--border);' : ''}">
+            <div style="width:26px;height:26px;border-radius:50%;background:var(--card3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;">${it.icon}</div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:12.5px;color:var(--text);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(it.title)}</div>
+              <div style="font-size:10.5px;color:var(--text3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'Geist Mono',monospace;letter-spacing:0.2px;">${esc(it.subtitle)}</div>
+            </div>
+            ${it.badge ? `<span style="font-size:9px;font-family:'Geist Mono',monospace;color:var(--text3);background:var(--card3);padding:2px 6px;border-radius:4px;letter-spacing:0.4px;text-transform:uppercase;">${esc(it.badge)}</span>` : ''}
+          </div>
+        `).join('');
+        dd.querySelectorAll('.search-result-item').forEach(el => {
+          el.addEventListener('mouseenter', () => el.style.background = 'var(--card3)');
+          el.addEventListener('mouseleave', () => el.style.background = '');
+          el.addEventListener('click', () => {
+            try {
+              const action = JSON.parse(el.dataset.action);
+              if(action.type === 'go') window.go?.(action.view);
+              else if(action.type === 'appt') window.showApptDetail?.(action.id);
+              else if(action.type === 'lead') {
+                window.go?.('aria');
+                setTimeout(() => window.ariaTab?.('contactos'), 80);
+              }
+              window._closeTopnavSearch();
+            } catch(_){}
+          });
+        });
+      }
+      dd.style.display = 'block';
+    };
+
+    const COMMANDS = [
+      { keywords:['resumen','inicio','brief','home'], title:'Ir a Resumen', subtitle:'Vista principal · KPIs + chart + próximas citas', icon:'📊', view:'brief' },
+      { keywords:['agenda','citas','calendario'], title:'Ir a Agenda', subtitle:'Calendario + lista de citas', icon:'📅', view:'agenda' },
+      { keywords:['aria','conversaciones','contactos','chat','whatsapp'], title:'Ir a ARIA', subtitle:'Conversaciones · Contactos · Automatización', icon:'🤖', view:'aria' },
+      { keywords:['ingresos','revenue','pagos','dinero'], title:'Ir a Ingresos', subtitle:'KPIs HOY/SEMANA/MES + chart + historial', icon:'💰', view:'ingresos' },
+      { keywords:['publicidad','ads','meta','campañas paid'], title:'Ir a Publicidad', subtitle:'ROI por campaña de ads', icon:'📈', view:'publicidad' },
+      { keywords:['crm','clientes','pacientes'], title:'Ir a CRM 360', subtitle:'LTV por paciente', icon:'👥', view:'crm' },
+      { keywords:['campañas','campaigns','email blast'], title:'Ir a Campañas', subtitle:'Email broadcasts + reactivación', icon:'📣', view:'campaigns' },
+      { keywords:['reportes','reports'], title:'Ir a Reportes', subtitle:'Reportes mensuales PDF', icon:'📄', view:'reports' },
+      { keywords:['facturacion','billing','suscripcion','plan'], title:'Ir a Facturación', subtitle:'Plan + invoices', icon:'💳', view:'billing' },
+      { keywords:['configuracion','settings','ajustes','setup','perfil'], title:'Ir a Configuración', subtitle:'Datos del negocio · horarios · servicios', icon:'⚙', view:'settings' },
+      { keywords:['funnel','embudo','conversion'], title:'Ir a Funnel + Diagnóstico', subtitle:'Embudo lead → cita → pago', icon:'🔍', view:'funnel' },
+    ];
+
+    let searchTimer;
+    const doSearch = async (query) => {
+      query = query.trim();
+      if(!query){
+        if(dropdown) dropdown.style.display = 'none';
+        return;
+      }
+      const q = query.toLowerCase();
+
+      // 1) Comandos de navegación (instant)
+      const cmds = COMMANDS
+        .filter(c => c.keywords.some(k => k.includes(q) || q.includes(k)))
+        .slice(0, 4)
+        .map(c => ({
+          icon: c.icon,
+          title: c.title,
+          subtitle: c.subtitle,
+          badge: 'comando',
+          action: { type:'go', view: c.view }
+        }));
+
+      // 2) Búsqueda en BD: leads + appointments (con guard si no hay CLIENT_ID)
+      const items = [...cmds];
+      if(window.CLIENT_ID && query.length >= 2){
+        try {
+          const qEsc = q.replace(/[%_]/g, ''); // sanity
+          const [leads, appts] = await Promise.all([
+            sbGet('leads', `client_id=eq.${window.CLIENT_ID}&or=(nombre.ilike.*${qEsc}*,whatsapp.ilike.*${qEsc}*,email.ilike.*${qEsc}*)&select=id,nombre,whatsapp,email,intent_score,status&limit=5`).catch(() => []),
+            sbGet('appointments', `client_id=eq.${window.CLIENT_ID}&or=(nombre.ilike.*${qEsc}*,servicio.ilike.*${qEsc}*)&select=id,nombre,servicio,fecha,hora,estado&order=fecha.desc&limit=5`).catch(() => []),
+          ]);
+          leads.forEach(l => {
+            const tags = [];
+            if(l.intent_score >= 80) tags.push('HOT');
+            if(l.status) tags.push(l.status);
+            items.push({
+              icon: '👤',
+              title: l.nombre || l.email || l.whatsapp || 'Sin nombre',
+              subtitle: `${l.whatsapp || ''}${l.email ? ' · ' + l.email : ''}`.trim() || 'sin contacto',
+              badge: 'contacto',
+              action: { type:'lead', id: l.id }
+            });
+          });
+          appts.forEach(a => {
+            const horaFmt = (a.hora || '').slice(0,5);
+            items.push({
+              icon: '📅',
+              title: a.nombre || 'Sin nombre',
+              subtitle: `${a.servicio || ''} · ${a.fecha || ''} ${horaFmt} · ${a.estado}`,
+              badge: 'cita',
+              action: { type:'appt', id: a.id }
+            });
+          });
+        } catch(err){
+          console.warn('[search] DB error', err);
+        }
+      }
+      renderResults(items, query);
+    };
+
+    input.addEventListener('input', e => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => doSearch(e.target.value), 220);
+    });
+    input.addEventListener('focus', () => {
+      if(input.value.trim()) doSearch(input.value);
+    });
+
+    window._closeTopnavSearch = () => {
+      if(dropdown) dropdown.style.display = 'none';
+      input.blur();
+    };
+    // Click fuera del input/dropdown cierra
+    document.addEventListener('click', e => {
+      if(!e.target.closest('#topnav-search-input') && !e.target.closest('#topnav-search-results')) {
+        if(dropdown) dropdown.style.display = 'none';
+      }
+    });
+  };
+
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
 
 // ============================================
 // TOPNAV GROUP DROPDOWNS (Commit 4.5)
@@ -5132,12 +5290,14 @@ window.renderBriefBarChart = function(monthKey){
   setEl('brief-axis-mid',   '15 ' + monthAbbr);
   setEl('brief-axis-end',   days + ' ' + monthAbbr);
 
-  // Render bars
+  // v2.3.9 — Render bars con stagger animation (cada bar entra ~12ms después de la previa).
+  // Las dim/empty bars usan height fija del CSS (10px y 14px respectivamente · ya no inline).
   chart.innerHTML = '';
   for(let d = 1; d <= days; d++){
     const value = values[d - 1];
     const bar = document.createElement('div');
     bar.className = 'bar';
+    bar.style.animationDelay = (d * 12) + 'ms'; // stagger profesional
     const dateStr = `${d} ${monthAbbr}`;
     if(isCurrentMonth && d > today){
       // Día futuro = empty
@@ -5146,14 +5306,13 @@ window.renderBriefBarChart = function(monthKey){
       bar.dataset.v = '—';
       bar.dataset.c = 'aún no transcurrido';
     } else if(value === 0){
-      // Día sin ingresos
+      // Día sin ingresos · usa height del CSS (10px uniforme)
       bar.classList.add('dim');
-      bar.style.height = '6%';
       bar.dataset.d = dateStr;
       bar.dataset.v = monedaSym + '0';
       bar.dataset.c = 'sin ingresos';
     } else {
-      const pct = Math.max(8, Math.round((value / max) * 100));
+      const pct = Math.max(12, Math.round((value / max) * 100));
       bar.style.height = pct + '%';
       if(isCurrentMonth && d === today) bar.classList.add('today');
       bar.dataset.d = dateStr;
@@ -5256,12 +5415,13 @@ window.renderIngresosBarChart = function(monthKey){
   setEl('ing-axis-mid',   '15 ' + monthAbbr);
   setEl('ing-axis-end',   days + ' ' + monthAbbr);
 
-  // Render bars
+  // v2.3.9 — Mismo render profesional que el Brief chart (stagger + dim/empty del CSS)
   chart.innerHTML = '';
   for(let d = 1; d <= days; d++){
     const value = values[d - 1];
     const bar = document.createElement('div');
     bar.className = 'bar';
+    bar.style.animationDelay = (d * 12) + 'ms';
     const dateStr = `${d} ${monthAbbr}`;
     if(isCurrentMonth && d > today){
       bar.classList.add('empty');
@@ -5270,12 +5430,11 @@ window.renderIngresosBarChart = function(monthKey){
       bar.dataset.c = 'aún no transcurrido';
     } else if(value === 0){
       bar.classList.add('dim');
-      bar.style.height = '6%';
       bar.dataset.d = dateStr;
       bar.dataset.v = monedaSym + '0';
       bar.dataset.c = 'sin ingresos';
     } else {
-      const pct = Math.max(8, Math.round((value / max) * 100));
+      const pct = Math.max(12, Math.round((value / max) * 100));
       bar.style.height = pct + '%';
       if(isCurrentMonth && d === today) bar.classList.add('today');
       bar.dataset.d = dateStr;
