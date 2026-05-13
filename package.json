@@ -1,7 +1,7 @@
 {
   "name": "dominio-system",
   "productName": "Dominio System",
-  "version": "2.3.7",
+  "version": "2.3.8",
   "description": "Dashboard de rendimiento para clientes de Dominio System",
   "main": "main.js",
   "author": {

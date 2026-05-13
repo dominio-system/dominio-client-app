@@ -872,15 +872,34 @@ window.loadBriefData = async function(){
     const ariaPaidCount = ariaPaid.length;
     const ariaPaidRevCents = ariaPaid.reduce((s, a) => s + (a.neto_cents || a.precio_cents || 0), 0);
 
-    // Revenue agregado por mes Y por día (Commit 6: bars chart con month nav)
+    // v2.3.8 — Revenue agregado por mes/día usando TZ del cliente (NO la del browser).
+    // Antes usábamos d.getDate() que retorna el día en TZ local del browser ·
+    // si el browser estaba en una TZ con offset distinto al cliente, las citas
+    // pagadas en horas cercanas a medianoche podían caer al día equivocado, y
+    // el chart del Resumen renderizaba la barra en la posición errónea.
+    // Ahora usamos Intl.DateTimeFormat con la TZ del cliente (clients.timezone)
+    // para extraer el día/mes/año exactos como los ve el dueño del negocio.
     const revenueByMonth = {};
     const revenueByMonthDay = {}; // { 'YYYY-MM': { 1: cents, 2: cents, ... } }
     const apptCountByMonthDay = {}; // { 'YYYY-MM': { 1: count, ... } }
     let totalRev30 = 0;
+    const clientTz = (typeof window.getTZ === 'function') ? window.getTZ() : 'America/Mexico_City';
+    // Reuse formatter para perf (1 instance vs N)
+    const ymdFmt = new Intl.DateTimeFormat('en-CA', {
+      timeZone: clientTz,
+      year: 'numeric', month: '2-digit', day: '2-digit'
+    });
+    const partsToYmd = (parts) => {
+      const out = {};
+      parts.forEach(p => { if(p.type !== 'literal') out[p.type] = p.value; });
+      return out;
+    };
     paidAppts180.forEach(a => {
       const d = new Date(a.paid_at);
-      const monthKey = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-      const day = d.getDate();
+      if(isNaN(d.getTime())) return; // ignorar fechas inválidas
+      const ymd = partsToYmd(ymdFmt.formatToParts(d));
+      const monthKey = `${ymd.year}-${ymd.month}`;
+      const day = parseInt(ymd.day, 10);
       const cents = a.neto_cents || a.precio_cents || 0;
       revenueByMonth[monthKey] = (revenueByMonth[monthKey] || 0) + cents;
       if(!revenueByMonthDay[monthKey]) revenueByMonthDay[monthKey] = {};
@@ -889,7 +908,8 @@ window.loadBriefData = async function(){
       apptCountByMonthDay[monthKey][day] = (apptCountByMonthDay[monthKey][day] || 0) + 1;
       if(now - d < 30 * 864e5) totalRev30 += cents;
     });
-    // Guardamos en window para que briefChangeMonth() pueda re-renderizar sin re-fetch
+    // v2.3.8 · reasignación completa (no merge) para invalidar cache stale
+    window._briefChartData = null;
     window._briefChartData = { revenueByMonthDay, apptCountByMonthDay, monedaSym: null };
 
     const moneda = window.currentClient?.moneda || 'USD';
@@ -2226,20 +2246,32 @@ async function loadIngresos(/* days arg legacy · ignorado en v2.2.5 */){
     // ── Chart cleanup ──
     if(_ingresosChart){ try { _ingresosChart.destroy?.(); } catch(_){} _ingresosChart = null; }
 
-    // Build revenueByMonthDay + apptCountByMonthDay desde allYear
-    // (también guardamos `allPaid` para que updateIngresosKpisByMethod() filtre por mes)
+    // v2.3.8 · Build revenueByMonthDay usando TZ del cliente (consistencia con Brief)
     const revenueByMonthDay = {};
     const apptCountByMonthDay = {};
+    const clientTz2 = (typeof window.getTZ === 'function') ? window.getTZ() : 'America/Mexico_City';
+    const ymdFmt2 = new Intl.DateTimeFormat('en-CA', {
+      timeZone: clientTz2,
+      year: 'numeric', month: '2-digit', day: '2-digit'
+    });
+    const partsToYmd2 = (parts) => {
+      const out = {};
+      parts.forEach(p => { if(p.type !== 'literal') out[p.type] = p.value; });
+      return out;
+    };
     allYear.forEach(a => {
       const d = new Date(a.paid_at);
-      const monthKey = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-      const day = d.getDate();
+      if(isNaN(d.getTime())) return;
+      const ymd = partsToYmd2(ymdFmt2.formatToParts(d));
+      const monthKey = `${ymd.year}-${ymd.month}`;
+      const day = parseInt(ymd.day, 10);
       const cents = a.neto_cents || a.precio_cents || 0;
       if(!revenueByMonthDay[monthKey]) revenueByMonthDay[monthKey] = {};
       if(!apptCountByMonthDay[monthKey]) apptCountByMonthDay[monthKey] = {};
       revenueByMonthDay[monthKey][day] = (revenueByMonthDay[monthKey][day] || 0) + cents;
       apptCountByMonthDay[monthKey][day] = (apptCountByMonthDay[monthKey][day] || 0) + 1;
     });
+    window._ingresosChartData = null;
     window._ingresosChartData = { revenueByMonthDay, apptCountByMonthDay, allPaid: allYear, monedaSym: moneda };
 
     // Render del mes actual al cargar (o el último seleccionado)
