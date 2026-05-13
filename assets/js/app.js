@@ -2678,17 +2678,40 @@ window.confirmMarkAsPaid = async function(id){
     return;
   }
   try {
-    await sbPatch('appointments', id, {
+    // v2.3.7 FIX · `neto_cents` es columna GENERATED ALWAYS en Postgres:
+    //   neto_cents = round(precio_cents * (1 - descuento_pct/100))
+    // No se puede UPDATE directo · cualquier intento da 428C9 y rompe TODO el patch.
+    // Para que el neto cobrado refleje el monto real, ajustamos descuento_pct
+    // (puede ser negativo si pagaron mas que el precio original = recargo/propina).
+    const apts = await sbGet('appointments', `id=eq.${id}&select=precio_cents`);
+    const precioOriginal = apts[0]?.precio_cents || 0;
+    const montoCents = Math.round(monto * 100);
+
+    const patch = {
       pagado: true,
       metodo_pago: metodo,
-      neto_cents: Math.round(monto * 100),
       paid_at: new Date().toISOString(),
       estado: 'completed'
-    });
+    };
+
+    if(precioOriginal > 0 && montoCents !== precioOriginal){
+      // Pago distinto del precio original · descuento_pct hace match con el cobrado
+      patch.descuento_pct = +((1 - montoCents / precioOriginal) * 100).toFixed(2);
+    } else if(precioOriginal === 0 && montoCents > 0){
+      // Cita sin precio asignado · setear precio_cents directo, descuento 0
+      patch.precio_cents = montoCents;
+      patch.descuento_pct = 0;
+    }
+    // Si monto == precio original, no tocamos ninguno (descuento queda igual)
+
+    await sbPatch('appointments', id, patch);
     closeModal();
     window.toast('✓ Pago registrado', `${(window.currentClient?.moneda || 'USD')} ${monto.toFixed(2)} · ${metodo}`, 'success');
     // Realtime refresca
-  } catch(err){ window.toast('Error', err.message, 'err'); }
+  } catch(err){
+    window.toast('Error', err.message, 'err');
+    window.electronAPI?.sentryCapture?.(err);
+  }
 };
 
 window.showDayAppts = async function(date){
