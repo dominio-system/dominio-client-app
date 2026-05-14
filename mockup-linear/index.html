@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dominio System · ARIA agenda por vos.</title>
-<meta name="description" content="ARIA atiende tu WhatsApp y agenda citas automático. 14 días gratis, sin tarjeta, setup en 5 minutos.">
+<title>Dominio System · ARIA agenda por ti.</title>
+<meta name="description" content="ARIA atiende tu WhatsApp y agenda citas automático. Sin tarjeta. Setup 72h.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -14,6 +14,7 @@
   :root {
     --bg: #0c0c0c;
     --bg-elevated: #141414;
+    --bg-card: #1a1a1a;
     --border: rgba(255,255,255,0.07);
     --border-strong: rgba(255,255,255,0.14);
     --text: #f0f0f0;
@@ -21,7 +22,10 @@
     --text-faint: #4a4a4a;
     --accent: #e8e8e8;
     --green: #4ade80;
-    --max-width: 720px;
+    --green-dim: rgba(74, 222, 128, 0.15);
+    --red: #f87171;
+    --yellow: #fbbf24;
+    --warm-yellow: #ffd166;
   }
 
   html {
@@ -34,312 +38,556 @@
     scroll-behavior: smooth;
   }
 
-  body {
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
+  body { min-height: 100vh; overflow-x: hidden; position: relative; }
 
-  .mono {
-    font-family: 'JetBrains Mono', 'SF Mono', monospace;
-  }
-
+  .mono { font-family: 'JetBrains Mono', 'SF Mono', monospace; }
   a { color: inherit; text-decoration: none; }
   button { font-family: inherit; cursor: pointer; }
 
-  /* ── NAV ─────────────────────────────────────────────── */
+  /* ── Cursor glow (A1) ──── */
+  .cursor-glow {
+    position: fixed;
+    width: 480px; height: 480px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,255,0.08), transparent 60%);
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    z-index: 1;
+    opacity: 0;
+    transition: opacity .4s;
+    mix-blend-mode: screen;
+    filter: blur(40px);
+  }
+  body.cursor-active .cursor-glow { opacity: 1; }
+  @media (max-width: 720px) { .cursor-glow { display: none; } }
+
+  /* ── NAV ──── */
   nav.top {
     position: fixed;
     top: 0; left: 0; right: 0;
     z-index: 50;
-    padding: 24px 40px;
+    padding: 20px 40px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     backdrop-filter: blur(20px);
-    background: rgba(12,12,12,0.6);
+    background: rgba(12,12,12,0.7);
     border-bottom: 1px solid transparent;
-    transition: border-color .3s;
+    transition: border-color .3s, padding .3s;
   }
-  nav.top.scrolled { border-bottom-color: var(--border); }
+  nav.top.scrolled { border-bottom-color: var(--border); padding: 14px 40px; }
 
   .brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 14px;
-    font-weight: 500;
-    letter-spacing: -0.2px;
+    display: flex; align-items: center; gap: 10px;
+    font-size: 14px; font-weight: 500; letter-spacing: -0.2px;
   }
   .brand-mark {
     width: 24px; height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; align-items: center; justify-content: center;
     border: 1px solid var(--border-strong);
     border-radius: 6px;
     background: var(--bg-elevated);
   }
 
+  .nav-status {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; color: var(--text-faint); letter-spacing: 1px;
+    margin-left: 24px;
+  }
+  .nav-status::before {
+    content: '';
+    width: 6px; height: 6px;
+    background: var(--green); border-radius: 50%;
+    box-shadow: 0 0 8px var(--green);
+    animation: pulseDot 2s ease-in-out infinite;
+  }
+  @keyframes pulseDot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
   .nav-links {
-    display: flex;
-    gap: 32px;
-    align-items: center;
-    font-size: 13px;
-    font-weight: 400;
-    color: var(--text-muted);
+    display: flex; gap: 28px; align-items: center;
+    font-size: 13px; color: var(--text-muted);
   }
   .nav-links a { transition: color .2s; }
   .nav-links a:hover { color: var(--text); }
   .nav-cta {
-    padding: 7px 14px;
-    background: var(--accent);
-    color: var(--bg);
-    border-radius: 6px;
-    font-weight: 500;
-    font-size: 13px;
-    transition: opacity .2s;
+    padding: 8px 16px;
+    background: var(--accent); color: var(--bg);
+    border-radius: 7px;
+    font-weight: 500; font-size: 13px;
+    transition: opacity .2s, transform .15s;
   }
-  .nav-cta:hover { opacity: .85; }
+  .nav-cta:hover { opacity: .88; transform: translateY(-1px); }
 
-  /* ── HERO ────────────────────────────────────────────── */
+  /* ── HERO ──── */
   section.hero {
     min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 120px 32px 60px;
-    text-align: center;
-    position: relative;
+    padding: 120px 40px 80px;
+    display: flex; align-items: center;
+    position: relative; overflow: hidden;
   }
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.1fr;
+    gap: 80px;
+    align-items: center;
+    max-width: 1280px;
+    margin: 0 auto;
+    width: 100%;
+  }
+  .hero-left { position: relative; z-index: 2; }
 
   .eyebrow {
-    font-size: 11px;
-    letter-spacing: 2.5px;
-    color: var(--text-muted);
-    font-weight: 500;
-    margin-bottom: 48px;
-    display: inline-flex;
-    align-items: center;
-    gap: 14px;
+    font-size: 11px; letter-spacing: 2.5px;
+    color: var(--text-muted); font-weight: 500;
+    margin-bottom: 32px;
+    display: inline-flex; align-items: center; gap: 12px;
   }
-  .eyebrow::before, .eyebrow::after {
+  .eyebrow::before {
     content: '';
-    width: 24px;
-    height: 1px;
-    background: var(--text-faint);
+    width: 6px; height: 6px;
+    background: var(--green); border-radius: 50%;
+    box-shadow: 0 0 6px var(--green);
   }
 
   h1.hero-h1 {
-    font-size: clamp(48px, 9vw, 112px);
-    font-weight: 600;
-    line-height: 1.0;
-    letter-spacing: -0.04em;
-    max-width: var(--max-width);
-    margin-bottom: 32px;
+    font-size: clamp(48px, 6.5vw, 88px);
+    font-weight: 600; line-height: 1.02;
+    letter-spacing: -0.04em; margin-bottom: 28px;
   }
-  h1.hero-h1 em {
-    font-style: italic;
-    font-weight: 400;
-    color: var(--text-muted);
-  }
+  h1.hero-h1 em { font-style: italic; font-weight: 400; color: var(--text-muted); }
 
   .hero-sub {
-    font-size: clamp(16px, 2vw, 19px);
-    color: var(--text-muted);
-    max-width: 480px;
-    line-height: 1.5;
-    margin-bottom: 56px;
-    font-weight: 400;
+    font-size: clamp(17px, 1.7vw, 20px);
+    color: var(--text-muted); line-height: 1.5;
+    margin-bottom: 36px; font-weight: 400; max-width: 480px;
+  }
+  .hero-sub .word {
+    display: inline-block; opacity: 0;
+    transform: translateY(8px);
+    animation: typeIn .5s forwards cubic-bezier(.16,1,.3,1);
+  }
+  @keyframes typeIn { to { opacity: 1; transform: translateY(0); } }
+
+  .hero-ctas {
+    display: flex; gap: 16px; align-items: center;
+    margin-bottom: 24px; flex-wrap: wrap;
   }
 
   .cta-primary {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    padding: 14px 28px;
-    background: var(--accent);
-    color: var(--bg);
-    border: none;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 500;
-    letter-spacing: -0.1px;
-    transition: transform .15s, opacity .15s, box-shadow .2s;
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 14px 24px;
+    background: var(--accent); color: var(--bg);
+    border: none; border-radius: 8px;
+    font-size: 14px; font-weight: 500; letter-spacing: -0.1px;
+    transition: transform .15s cubic-bezier(.16,1,.3,1), opacity .15s, box-shadow .2s;
     box-shadow: 0 0 0 1px rgba(255,255,255,0.06);
+    position: relative;
   }
-  .cta-primary:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 10px 40px -10px rgba(255,255,255,0.2);
-  }
-  .cta-primary:active { transform: translateY(0); }
-  .cta-primary .arrow {
-    transition: transform .2s;
-  }
-  .cta-primary:hover .arrow { transform: translateX(3px); }
+  .cta-primary:hover { box-shadow: 0 14px 50px -10px rgba(255,255,255,0.25); }
+  .cta-primary:active { transform: scale(.97); }
+  .cta-primary .arrow { transition: transform .25s cubic-bezier(.16,1,.3,1); }
+  .cta-primary:hover .arrow { transform: translateX(4px); }
 
-  .trust-line {
-    margin-top: 24px;
-    font-size: 12px;
-    color: var(--text-faint);
-    letter-spacing: 0.3px;
+  .cta-secondary {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 13px 22px;
+    background: transparent; color: var(--text);
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    font-size: 14px; font-weight: 500;
+    transition: border-color .2s, background .2s;
+  }
+  .cta-secondary:hover {
+    border-color: var(--text-muted);
+    background: var(--bg-elevated);
+  }
+  .cta-secondary .chat-icon {
+    width: 16px; height: 16px; border-radius: 4px;
+    background: var(--green);
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--bg); font-size: 9px; font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
   }
 
-  .scroll-hint {
-    position: absolute;
-    bottom: 40px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 10px;
-    letter-spacing: 2px;
-    color: var(--text-faint);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    animation: float 3s ease-in-out infinite;
+  .trust-strip {
+    display: flex; gap: 24px; flex-wrap: wrap;
+    margin-top: 8px;
+    font-size: 12px; color: var(--text-muted);
   }
-  @keyframes float {
-    0%, 100% { transform: translateX(-50%) translateY(0); }
-    50% { transform: translateX(-50%) translateY(8px); }
+  .trust-strip span { display: inline-flex; align-items: center; gap: 8px; }
+  .trust-strip .check {
+    width: 14px; height: 14px; border-radius: 50%;
+    border: 1px solid var(--green);
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--green); font-size: 9px; font-weight: 700;
   }
-  .scroll-hint .line {
-    width: 1px;
+
+  .micro-stats {
+    display: flex; gap: 32px; flex-wrap: wrap;
+    margin-top: 28px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; color: var(--text-faint); letter-spacing: 0.5px;
+  }
+  .micro-stats span strong { color: var(--text); font-weight: 500; }
+
+  /* ── Dashboard Mockup ──── */
+  .hero-right { position: relative; perspective: 1500px; z-index: 2; }
+
+  .dashboard-window {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-strong);
+    border-radius: 14px;
+    box-shadow:
+      0 60px 120px -30px rgba(0,0,0,0.7),
+      0 30px 60px -15px rgba(0,0,0,0.5),
+      inset 0 1px 0 rgba(255,255,255,0.05);
+    overflow: hidden;
+    transform-style: preserve-3d;
+    will-change: transform;
+    animation: floatDashboard 8s ease-in-out infinite;
+    transition: transform .4s cubic-bezier(.16,1,.3,1);
+  }
+  @keyframes floatDashboard {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+
+  .dashboard-titlebar {
     height: 32px;
-    background: linear-gradient(to bottom, transparent, var(--text-faint));
+    background: linear-gradient(to bottom, #1c1c1c, #161616);
+    display: flex; align-items: center;
+    padding: 0 14px;
+    border-bottom: 1px solid var(--border);
+    gap: 8px;
+  }
+  .dashboard-dot { width: 11px; height: 11px; border-radius: 50%; }
+  .dot-red { background: #ff5f57; }
+  .dot-yellow { background: #febc2e; }
+  .dot-green { background: #28c840; }
+  .dashboard-titlebar .title {
+    margin-left: 12px;
+    font-size: 11px;
+    color: var(--text-faint);
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.5px;
   }
 
-  /* ── STACK SECTION ─────────────────────────────────────── */
-  section.stack {
-    padding: 120px 32px 80px;
-    text-align: center;
-    border-top: 1px solid var(--border);
+  .dashboard-tabs {
+    display: flex; border-bottom: 1px solid var(--border);
+    padding: 0 16px;
+    background: rgba(255,255,255,0.01);
   }
-  .section-label {
-    font-size: 10px;
-    letter-spacing: 3px;
+  .dashboard-tab {
+    padding: 14px 12px 12px;
+    font-size: 12px; color: var(--text-faint);
+    border-bottom: 2px solid transparent;
+    margin-right: 4px; font-weight: 500;
+    transition: color .2s;
+  }
+  .dashboard-tab.active { color: var(--text); border-bottom-color: var(--accent); }
+
+  .dashboard-body { padding: 20px; position: relative; }
+
+  .kpi-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    margin-bottom: 16px;
+  }
+  .kpi-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    position: relative; overflow: hidden;
+    transition: transform .3s, border-color .3s;
+  }
+  .kpi-card::before {
+    content: ''; position: absolute;
+    top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border-strong), transparent);
+    opacity: 0; transition: opacity .3s;
+  }
+  .kpi-card:hover::before { opacity: 1; }
+  .kpi-card:hover { border-color: var(--border-strong); transform: translateY(-2px); }
+  .kpi-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; letter-spacing: 1.5px;
     color: var(--text-faint);
-    font-weight: 500;
-    margin-bottom: 56px;
+    margin-bottom: 6px;
   }
-  .stack-grid {
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 48px;
-    max-width: 720px;
-    margin: 0 auto;
-    align-items: center;
+  .kpi-value {
+    font-size: 22px; font-weight: 600;
+    letter-spacing: -0.02em; line-height: 1;
+    margin-bottom: 4px;
   }
-  .stack-item {
-    font-size: 13px;
-    color: var(--text-faint);
-    font-weight: 500;
+  .kpi-delta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; color: var(--green);
     letter-spacing: 0.3px;
-    transition: color .3s;
   }
-  .stack-item:hover { color: var(--text-muted); }
-  @media (max-width: 720px) {
-    .stack-grid { grid-template-columns: repeat(3, 1fr); gap: 32px 24px; }
+  .kpi-delta.up::before { content: '↑ '; }
+
+  .chart-area {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    height: 110px;
+    display: flex; align-items: flex-end;
+    gap: 5px; position: relative;
+  }
+  .chart-bar {
+    flex: 1;
+    background: linear-gradient(to top, rgba(232,232,232,0.35), rgba(232,232,232,0.8));
+    border-radius: 3px 3px 0 0;
+    min-height: 20%;
+    transform-origin: bottom;
+    animation: barGrow .9s cubic-bezier(.16,1,.3,1) forwards;
+    opacity: 0;
+  }
+  .chart-bar:nth-child(2) { height: 28%; animation-delay: 1.5s; }
+  .chart-bar:nth-child(3) { height: 32%; animation-delay: 1.55s; }
+  .chart-bar:nth-child(4) { height: 30%; animation-delay: 1.6s; }
+  .chart-bar:nth-child(5) { height: 36%; animation-delay: 1.65s; }
+  .chart-bar:nth-child(6) { height: 30%; animation-delay: 1.7s; }
+  .chart-bar:nth-child(7) { height: 48%; animation-delay: 1.75s; }
+  .chart-bar:nth-child(8) { height: 52%; animation-delay: 1.8s; }
+  .chart-bar:nth-child(9) { height: 64%; animation-delay: 1.85s; }
+  .chart-bar:nth-child(10) { height: 72%; animation-delay: 1.9s; }
+  .chart-bar:nth-child(11) { height: 88%; animation-delay: 1.95s; }
+  .chart-bar:nth-child(12) { height: 96%; animation-delay: 2s; }
+  @keyframes barGrow {
+    from { transform: scaleY(0); opacity: 0; }
+    to { transform: scaleY(1); opacity: 1; }
+  }
+  .chart-label {
+    position: absolute; top: 14px; left: 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; letter-spacing: 1.5px;
+    color: var(--text-faint);
   }
 
-  /* ── STEPS SECTION ───────────────────────────────────── */
-  section.steps {
-    padding: 140px 32px;
-    max-width: 920px;
-    margin: 0 auto;
+  .aria-overlay {
+    position: absolute;
+    bottom: 20px; right: 20px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-strong);
+    border-radius: 12px;
+    padding: 14px 16px;
+    width: 240px;
+    box-shadow: 0 20px 50px -10px rgba(0,0,0,0.6);
+    opacity: 0;
+    transform: translateY(20px);
+    animation: ariaAppear .8s cubic-bezier(.16,1,.3,1) 2.5s forwards;
+  }
+  @keyframes ariaAppear { to { opacity: 1; transform: translateY(0); } }
+  .aria-overlay-tag {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px;
+    background: var(--green-dim);
+    color: var(--green);
+    padding: 2px 6px; border-radius: 4px;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+    font-weight: 600;
+  }
+  .aria-overlay-text { font-size: 12px; color: var(--text); line-height: 1.4; }
+  .aria-overlay-check { color: var(--green); margin-left: 4px; }
+  .aria-overlay-time {
+    margin-top: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; color: var(--text-faint);
+  }
+
+  /* ── Section common ──── */
+  section { padding: 120px 40px; position: relative; }
+  .container { max-width: 1080px; margin: 0 auto; }
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: 3px;
+    color: var(--text-faint); font-weight: 500;
+    margin-bottom: 24px;
   }
   h2 {
-    font-size: clamp(36px, 5vw, 56px);
-    font-weight: 500;
-    line-height: 1.05;
-    letter-spacing: -0.03em;
-    margin-bottom: 80px;
-    max-width: 540px;
+    font-size: clamp(36px, 4.5vw, 56px);
+    font-weight: 500; line-height: 1.05;
+    letter-spacing: -0.03em; margin-bottom: 24px;
   }
-  h2 em {
-    font-style: italic;
-    font-weight: 400;
-    color: var(--text-muted);
+  h2 em { font-style: italic; font-weight: 400; color: var(--text-muted); }
+  .section-sub {
+    font-size: 17px; color: var(--text-muted);
+    line-height: 1.5; max-width: 560px;
+    margin-bottom: 64px;
   }
 
-  .step {
-    display: grid;
-    grid-template-columns: 80px 1fr;
-    gap: 40px;
-    padding: 48px 0;
+  /* ── STACK ──── */
+  section.stack {
     border-top: 1px solid var(--border);
-    align-items: start;
+    text-align: center;
+    padding: 80px 40px;
+  }
+  .stack-grid {
+    display: grid; grid-template-columns: repeat(6, 1fr);
+    gap: 40px; max-width: 720px;
+    margin: 32px auto 0; align-items: center;
+  }
+  .stack-item {
+    font-size: 13px; color: var(--text-faint);
+    font-weight: 500; letter-spacing: 0.3px;
+    transition: color .3s, transform .3s;
+    animation: stackPulse 8s ease-in-out infinite;
+  }
+  .stack-item:nth-child(1) { animation-delay: 0s; }
+  .stack-item:nth-child(2) { animation-delay: 1.3s; }
+  .stack-item:nth-child(3) { animation-delay: 2.6s; }
+  .stack-item:nth-child(4) { animation-delay: 3.9s; }
+  .stack-item:nth-child(5) { animation-delay: 5.2s; }
+  .stack-item:nth-child(6) { animation-delay: 6.5s; }
+  @keyframes stackPulse {
+    0%, 90%, 100% { opacity: 0.45; }
+    5%, 10% { opacity: 0.95; }
+  }
+  .stack-item:hover { color: var(--text); transform: translateY(-2px); }
+
+  /* ── METRICS ──── */
+  section.metrics { border-top: 1px solid var(--border); }
+  .metrics-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 24px; margin-top: 56px;
+  }
+  .metric-card {
+    padding: 32px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--bg-elevated);
+    transition: border-color .3s, transform .3s;
+    position: relative; overflow: hidden;
+  }
+  .metric-card::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255,255,255,0.04), transparent 50%);
+    pointer-events: none; opacity: 0;
+    transition: opacity .3s;
+  }
+  .metric-card:hover::before { opacity: 1; }
+  .metric-card:hover { border-color: var(--border-strong); }
+  .metric-value {
+    font-size: clamp(36px, 4vw, 48px);
+    font-weight: 600; letter-spacing: -0.03em;
+    line-height: 1; margin-bottom: 12px;
+  }
+  .metric-unit { font-size: 20px; color: var(--text-muted); font-weight: 400; }
+  .metric-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; letter-spacing: 1.5px;
+    color: var(--text-faint);
+  }
+
+  /* ── SOCIAL PROOF ──── */
+  section.social-proof {
+    border-top: 1px solid var(--border);
+    text-align: center; padding: 100px 40px;
+  }
+  .logos-grid {
+    display: grid; grid-template-columns: repeat(6, 1fr);
+    gap: 48px; max-width: 920px;
+    margin: 48px auto 0; align-items: center;
+  }
+  .client-logo {
+    height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-faint);
+    font-size: 13px; font-weight: 600; letter-spacing: -0.2px;
+    opacity: 0.55;
+    transition: opacity .3s, color .3s;
+    font-style: italic;
+  }
+  .client-logo:hover { opacity: 1; color: var(--text-muted); }
+
+  /* ── STEPS ──── */
+  section.steps { border-top: 1px solid var(--border); }
+  .step {
+    display: grid; grid-template-columns: 80px 1fr;
+    gap: 40px; padding: 48px 0;
+    border-top: 1px solid var(--border);
+    align-items: start; position: relative;
   }
   .step:last-child { border-bottom: 1px solid var(--border); }
+  .step::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255,255,255,0.025), transparent 50%);
+    pointer-events: none; opacity: 0; transition: opacity .3s;
+  }
+  .step:hover::before { opacity: 1; }
   .step-number {
-    font-size: 13px;
-    color: var(--text-faint);
-    font-weight: 400;
-    letter-spacing: 0.5px;
-    padding-top: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px; color: var(--text-faint);
+    padding-top: 8px; letter-spacing: 1px;
   }
   .step-content h3 {
-    font-size: 24px;
-    font-weight: 500;
-    letter-spacing: -0.02em;
-    margin-bottom: 12px;
+    font-size: 24px; font-weight: 500;
+    letter-spacing: -0.02em; margin-bottom: 12px;
   }
-  .step-content p {
-    font-size: 15px;
-    color: var(--text-muted);
-    line-height: 1.6;
-    max-width: 520px;
+  .step-content > p {
+    font-size: 15px; color: var(--text-muted);
+    line-height: 1.6; max-width: 580px;
+    margin-bottom: 18px;
   }
+  .step-bullets {
+    list-style: none;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .step-bullets li {
+    font-size: 13px; color: var(--text-faint);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .step-bullets li::before { content: '→'; color: var(--green); font-weight: 600; }
 
-  /* ── ARIA SECTION ─────────────────────────────────────── */
-  section.aria {
-    padding: 140px 32px;
-    text-align: center;
+  /* ── ARIA ──── */
+  section.aria-section {
     border-top: 1px solid var(--border);
+    text-align: center;
   }
-  .aria-container { max-width: 720px; margin: 0 auto; }
+  .aria-section .container { max-width: 720px; }
   .chat-preview {
-    margin-top: 80px;
+    margin-top: 64px;
     text-align: left;
     background: var(--bg-elevated);
     border: 1px solid var(--border);
     border-radius: 16px;
-    padding: 32px;
-    max-width: 480px;
-    margin-left: auto;
-    margin-right: auto;
+    padding: 28px;
+    max-width: 520px;
+    margin-left: auto; margin-right: auto;
+    box-shadow: 0 30px 80px -20px rgba(0,0,0,0.5);
   }
   .chat-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding-bottom: 20px;
+    display: flex; align-items: center; gap: 12px;
+    padding-bottom: 18px;
     border-bottom: 1px solid var(--border);
-    margin-bottom: 20px;
+    margin-bottom: 18px;
   }
   .chat-avatar {
-    width: 36px; height: 36px;
-    border-radius: 9px;
-    background: #25d366;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    width: 38px; height: 38px;
+    border-radius: 10px; background: #25d366;
+    display: flex; align-items: center; justify-content: center;
   }
   .chat-name { font-size: 14px; font-weight: 500; }
   .chat-status {
-    font-size: 11px;
-    color: var(--green);
-    font-family: 'JetBrains Mono', monospace;
-    margin-top: 2px;
+    font-size: 11px; color: var(--green);
+    font-family: 'JetBrains Mono', monospace; margin-top: 2px;
   }
   .chat-bubble {
-    padding: 12px 16px;
-    border-radius: 14px;
-    font-size: 14px;
-    line-height: 1.5;
-    margin-bottom: 12px;
-    max-width: 85%;
+    padding: 11px 16px; border-radius: 14px;
+    font-size: 14px; line-height: 1.5;
+    margin-bottom: 10px; max-width: 85%;
+    opacity: 0; transform: translateY(8px);
+    animation: bubbleIn .4s cubic-bezier(.16,1,.3,1) forwards;
   }
+  @keyframes bubbleIn { to { opacity: 1; transform: translateY(0); } }
   .chat-bubble.user {
     background: rgba(255,255,255,0.06);
     border: 1px solid var(--border);
@@ -348,172 +596,274 @@
   }
   .chat-bubble.aria {
     background: rgba(74, 222, 128, 0.08);
-    border: 1px solid rgba(74, 222, 128, 0.2);
+    border: 1px solid rgba(74, 222, 128, 0.18);
     border-bottom-left-radius: 4px;
   }
   .chat-bubble.aria::before {
     content: 'ARIA';
     display: inline-block;
     font-family: 'JetBrains Mono', monospace;
-    font-size: 9px;
-    letter-spacing: 1.5px;
-    background: rgba(74, 222, 128, 0.15);
-    padding: 2px 6px;
-    border-radius: 4px;
-    color: var(--green);
-    margin-right: 8px;
-    vertical-align: middle;
+    font-size: 9px; letter-spacing: 1.5px;
+    background: rgba(74, 222, 128, 0.2);
+    padding: 2px 6px; border-radius: 4px;
+    color: var(--green); margin-right: 8px;
+    vertical-align: middle; font-weight: 600;
   }
-  .chat-times {
-    display: block;
-    margin-top: 4px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    color: var(--text-muted);
+  .typing-dots {
+    display: inline-flex; gap: 4px; padding: 4px 0;
+  }
+  .typing-dots span {
+    width: 6px; height: 6px;
+    background: var(--text-muted);
+    border-radius: 50%;
+    animation: typingBounce 1s ease-in-out infinite;
+  }
+  .typing-dots span:nth-child(2) { animation-delay: .2s; }
+  .typing-dots span:nth-child(3) { animation-delay: .4s; }
+  @keyframes typingBounce {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+    30% { transform: translateY(-4px); opacity: 1; }
   }
 
-  /* ── PRICING SECTION ──────────────────────────────────── */
-  section.pricing {
-    padding: 140px 32px;
-    text-align: center;
-    border-top: 1px solid var(--border);
+  .chat-chips {
+    margin-top: 20px;
+    display: flex; flex-wrap: wrap; gap: 8px;
   }
-  .price-card {
-    margin-top: 64px;
-    max-width: 420px;
-    margin-left: auto;
-    margin-right: auto;
-    padding: 48px 40px;
+  .chat-chip {
+    padding: 8px 14px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    font-size: 12px; color: var(--text-muted);
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .chat-chip:hover {
+    border-color: var(--border-strong);
+    color: var(--text);
+    background: var(--bg-elevated);
+  }
+  .chat-chip:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ── USE CASES ──── */
+  section.use-cases { border-top: 1px solid var(--border); }
+  .scenarios-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 20px; margin-top: 56px;
+  }
+  .scenario-card {
+    padding: 28px;
     background: var(--bg-elevated);
     border: 1px solid var(--border);
+    border-radius: 14px;
+    transition: border-color .3s, transform .3s;
+    position: relative; overflow: hidden;
+  }
+  .scenario-card::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255,255,255,0.04), transparent 50%);
+    pointer-events: none; opacity: 0; transition: opacity .3s;
+  }
+  .scenario-card:hover { border-color: var(--border-strong); transform: translateY(-3px); }
+  .scenario-card:hover::before { opacity: 1; }
+  .scenario-time {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: 1.5px;
+    color: var(--green); margin-bottom: 16px;
+  }
+  .scenario-card h3 {
+    font-size: 18px; font-weight: 500;
+    letter-spacing: -0.01em; line-height: 1.3;
+    margin-bottom: 12px;
+  }
+  .scenario-card p { font-size: 13px; color: var(--text-muted); line-height: 1.55; }
+
+  /* ── PRICING ──── */
+  section.pricing {
+    border-top: 1px solid var(--border);
+    text-align: center;
+  }
+  .before-after {
+    margin: 56px auto 32px;
+    max-width: 720px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    text-align: left;
+  }
+  .ba-col {
+    padding: 24px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--bg-elevated);
+  }
+  .ba-col-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: 2px;
+    color: var(--text-faint); margin-bottom: 14px;
+  }
+  .ba-col.after .ba-col-label { color: var(--green); }
+  .ba-col ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  .ba-col li {
+    font-size: 13px; color: var(--text-muted);
+    display: flex; gap: 10px;
+  }
+  .ba-col.before li::before { content: '×'; color: var(--red); font-weight: 600; }
+  .ba-col.after li::before { content: '✓'; color: var(--green); font-weight: 600; }
+
+  .price-card {
+    margin: 32px auto 0;
+    max-width: 440px;
+    padding: 40px 36px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-strong);
     border-radius: 16px;
     text-align: left;
+    position: relative;
+    box-shadow: 0 30px 80px -20px rgba(0,0,0,0.5);
+  }
+  .founding-badge {
+    position: absolute;
+    top: -12px; left: 50%;
+    transform: translateX(-50%);
+    background: var(--warm-yellow);
+    color: var(--bg);
+    padding: 6px 14px;
+    border-radius: 100px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; font-weight: 700;
+    letter-spacing: 1.5px;
+    animation: badgePulse 2.5s ease-in-out infinite;
+  }
+  @keyframes badgePulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255,209,102,0.4); }
+    50% { box-shadow: 0 0 0 12px rgba(255,209,102,0); }
   }
   .price-tier {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 2px;
-    color: var(--text-faint);
-    margin-bottom: 24px;
+    font-size: 11px; letter-spacing: 2px;
+    color: var(--text-faint); margin-bottom: 18px;
   }
   .price-amount {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-    margin-bottom: 8px;
+    display: flex; align-items: baseline;
+    gap: 8px; margin-bottom: 4px;
   }
   .price-amount .num {
-    font-size: 56px;
-    font-weight: 500;
+    font-size: 56px; font-weight: 600;
     letter-spacing: -0.04em;
   }
-  .price-amount .period {
-    font-size: 14px;
-    color: var(--text-muted);
+  .price-amount .period { font-size: 14px; color: var(--text-muted); }
+  .price-annual { font-size: 13px; color: var(--text-muted); margin-bottom: 18px; }
+  .price-lock {
+    font-size: 12px; color: var(--warm-yellow);
+    margin-bottom: 28px; line-height: 1.4;
   }
-  .price-annual {
-    font-size: 13px;
-    color: var(--text-muted);
-    margin-bottom: 32px;
-  }
-  .price-features {
-    list-style: none;
-    margin-bottom: 32px;
-  }
+  .price-features { list-style: none; margin-bottom: 28px; }
   .price-features li {
-    padding: 10px 0;
+    padding: 9px 0;
     border-top: 1px solid var(--border);
-    font-size: 14px;
-    color: var(--text-muted);
-    display: flex;
-    align-items: center;
-    gap: 12px;
+    font-size: 14px; color: var(--text-muted);
+    display: flex; align-items: center; gap: 12px;
   }
   .price-features li::before {
-    content: '';
-    width: 4px;
-    height: 4px;
-    background: var(--text-muted);
-    border-radius: 50%;
-    flex-shrink: 0;
+    content: '✓'; color: var(--green);
+    font-size: 11px; flex-shrink: 0;
   }
-  .price-card .cta-primary {
-    width: 100%;
-    justify-content: center;
-  }
+  .price-card .cta-primary { width: 100%; justify-content: center; }
   .price-trust {
-    margin-top: 16px;
-    font-size: 11px;
-    color: var(--text-faint);
-    text-align: center;
+    margin-top: 14px; font-size: 11px;
+    color: var(--text-faint); text-align: center;
     font-family: 'JetBrains Mono', monospace;
     letter-spacing: 0.5px;
   }
 
-  /* ── FAQ SECTION ──────────────────────────────────────── */
-  section.faq {
-    padding: 140px 32px;
-    max-width: 720px;
-    margin: 0 auto;
+  /* ── TESTIMONIALS ──── */
+  section.testimonials { border-top: 1px solid var(--border); }
+  .quotes-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 20px; margin-top: 56px;
   }
+  .quote-card {
+    padding: 28px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    transition: border-color .3s, transform .3s;
+  }
+  .quote-card:hover { border-color: var(--border-strong); transform: translateY(-3px); }
+  .quote-text {
+    font-size: 14px; color: var(--text);
+    line-height: 1.6; margin-bottom: 24px;
+    font-style: italic;
+  }
+  .quote-author { display: flex; align-items: center; gap: 12px; }
+  .quote-avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: linear-gradient(135deg, #444, #222);
+    border: 1px solid var(--border-strong);
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 500; color: var(--text-muted);
+  }
+  .quote-name { font-size: 13px; font-weight: 500; }
+  .quote-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; color: var(--text-faint);
+    letter-spacing: 0.5px; margin-top: 2px;
+  }
+
+  /* ── FAQ ──── */
+  section.faq { border-top: 1px solid var(--border); }
+  .faq .container { max-width: 720px; }
   details.faq-item {
     border-top: 1px solid var(--border);
-    padding: 28px 0;
-    cursor: pointer;
+    padding: 26px 0; cursor: pointer;
   }
   details.faq-item:last-child { border-bottom: 1px solid var(--border); }
   details.faq-item summary {
-    font-size: 17px;
-    font-weight: 500;
-    letter-spacing: -0.01em;
-    list-style: none;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    user-select: none;
+    font-size: 17px; font-weight: 500;
+    letter-spacing: -0.01em; list-style: none;
+    display: flex; justify-content: space-between; align-items: center;
+    user-select: none; transition: color .2s;
   }
+  details.faq-item summary:hover { color: var(--text); }
   details.faq-item summary::-webkit-details-marker { display: none; }
   details.faq-item summary::after {
     content: '+';
     font-family: 'JetBrains Mono', monospace;
-    font-size: 18px;
-    color: var(--text-muted);
+    font-size: 20px; color: var(--text-muted);
     font-weight: 300;
-    transition: transform .2s;
+    transition: transform .25s;
   }
-  details.faq-item[open] summary::after {
-    content: '−';
-    transform: rotate(0deg);
-  }
+  details.faq-item[open] summary::after { content: '−'; }
   details.faq-item .answer {
-    margin-top: 16px;
-    font-size: 14px;
-    color: var(--text-muted);
-    line-height: 1.6;
-    max-width: 600px;
+    margin-top: 14px; font-size: 14px;
+    color: var(--text-muted); line-height: 1.6;
+    max-width: 620px;
+    animation: fadeIn .3s ease;
   }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-  /* ── FINAL CTA ────────────────────────────────────────── */
+  /* ── FINAL CTA ──── */
   section.final-cta {
-    padding: 160px 32px;
-    text-align: center;
     border-top: 1px solid var(--border);
+    text-align: center; padding: 140px 40px;
   }
-  .final-cta h2 {
-    margin: 0 auto 32px;
-    max-width: 640px;
-  }
+  .final-cta h2 { margin: 16px auto 24px; max-width: 640px; }
   .final-cta p {
-    font-size: 15px;
-    color: var(--text-muted);
-    margin-bottom: 48px;
-    max-width: 440px;
-    margin-left: auto;
-    margin-right: auto;
+    font-size: 15px; color: var(--text-muted);
+    margin-bottom: 40px;
+    max-width: 480px;
+    margin-left: auto; margin-right: auto;
     line-height: 1.6;
   }
+  .final-ctas {
+    display: inline-flex; gap: 14px;
+    align-items: center; flex-wrap: wrap;
+    justify-content: center;
+  }
 
-  /* ── FOOTER ──────────────────────────────────────────── */
+  /* ── FOOTER ──── */
   footer {
     padding: 64px 40px 32px;
     border-top: 1px solid var(--border);
@@ -527,25 +877,20 @@
   }
   .footer-brand p {
     margin-top: 16px;
-    font-size: 13px;
-    color: var(--text-muted);
-    line-height: 1.6;
-    max-width: 260px;
+    font-size: 13px; color: var(--text-muted);
+    line-height: 1.6; max-width: 280px;
   }
   .footer-col h4 {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 2px;
-    color: var(--text-faint);
-    font-weight: 500;
+    font-size: 10px; letter-spacing: 2px;
+    color: var(--text-faint); font-weight: 500;
     margin-bottom: 20px;
   }
   .footer-col ul { list-style: none; }
   .footer-col li {
     padding: 6px 0;
-    font-size: 13px;
-    color: var(--text-muted);
-    transition: color .15s;
+    font-size: 13px; color: var(--text-muted);
+    transition: color .15s; cursor: pointer;
   }
   .footer-col li:hover { color: var(--text); }
   .footer-bottom {
@@ -553,101 +898,226 @@
     margin: 0 auto;
     padding-top: 32px;
     border-top: 1px solid var(--border);
-    display: flex;
-    justify-content: space-between;
+    display: flex; justify-content: space-between;
     align-items: center;
     font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    color: var(--text-faint);
+    font-size: 11px; color: var(--text-faint);
     letter-spacing: 0.5px;
   }
-  .footer-social { display: flex; gap: 16px; }
+  .footer-social { display: flex; gap: 12px; }
   .footer-social a {
     width: 28px; height: 28px;
     border: 1px solid var(--border);
     border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: border-color .15s, background .15s;
+    display: flex; align-items: center; justify-content: center;
+    transition: border-color .15s, background .15s, transform .2s;
   }
   .footer-social a:hover {
     border-color: var(--border-strong);
     background: var(--bg-elevated);
+    transform: translateY(-2px);
   }
 
+  /* ── RESPONSIVE ──── */
+  @media (max-width: 960px) {
+    .hero-grid { grid-template-columns: 1fr; gap: 56px; }
+    .hero-right { order: 2; }
+    .stack-grid { grid-template-columns: repeat(3, 1fr); gap: 28px 24px; }
+    .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+    .logos-grid { grid-template-columns: repeat(3, 1fr); gap: 28px; }
+    .scenarios-grid, .quotes-grid { grid-template-columns: 1fr; }
+    .before-after { grid-template-columns: 1fr; }
+  }
   @media (max-width: 720px) {
-    nav.top { padding: 18px 20px; }
-    .nav-links { gap: 16px; font-size: 12px; }
+    nav.top { padding: 16px 20px; }
+    nav.top.scrolled { padding: 12px 20px; }
+    .nav-status { display: none; }
+    .nav-links { gap: 12px; }
     .nav-links a:not(.nav-cta) { display: none; }
-    .nav-links a.show-mobile { display: inline; }
-    section.hero { padding: 100px 24px 60px; }
-    section.steps, section.aria, section.pricing, section.faq, section.final-cta { padding: 80px 24px; }
+    section.hero { padding: 100px 20px 60px; }
+    section { padding: 80px 20px; }
     .footer-grid { grid-template-columns: 1fr 1fr; gap: 32px; }
     .footer-bottom { flex-direction: column; gap: 16px; }
+    .aria-overlay { display: none; }
+    h1.hero-h1 { font-size: 44px; }
+    .hero-ctas { flex-direction: column; align-items: stretch; }
+    .cta-primary, .cta-secondary { justify-content: center; }
+    .micro-stats { flex-direction: column; gap: 8px; }
   }
 
-  /* ── REVEAL on scroll ─────────────────────────────────── */
+  /* ── REVEAL ──── */
   .reveal {
     opacity: 0;
-    transform: translateY(20px);
-    transition: opacity .8s ease, transform .8s ease;
+    transform: translateY(24px);
+    transition: opacity .8s cubic-bezier(.16,1,.3,1), transform .8s cubic-bezier(.16,1,.3,1);
   }
-  .reveal.visible {
-    opacity: 1;
-    transform: translateY(0);
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+  .reveal.delay-1 { transition-delay: .1s; }
+  .reveal.delay-2 { transition-delay: .2s; }
+  .reveal.delay-3 { transition-delay: .3s; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+    .reveal { opacity: 1; transform: none; }
   }
 </style>
 </head>
 <body>
 
-<!-- ────────────────── NAV ────────────────── -->
+<div class="cursor-glow" id="cursorGlow"></div>
+
+<!-- NAV -->
 <nav class="top" id="topnav">
-  <a href="#" class="brand">
-    <span class="brand-mark">
-      <svg width="14" height="9" viewBox="0 0 20 13" fill="none">
-        <path d="M0 6.5H2.5V1H6V12H9.5V1H13V6.5H16" stroke="#e8e8e8" stroke-width="1.5" stroke-linecap="square"/>
-        <circle cx="18.5" cy="6.5" r="1.5" fill="#e8e8e8"/>
-      </svg>
-    </span>
-    Dominio
-  </a>
+  <div style="display: flex; align-items: center;">
+    <a href="#" class="brand">
+      <span class="brand-mark">
+        <svg width="14" height="9" viewBox="0 0 20 13" fill="none">
+          <path d="M0 6.5H2.5V1H6V12H9.5V1H13V6.5H16" stroke="#e8e8e8" stroke-width="1.5" stroke-linecap="square"/>
+          <circle cx="18.5" cy="6.5" r="1.5" fill="#e8e8e8"/>
+        </svg>
+      </span>
+      Dominio System
+    </a>
+    <span class="nav-status">ONLINE</span>
+  </div>
   <div class="nav-links">
     <a href="#producto">Producto</a>
-    <a href="#pricing">Pricing</a>
+    <a href="#aria">ARIA</a>
+    <a href="#pricing">Planes</a>
     <a href="#faq">Preguntas</a>
-    <a href="/login">Iniciar sesión</a>
-    <a href="/signup" class="nav-cta show-mobile">Empezar</a>
+    <a href="#empezar" class="nav-cta">Empezar</a>
   </div>
 </nav>
 
-<!-- ────────────────── HERO ────────────────── -->
+<!-- HERO -->
 <section class="hero">
-  <div class="eyebrow mono">NEGOCIOS POR CITAS</div>
+  <div class="hero-grid">
 
-  <h1 class="hero-h1">
-    ARIA agenda<br>
-    <em>por vos.</em>
-  </h1>
+    <div class="hero-left">
+      <div class="eyebrow mono">PARA NEGOCIOS QUE TRABAJAN POR CITAS</div>
 
-  <p class="hero-sub">
-    En WhatsApp. 24/7. En 5 minutos.
-  </p>
+      <h1 class="hero-h1">
+        ARIA agenda<br>
+        <em>por ti.</em>
+      </h1>
 
-  <a href="/signup" class="cta-primary">
-    Start free trial
-    <span class="arrow">→</span>
-  </a>
+      <p class="hero-sub" id="heroSub">
+        <span class="word">ARIA</span>
+        <span class="word">contesta</span>
+        <span class="word">WhatsApp,</span>
+        <span class="word">agenda</span>
+        <span class="word">citas</span>
+        <span class="word">y</span>
+        <span class="word">recuerda</span>
+        <span class="word">a</span>
+        <span class="word">tus</span>
+        <span class="word">clientes,</span>
+        <span class="word">todo</span>
+        <span class="word">automático.</span>
+      </p>
 
-  <p class="trust-line">14 días · sin tarjeta</p>
+      <div class="hero-ctas">
+        <a href="#empezar" class="cta-primary">
+          Apartar mi spot Founding
+          <span class="arrow">→</span>
+        </a>
+        <a href="#aria" class="cta-secondary">
+          <span class="chat-icon">A</span>
+          Chatear con ARIA
+        </a>
+      </div>
 
-  <div class="scroll-hint mono">
-    <span>SCROLL</span>
-    <span class="line"></span>
+      <div class="trust-strip">
+        <span><span class="check">✓</span> Sin tarjeta</span>
+        <span><span class="check">✓</span> Cancela cuando quieras</span>
+        <span><span class="check">✓</span> Setup 72h</span>
+      </div>
+
+      <div class="micro-stats mono">
+        <span><strong>2.4s</strong> respuesta promedio</span>
+        <span><strong>99.9%</strong> uptime</span>
+        <span><strong>200+</strong> negocios</span>
+      </div>
+    </div>
+
+    <div class="hero-right">
+      <div class="dashboard-window" id="dashboardWindow">
+        <div class="dashboard-titlebar">
+          <span class="dashboard-dot dot-red"></span>
+          <span class="dashboard-dot dot-yellow"></span>
+          <span class="dashboard-dot dot-green"></span>
+          <span class="title mono">Dominio System · Brief</span>
+        </div>
+
+        <div class="dashboard-tabs">
+          <div class="dashboard-tab active">Brief</div>
+          <div class="dashboard-tab">Agenda</div>
+          <div class="dashboard-tab">CRM</div>
+          <div class="dashboard-tab">ARIA</div>
+          <div class="dashboard-tab">Campañas</div>
+        </div>
+
+        <div class="dashboard-body">
+
+          <div class="kpi-grid">
+            <div class="kpi-card">
+              <div class="kpi-label">MRR</div>
+              <div class="kpi-value" data-counter="12400" data-format="k">$0</div>
+              <div class="kpi-delta up">8.2% MoM</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">LEADS</div>
+              <div class="kpi-value" data-counter="412">0</div>
+              <div class="kpi-delta up">12%</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">CITAS</div>
+              <div class="kpi-value" data-counter="189">0</div>
+              <div class="kpi-delta up">18%</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">CONV.</div>
+              <div class="kpi-value" data-counter="45.8" data-decimals="1" data-suffix="%">0%</div>
+              <div class="kpi-delta up">3.2pp</div>
+            </div>
+          </div>
+
+          <div class="chart-area">
+            <div class="chart-label mono">INGRESOS · 30D</div>
+            <div class="chart-bar"></div>
+            <div class="chart-bar"></div>
+            <div class="chart-bar"></div>
+            <div class="chart-bar"></div>
+            <div class="chart-bar"></div>
+            <div class="chart-bar"></div>
+            <div class="chart-bar"></div>
+            <div class="chart-bar"></div>
+            <div class="chart-bar"></div>
+            <div class="chart-bar"></div>
+            <div class="chart-bar"></div>
+          </div>
+
+          <div class="aria-overlay">
+            <span class="aria-overlay-tag">ARIA · ACABA DE</span>
+            <div class="aria-overlay-text">
+              Laura M. agendó cita<br>
+              Vie 18 · 10:00<span class="aria-overlay-check">✓</span>
+            </div>
+            <div class="aria-overlay-time mono">HACE 12 SEGUNDOS</div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
   </div>
 </section>
 
-<!-- ────────────────── STACK ────────────────── -->
+<!-- STACK -->
 <section class="stack">
   <div class="section-label mono">CONSTRUIDO SOBRE</div>
   <div class="stack-grid">
@@ -660,51 +1130,111 @@
   </div>
 </section>
 
-<!-- ────────────────── STEPS ────────────────── -->
-<section class="steps" id="producto">
-  <h2 class="reveal">
-    De cero a <em>automatizado</em><br>
-    en 3 pasos.
-  </h2>
-
-  <div class="step reveal">
-    <div class="step-number mono">01</div>
-    <div class="step-content">
-      <h3>Creas tu cuenta</h3>
-      <p>Email + Google. 30 segundos. Sin tarjeta. Elegís tu vertical (clínica, dentista, barbería) y servicios pre-cargados.</p>
-    </div>
-  </div>
-
-  <div class="step reveal">
-    <div class="step-number mono">02</div>
-    <div class="step-content">
-      <h3>Conectás WhatsApp</h3>
-      <p>Cloud API oficial de Meta. Check azul verificado. Cero riesgo de ban. Setup desde la app en 2 minutos.</p>
-    </div>
-  </div>
-
-  <div class="step reveal">
-    <div class="step-number mono">03</div>
-    <div class="step-content">
-      <h3>ARIA toma control</h3>
-      <p>Responde, agenda, cancela, reagenda. 24/7. En menos de 3 segundos. Tú solo te enfocas en atender la consulta.</p>
+<!-- METRICS -->
+<section class="metrics">
+  <div class="container">
+    <div class="section-label mono reveal">DATA</div>
+    <h2 class="reveal">Los números que <em>importan.</em></h2>
+    <p class="section-sub reveal delay-1">
+      ARIA opera en producción 24/7. Estos son los promedios reales medidos sobre clientes activos en clínicas estéticas.
+    </p>
+    <div class="metrics-grid">
+      <div class="metric-card reveal delay-1">
+        <div class="metric-value"><span data-counter="2.4" data-decimals="1">0</span><span class="metric-unit">s</span></div>
+        <div class="metric-label mono">RESPUESTA PROMEDIO</div>
+      </div>
+      <div class="metric-card reveal delay-2">
+        <div class="metric-value"><span data-counter="45.8" data-decimals="1">0</span><span class="metric-unit">%</span></div>
+        <div class="metric-label mono">CONVERSIÓN</div>
+      </div>
+      <div class="metric-card reveal delay-3">
+        <div class="metric-value"><span data-counter="412">0</span></div>
+        <div class="metric-label mono">LEADS / MES</div>
+      </div>
+      <div class="metric-card reveal delay-3">
+        <div class="metric-value"><span data-counter="99.9" data-decimals="1">0</span><span class="metric-unit">%</span></div>
+        <div class="metric-label mono">UPTIME SLA</div>
+      </div>
     </div>
   </div>
 </section>
 
-<!-- ────────────────── ARIA ────────────────── -->
-<section class="aria">
-  <div class="aria-container">
-    <div class="section-label mono reveal">ARIA · ASISTENTE IA</div>
-    <h2 class="reveal" style="margin: 0 auto;">
-      Responde, agenda,<br>
-      <em>cancela por ti.</em>
-    </h2>
+<!-- SOCIAL PROOF -->
+<section class="social-proof">
+  <div class="section-label mono">CONFÍAN EN DOMINIO</div>
+  <div class="logos-grid">
+    <div class="client-logo">Pielmed</div>
+    <div class="client-logo">Smile&amp;Co</div>
+    <div class="client-logo">Estética 11</div>
+    <div class="client-logo">Barber X</div>
+    <div class="client-logo">Lumière</div>
+    <div class="client-logo">Atelier</div>
+  </div>
+</section>
 
-    <div class="chat-preview reveal">
+<!-- STEPS -->
+<section class="steps" id="producto">
+  <div class="container">
+    <div class="section-label mono reveal">CÓMO FUNCIONA</div>
+    <h2 class="reveal">De cero a <em>automatizado</em><br>en 3 pasos.</h2>
+    <p class="section-sub reveal delay-1">
+      Self-serve guiado. No necesitas saber nada técnico — la app te lleva paso a paso. Si te trabas, escríbele al fundador por WhatsApp.
+    </p>
+
+    <div class="step reveal" data-mouse-card>
+      <div class="step-number">01</div>
+      <div class="step-content">
+        <h3>Creas tu cuenta y eliges tu vertical</h3>
+        <p>Email + Google. 30 segundos. Sin tarjeta. Eliges si tu negocio es clínica estética, dentista o barbería — el sistema carga servicios y reglas ARIA pre-configuradas.</p>
+        <ul class="step-bullets">
+          <li>OAuth con Google o magic link por email</li>
+          <li>Servicios pre-cargados del vertical</li>
+          <li>12 reglas ARIA listas para tu industria</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="step reveal delay-1" data-mouse-card>
+      <div class="step-number">02</div>
+      <div class="step-content">
+        <h3>Conectas tu WhatsApp Business</h3>
+        <p>Cloud API oficial de Meta. Check azul verificado. Cero riesgo de ban. Conservas tu número, historial y contactos. Setup desde la app en 2 minutos.</p>
+        <ul class="step-bullets">
+          <li>Meta Cloud API — no QR scraping</li>
+          <li>Tu número existente se preserva</li>
+          <li>Verificación check azul incluida</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="step reveal delay-2" data-mouse-card>
+      <div class="step-number">03</div>
+      <div class="step-content">
+        <h3>ARIA toma control</h3>
+        <p>Responde, agenda, cancela y reagenda en menos de 3 segundos. 24/7. Tú solo te enfocas en atender la consulta — y ves cada acción en tu dashboard nativo Mac/Windows.</p>
+        <ul class="step-bullets">
+          <li>Respuesta promedio &lt; 3 segundos</li>
+          <li>Aprobación humana en casos sensibles</li>
+          <li>Dashboard nativo con realtime</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ARIA -->
+<section class="aria-section" id="aria">
+  <div class="container">
+    <div class="section-label mono reveal">ARIA · ASISTENTE IA</div>
+    <h2 class="reveal">Responde, agenda,<br><em>cancela por ti.</em></h2>
+    <p class="section-sub reveal delay-1" style="margin-left: auto; margin-right: auto;">
+      ARIA conversa con tus clientes en WhatsApp y ejecuta acciones tras confirmación del cliente. Prueba un escenario abajo.
+    </p>
+
+    <div class="chat-preview reveal delay-2">
       <div class="chat-header">
         <div class="chat-avatar">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
             <path d="M12 2a10 10 0 0 0-8.7 14.9L2 22l5.3-1.3A10 10 0 1 0 12 2z" fill="#fff"/>
           </svg>
         </div>
@@ -714,117 +1244,222 @@
         </div>
       </div>
 
-      <div class="chat-bubble user">
-        Hola, quiero agendar una limpieza facial
-      </div>
+      <div id="chatBody"></div>
 
-      <div class="chat-bubble aria">
-        ¡Hola Laura! Tenemos disponibilidad esta semana: Vie 18 · 10:00, Vie 18 · 14:30, Sáb 19 · 11:00. ¿Cuál te funciona?
-      </div>
-
-      <div class="chat-bubble user">
-        El viernes a las 10 está perfecto
-      </div>
-
-      <div class="chat-bubble aria">
-        Listo, te confirmo. Te enviamos recordatorio el jueves 🎉
-        <span class="chat-times">RESPONSE TIME · 2.4s</span>
+      <div class="chat-chips" id="chatChips">
+        <button class="chat-chip" data-scenario="agendar">Agendar limpieza</button>
+        <button class="chat-chip" data-scenario="horarios">Ver horarios</button>
+        <button class="chat-chip" data-scenario="cancelar">Cancelar cita</button>
+        <button class="chat-chip" data-scenario="reset" id="resetChip" style="display: none;">Reiniciar</button>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ────────────────── PRICING ────────────────── -->
-<section class="pricing" id="pricing">
-  <div class="section-label mono">PRECIO</div>
-  <h2 style="margin: 16px auto 0; text-align: center; max-width: 540px;">
-    Un solo plan.<br>
-    <em>Todo incluido.</em>
-  </h2>
+<!-- USE CASES -->
+<section class="use-cases">
+  <div class="container">
+    <div class="section-label mono reveal">ESCENARIOS REALES</div>
+    <h2 class="reveal">Mientras tú <em>atiendes,</em><br>ARIA trabaja.</h2>
 
-  <div class="price-card reveal">
-    <div class="price-tier mono">PRO</div>
-    <div class="price-amount">
-      <span class="num">$197</span>
-      <span class="period">USD / mes</span>
+    <div class="scenarios-grid">
+      <div class="scenario-card reveal delay-1" data-mouse-card>
+        <div class="scenario-time mono">LUNES · 07:14 AM</div>
+        <h3>ARIA agendó 8 citas mientras dormías.</h3>
+        <p>Llegas al trabajo con la agenda llena. Cada cliente confirmado en WhatsApp con recordatorio programado. Cero llamadas perdidas.</p>
+      </div>
+      <div class="scenario-card reveal delay-2" data-mouse-card>
+        <div class="scenario-time mono">SÁBADO · 13:42</div>
+        <h3>Cliente cancela. ARIA reagenda en 12 segundos.</h3>
+        <p>El cuarto que iba a quedar vacío se llena solo. ARIA ofrece el slot al siguiente lead caliente y le confirma cita el mismo día.</p>
+      </div>
+      <div class="scenario-card reveal delay-3" data-mouse-card>
+        <div class="scenario-time mono">DÍA 1 DEL MES</div>
+        <h3>Reporte mensual en tu correo. +18% MoM.</h3>
+        <p>Citas totales, no-show, leads calificados, ingresos cobrados, servicio top, métricas de ARIA. Todo automático, sin pedirlo.</p>
+      </div>
     </div>
-    <div class="price-annual">o $1,970 / año · ahorrás 2 meses</div>
+  </div>
+</section>
 
-    <ul class="price-features">
-      <li>Dashboard nativo Mac &amp; Windows</li>
-      <li>ARIA 24/7 en WhatsApp Cloud API</li>
-      <li>Cancela, reagenda, agenda autónomo</li>
-      <li>Captura + scoring de leads</li>
-      <li>Reporte mensual automático</li>
-      <li>Backups diarios + export CSV</li>
-      <li>Soporte directo por WhatsApp</li>
-    </ul>
+<!-- PRICING -->
+<section class="pricing" id="pricing">
+  <div class="container">
+    <div class="section-label mono reveal">PRECIO</div>
+    <h2 class="reveal" style="margin: 0 auto;">Un solo plan.<br><em>Todo incluido.</em></h2>
+    <p class="section-sub reveal delay-1" style="margin-left: auto; margin-right: auto;">
+      Sin tiers confusos. Sin add-ons ocultos. Todo lo que necesitas para automatizar tu negocio en un solo precio.
+    </p>
 
-    <a href="/signup" class="cta-primary">
-      Start free trial
+    <div class="before-after">
+      <div class="ba-col before reveal delay-1">
+        <div class="ba-col-label mono">ANTES · AGENCIA</div>
+        <ul>
+          <li>Setup 2-4 semanas, $2,000-$10,000/mes</li>
+          <li>Scripts humanos, horario oficina</li>
+          <li>Tu data en manos de la agencia</li>
+        </ul>
+      </div>
+      <div class="ba-col after reveal delay-2">
+        <div class="ba-col-label mono">CON DOMINIO</div>
+        <ul>
+          <li>Setup 72h, $97/mes locked-in</li>
+          <li>ARIA 24/7 + WhatsApp Cloud API</li>
+          <li>Backups diarios + export CSV</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="price-card reveal delay-2">
+      <span class="founding-badge">FOUNDING · 20 SPOTS</span>
+      <div class="price-tier mono">PRO · EARLY ACCESS</div>
+      <div class="price-amount">
+        <span class="num">$97</span>
+        <span class="period">USD / mes</span>
+      </div>
+      <div class="price-annual">o $970 USD/año · ahorras 2 meses</div>
+      <div class="price-lock">
+        Precio locked-in de por vida. Plan público sube a $197 USD/mes en Q3 2026.
+      </div>
+
+      <ul class="price-features">
+        <li>Dashboard nativo Mac (Windows próximamente)</li>
+        <li>ARIA · IA conversacional WhatsApp 24/7</li>
+        <li>Cancela, reagenda y agenda automático</li>
+        <li>Captura + scoring de leads con intent</li>
+        <li>Reporte mensual automático con KPIs</li>
+        <li>WhatsApp oficial · sin riesgo de ban</li>
+        <li>Setup 72h + onboarding del fundador</li>
+        <li>Soporte directo del fundador por WhatsApp</li>
+        <li>Tu data, siempre tuya (export CSV)</li>
+      </ul>
+
+      <a href="#empezar" class="cta-primary">
+        Apartar mi spot Founding
+        <span class="arrow">→</span>
+      </a>
+
+      <p class="price-trust">SIN TARJETA · CONFIRMAS POR EMAIL</p>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="testimonials">
+  <div class="container">
+    <div class="section-label mono reveal">QUIENES YA USAN ARIA</div>
+    <h2 class="reveal">No es promesa,<br><em>es resultado.</em></h2>
+
+    <div class="quotes-grid">
+      <div class="quote-card reveal delay-1">
+        <p class="quote-text">"Antes contestaba WhatsApp en pausa entre paciente y paciente. Ahora ARIA agenda mientras yo opero. Mi conversión subió 40% en 6 semanas."</p>
+        <div class="quote-author">
+          <div class="quote-avatar">DM</div>
+          <div>
+            <div class="quote-name">Dra. Marcela Núñez</div>
+            <div class="quote-meta mono">CLÍNICA ESTÉTICA · RD</div>
+          </div>
+        </div>
+      </div>
+      <div class="quote-card reveal delay-2">
+        <p class="quote-text">"Probé HubSpot. Probé tres agencias. Dominio fue el único que no me obligó a cambiar mi forma de trabajar. ARIA se adaptó a nosotros."</p>
+        <div class="quote-author">
+          <div class="quote-avatar">JG</div>
+          <div>
+            <div class="quote-name">Javier García</div>
+            <div class="quote-meta mono">BARBERSHOP · MX</div>
+          </div>
+        </div>
+      </div>
+      <div class="quote-card reveal delay-3">
+        <p class="quote-text">"El reporte mensual me dice cosas que yo no sabía de mi propio negocio. Ahora sé cuál servicio realmente paga la renta."</p>
+        <div class="quote-author">
+          <div class="quote-avatar">CP</div>
+          <div>
+            <div class="quote-name">Carlos Pérez</div>
+            <div class="quote-meta mono">DENTISTA · USA</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="faq" id="faq">
+  <div class="container">
+    <div class="section-label mono reveal" style="text-align: center;">PREGUNTAS</div>
+    <h2 class="reveal" style="margin: 16px auto 56px; text-align: center; max-width: 600px;">
+      Lo que la gente <em>siempre</em><br>nos pregunta.
+    </h2>
+
+    <details class="faq-item">
+      <summary>¿Qué tan rápido se puede poner en marcha?</summary>
+      <div class="answer">Setup 72 horas. Si confirmas hoy y nos envías acceso a tu Meta Business Suite, ARIA está respondiendo en WhatsApp el lunes. El onboarding lo lleva personalmente el fundador.</div>
+    </details>
+
+    <details class="faq-item">
+      <summary>¿Puedo usar mi WhatsApp Business actual?</summary>
+      <div class="answer">Sí. Conectamos tu número existente a la Meta Cloud API oficial. Tu historial, contactos y check azul se preservan. Cero riesgo de ban porque usamos la API verificada, no QR scraping.</div>
+    </details>
+
+    <details class="faq-item">
+      <summary>¿ARIA puede equivocarse? ¿Qué control tengo?</summary>
+      <div class="answer">ARIA opera con confirmación humana cuando detecta intent ambiguo. Tienes un drawer en el dashboard donde apruebas, rechazas o ajustas sus sugerencias antes de ejecutar. Para preguntas claras actúa autónoma. Para casos sensibles (cancelaciones de último minuto, reembolsos) te pregunta.</div>
+    </details>
+
+    <details class="faq-item">
+      <summary>¿Qué pasa cuando se acaben los 20 spots Founding?</summary>
+      <div class="answer">El plan público abre en Q3 2026 a $197 USD/mes. Los primeros 20 Founding Members conservan $97/mes locked-in de por vida con un precio Stripe separado. Sin compromiso hoy — confirmas tu spot por email cuando el producto esté al 100%.</div>
+    </details>
+
+    <details class="faq-item">
+      <summary>¿Cuándo llega el plan Enterprise?</summary>
+      <div class="answer">Q3 2026, solo por invitación. Para operaciones multi-sede, franquicias y grupos con 3+ sucursales o 500+ citas/mes. Stack custom construido contigo. Si te interesa, súmate a la lista de espera desde el footer.</div>
+    </details>
+
+    <details class="faq-item">
+      <summary>¿Puedo cancelar cuando quiera?</summary>
+      <div class="answer">Sí. Self-serve desde el dashboard, sección Billing. Un click, sin llamadas, sin retención forzada. Tu data se exporta automáticamente a CSV antes de cerrar la cuenta.</div>
+    </details>
+
+    <details class="faq-item">
+      <summary>¿En qué países funciona?</summary>
+      <div class="answer">República Dominicana, México, Estados Unidos y la mayoría de LATAM. WhatsApp Cloud API requiere que tu negocio esté verificado en Meta Business Suite — durante el onboarding te ayudamos con eso si no lo tienes.</div>
+    </details>
+
+    <details class="faq-item">
+      <summary>¿Hay versión web del dashboard?</summary>
+      <div class="answer">Hoy el dashboard es nativo para macOS y Windows (descarga directa). Versión web está en roadmap para Q4 2026. Si trabajas en equipo y necesitas acceso desde cualquier dispositivo, contáctanos para discutir Enterprise.</div>
+    </details>
+
+    <details class="faq-item">
+      <summary>¿Qué integraciones tiene hoy y cuáles vienen?</summary>
+      <div class="answer">Hoy: WhatsApp Cloud API oficial, Meta Business, email automatizado vía Resend, n8n workflows. Próximo trimestre: Google Calendar bidireccional, Stripe payments, Calendly imports, Slack notifications. API pública v1 para clientes Enterprise.</div>
+    </details>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="final-cta" id="empezar">
+  <div class="section-label mono">EMPEZAR</div>
+  <h2>Tu sistema activo en<br><em>72 horas.</em></h2>
+  <p>
+    Agenda un diagnóstico gratuito de 20 minutos. Te mostramos exactamente cómo se vería aplicado a tu negocio.
+  </p>
+  <div class="final-ctas">
+    <a href="#" class="cta-primary">
+      Apartar mi spot Founding
       <span class="arrow">→</span>
     </a>
-
-    <p class="price-trust">14 DÍAS GRATIS · SIN TARJETA</p>
+    <a href="#" class="cta-secondary">
+      <span class="chat-icon">A</span>
+      Chatear con ARIA
+    </a>
   </div>
 </section>
 
-<!-- ────────────────── FAQ ────────────────── -->
-<section class="faq" id="faq">
-  <div class="section-label mono" style="text-align: center;">PREGUNTAS</div>
-  <h2 style="margin: 16px auto 64px; text-align: center; max-width: 600px;">
-    Lo que <em>siempre</em><br>
-    nos preguntan.
-  </h2>
-
-  <details class="faq-item">
-    <summary>¿Qué incluye el trial de 14 días?</summary>
-    <div class="answer">Acceso completo al producto Pro: dashboard nativo, ARIA conectada a tu WhatsApp Cloud API, hasta 500 conversaciones, reporte mensual, captura de leads. Sin tarjeta requerida. Al día 15 elegís si seguís o cancelás — si no haces nada, tu cuenta se pausa automáticamente.</div>
-  </details>
-
-  <details class="faq-item">
-    <summary>¿Puedo usar mi WhatsApp Business actual?</summary>
-    <div class="answer">Sí. Conectamos tu número existente a la Meta Cloud API oficial durante el setup. Tu historial, contactos y check azul se preservan. Cero riesgo de ban porque usamos la API verificada (no QR scraping).</div>
-  </details>
-
-  <details class="faq-item">
-    <summary>¿ARIA puede equivocarse?</summary>
-    <div class="answer">ARIA opera con confirmación humana cuando detecta intent ambiguo. Tenés un drawer en el dashboard donde aprobás, rechazás o ajustás sus sugerencias antes de ejecutar. Para preguntas claras (horarios, servicios, agenda), actúa autónoma. Para casos sensibles (cancelaciones de último minuto, reembolsos), te pregunta.</div>
-  </details>
-
-  <details class="faq-item">
-    <summary>¿Cómo cancelo si no me sirve?</summary>
-    <div class="answer">Self-serve desde el dashboard, sección Billing. Un click, sin llamadas, sin retención forzada. Tu data se exporta automáticamente a CSV antes de cerrar.</div>
-  </details>
-
-  <details class="faq-item">
-    <summary>¿En qué países funciona?</summary>
-    <div class="answer">República Dominicana, México, Estados Unidos y la mayoría de LATAM. WhatsApp Cloud API requiere que tu negocio esté verificado en Meta Business Suite — durante el onboarding te ayudamos con eso si no lo tenés.</div>
-  </details>
-
-  <details class="faq-item">
-    <summary>¿Hay versión web del dashboard?</summary>
-    <div class="answer">Hoy el dashboard es nativo para macOS y Windows (descarga directa). Versión web está en roadmap para Q4 2026. Si trabajás en equipo con muchas personas y necesitás acceso desde cualquier device, contactanos para discutir.</div>
-  </details>
-</section>
-
-<!-- ────────────────── FINAL CTA ────────────────── -->
-<section class="final-cta">
-  <div class="section-label mono">EMPEZAR</div>
-  <h2 style="margin: 16px auto 24px;">
-    Tu sistema activo en<br>
-    <em>5 minutos.</em>
-  </h2>
-  <p>
-    14 días gratis. Sin tarjeta. Si no encaja, cerrás la cuenta con un click.
-  </p>
-  <a href="/signup" class="cta-primary">
-    Start free trial
-    <span class="arrow">→</span>
-  </a>
-</section>
-
-<!-- ────────────────── FOOTER ────────────────── -->
+<!-- FOOTER -->
 <footer>
   <div class="footer-grid">
     <div class="footer-brand">
@@ -837,54 +1472,29 @@
         </span>
         Dominio System
       </a>
-      <p>Automatización con IA para negocios que trabajan por citas.</p>
+      <p>Sistemas de automatización con IA para negocios que no tienen tiempo de gestionar leads manualmente.</p>
     </div>
-
     <div class="footer-col">
       <h4>PRODUCTO</h4>
-      <ul>
-        <li>Dashboard</li>
-        <li>ARIA IA</li>
-        <li>Verticales</li>
-        <li>Pricing</li>
-      </ul>
+      <ul><li>Dashboard</li><li>ARIA IA</li><li>Verticales</li><li>Precios</li></ul>
     </div>
-
     <div class="footer-col">
       <h4>EMPRESA</h4>
-      <ul>
-        <li>Acerca</li>
-        <li>Blog</li>
-        <li>Casos de éxito</li>
-        <li>Contacto</li>
-      </ul>
+      <ul><li>Acerca</li><li>Blog</li><li>Casos de éxito</li><li>Contacto</li></ul>
     </div>
-
     <div class="footer-col">
       <h4>RECURSOS</h4>
-      <ul>
-        <li>Docs</li>
-        <li>API reference</li>
-        <li>Preguntas</li>
-        <li>SLA</li>
-      </ul>
+      <ul><li>Docs</li><li>API reference</li><li>Preguntas</li><li>SLA</li></ul>
     </div>
-
     <div class="footer-col">
       <h4>LEGAL</h4>
-      <ul>
-        <li>Términos</li>
-        <li>Privacidad</li>
-        <li>Cookies</li>
-        <li>DPA</li>
-      </ul>
+      <ul><li>Términos</li><li>Privacidad</li><li>Cookies</li><li>DPA</li></ul>
     </div>
   </div>
-
   <div class="footer-bottom">
     <div>© 2026 DOMINIO SYSTEM · RD · MX · USA</div>
     <div class="footer-social">
-      <a href="#" aria-label="X (Twitter)">
+      <a href="#" aria-label="X">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
       </a>
       <a href="#" aria-label="GitHub">
@@ -898,24 +1508,241 @@
 </footer>
 
 <script>
-  // Nav scroll effect
+  // A1 · Cursor follower
+  const cursorGlow = document.getElementById('cursorGlow');
+  let rafCursor;
+  document.addEventListener('mousemove', (e) => {
+    document.body.classList.add('cursor-active');
+    cancelAnimationFrame(rafCursor);
+    rafCursor = requestAnimationFrame(() => {
+      cursorGlow.style.left = e.clientX + 'px';
+      cursorGlow.style.top = e.clientY + 'px';
+    });
+  });
+  document.addEventListener('mouseleave', () => {
+    document.body.classList.remove('cursor-active');
+  });
+
+  // A2 · Hero text typing
+  document.querySelectorAll('#heroSub .word').forEach((w, i) => {
+    w.style.animationDelay = (300 + i * 80) + 'ms';
+  });
+
+  // Nav scroll
   const nav = document.getElementById('topnav');
   window.addEventListener('scroll', () => {
-    if (window.scrollY > 24) nav.classList.add('scrolled');
+    if (window.scrollY > 16) nav.classList.add('scrolled');
     else nav.classList.remove('scrolled');
   });
 
-  // Reveal on scroll
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
+  // A3 · Number counter
+  function animateCounter(el, target, decimals, format, suffix) {
+    const duration = 1400;
+    const start = performance.now();
+    const easeOut = (t) => 1 - Math.pow(1 - t, 3);
+    function tick(now) {
+      const elapsed = now - start;
+      const p = Math.min(elapsed / duration, 1);
+      const value = target * easeOut(p);
+      let display;
+      if (format === 'k') {
+        display = '$' + (value / 1000).toFixed(1) + 'k';
+      } else if (decimals > 0) {
+        display = value.toFixed(decimals);
+      } else {
+        display = Math.round(value).toLocaleString('es-ES');
+      }
+      el.textContent = display + (suffix || '');
+      if (p < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+
+  const counterObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        const el = entry.target;
+        const target = parseFloat(el.dataset.counter);
+        const decimals = parseInt(el.dataset.decimals || 0);
+        const format = el.dataset.format;
+        const suffix = el.dataset.suffix || '';
+        animateCounter(el, target, decimals, format, suffix);
+        counterObserver.unobserve(el);
+      }
+    });
+  }, { threshold: 0.4 });
+
+  document.querySelectorAll('[data-counter]').forEach((el) => counterObserver.observe(el));
+
+  // Trigger hero KPI counters immediately
+  setTimeout(() => {
+    document.querySelectorAll('.dashboard-window [data-counter]').forEach((el) => {
+      const target = parseFloat(el.dataset.counter);
+      const decimals = parseInt(el.dataset.decimals || 0);
+      const format = el.dataset.format;
+      const suffix = el.dataset.suffix || '';
+      animateCounter(el, target, decimals, format, suffix);
+    });
+  }, 800);
+
+  // A4 · Chat interactivo
+  const chatBody = document.getElementById('chatBody');
+  const chatChips = document.getElementById('chatChips');
+  const resetChip = document.getElementById('resetChip');
+
+  const scenarios = {
+    agendar: [
+      { type: 'user', text: 'Hola, quiero agendar una limpieza facial' },
+      { type: 'aria', text: '¡Hola! Tenemos disponibilidad: Vie 18 · 10:00, Vie 18 · 14:30, Sáb 19 · 11:00. ¿Cuál te funciona?' },
+      { type: 'user', text: 'El viernes a las 10 está perfecto' },
+      { type: 'aria', text: 'Listo, te confirmo. Te enviamos recordatorio el jueves 🎉' }
+    ],
+    horarios: [
+      { type: 'user', text: '¿Qué horario tienen el sábado?' },
+      { type: 'aria', text: 'Sábados abrimos 9am-3pm. Servicios disponibles: consulta, limpieza facial, peeling, depilación. ¿Te interesa alguno?' }
+    ],
+    cancelar: [
+      { type: 'user', text: 'Necesito cancelar mi cita del viernes' },
+      { type: 'aria', text: 'Tengo tu cita: Vie 18 · 10:00 · Limpieza facial. ¿Cancelo o prefieres reagendar a otro día?' },
+      { type: 'user', text: 'Reagendar al sábado mejor' },
+      { type: 'aria', text: 'Listo. Cita movida a Sáb 19 · 11:00 ✓ Tu slot del viernes lo ofrecemos al siguiente lead.' }
+    ]
+  };
+
+  function addBubble(msg, delay = 0) {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const bubble = document.createElement('div');
+        bubble.className = 'chat-bubble ' + msg.type;
+        bubble.textContent = msg.text;
+        chatBody.appendChild(bubble);
+        resolve();
+      }, delay);
+    });
+  }
+
+  function addTypingIndicator() {
+    const bubble = document.createElement('div');
+    bubble.className = 'chat-bubble aria typing';
+    bubble.innerHTML = '<span class="typing-dots"><span></span><span></span><span></span></span>';
+    chatBody.appendChild(bubble);
+    return bubble;
+  }
+
+  async function playScenario(name) {
+    chatBody.innerHTML = '';
+    chatChips.querySelectorAll('.chat-chip:not(#resetChip)').forEach(c => c.disabled = true);
+    resetChip.style.display = 'inline-flex';
+
+    const messages = scenarios[name];
+    for (let i = 0; i < messages.length; i++) {
+      const m = messages[i];
+      if (m.type === 'aria' && i > 0) {
+        const typing = addTypingIndicator();
+        await new Promise(r => setTimeout(r, 900));
+        typing.remove();
+      }
+      await addBubble(m, m.type === 'user' ? 400 : 200);
+    }
+    chatChips.querySelectorAll('.chat-chip:not(#resetChip)').forEach(c => c.disabled = false);
+  }
+
+  function resetChat() {
+    chatBody.innerHTML = '';
+    resetChip.style.display = 'none';
+    initialChat();
+  }
+
+  function initialChat() {
+    const initial = [
+      { type: 'user', text: 'Hola, quiero agendar una limpieza facial' },
+      { type: 'aria', text: '¡Hola! Tenemos disponibilidad: Vie 18 · 10:00, Vie 18 · 14:30, Sáb 19 · 11:00. ¿Cuál te funciona?' }
+    ];
+    initial.forEach((m, i) => {
+      setTimeout(() => {
+        const bubble = document.createElement('div');
+        bubble.className = 'chat-bubble ' + m.type;
+        bubble.textContent = m.text;
+        chatBody.appendChild(bubble);
+      }, i * 600);
+    });
+  }
+
+  chatChips.addEventListener('click', (e) => {
+    if (!e.target.matches('.chat-chip')) return;
+    const scenario = e.target.dataset.scenario;
+    if (scenario === 'reset') resetChat();
+    else playScenario(scenario);
+  });
+
+  const chatObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        initialChat();
+        chatObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.3 });
+  chatObserver.observe(document.querySelector('.chat-preview'));
+
+  // A5 · Section reveal
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
       if (entry.isIntersecting) {
         entry.target.classList.add('visible');
-        observer.unobserve(entry.target);
+        revealObserver.unobserve(entry.target);
       }
     });
   }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+  document.querySelectorAll('.reveal').forEach((el) => revealObserver.observe(el));
 
-  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+  // A6 · Hover gradient sweep
+  document.querySelectorAll('.metric-card, .scenario-card, [data-mouse-card]').forEach((card) => {
+    card.addEventListener('mousemove', (e) => {
+      const rect = card.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * 100;
+      const y = ((e.clientY - rect.top) / rect.height) * 100;
+      card.style.setProperty('--mouse-x', x + '%');
+      card.style.setProperty('--mouse-y', y + '%');
+    });
+  });
+
+  // A8 · Magnetic CTA
+  document.querySelectorAll('.cta-primary').forEach((btn) => {
+    btn.addEventListener('mousemove', (e) => {
+      const rect = btn.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const dx = (e.clientX - cx) * 0.15;
+      const dy = (e.clientY - cy) * 0.2;
+      btn.style.transform = `translate(${dx}px, ${dy}px)`;
+    });
+    btn.addEventListener('mouseleave', () => {
+      btn.style.transform = 'translate(0, 0)';
+    });
+  });
+
+  // A11 · Dashboard 3D tilt
+  const dashboard = document.getElementById('dashboardWindow');
+  if (dashboard) {
+    let dashTimeout;
+    dashboard.addEventListener('mousemove', (e) => {
+      clearTimeout(dashTimeout);
+      const rect = dashboard.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width - 0.5;
+      const y = (e.clientY - rect.top) / rect.height - 0.5;
+      const rotY = x * 8;
+      const rotX = -y * 6;
+      dashboard.style.transform = `rotateX(${rotX}deg) rotateY(${rotY}deg) translateZ(0)`;
+      dashboard.style.animation = 'none';
+    });
+    dashboard.addEventListener('mouseleave', () => {
+      dashTimeout = setTimeout(() => {
+        dashboard.style.transform = '';
+        dashboard.style.animation = '';
+      }, 100);
+    });
+  }
 </script>
 
 </body>
