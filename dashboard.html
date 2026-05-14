@@ -925,17 +925,17 @@ body.aria-open .aria-overlay{ pointer-events:auto; }
 /* v2.3.9 — Bar chart profesional con bars consistentes, animación de entrada y mejor hover.
    Mejoras: dim bars uniformes como ticks del eje, today con glow sutil, gradient elegante,
    stagger animation al cargar. Mantenemos paleta y comportamiento original. */
+/* v2.3.11 · Bar chart simplificado · sin animation de entrada (causaba bars invisibles
+   en algunos cases · scaleY(0) + backwards quedaba pegado si la animation no completaba).
+   Mantenemos transitions de hover, dim uniformes y today highlight. */
 .bar-chart{height:180px;display:flex;align-items:flex-end;gap:4px;padding:8px 0 4px;position:relative;}
-.bar-chart .bar{flex:1;background:linear-gradient(to top,var(--text) 0%,var(--text2) 70%,var(--text3) 100%);border-radius:3px 3px 0 0;min-height:4px;cursor:pointer;position:relative;transition:opacity 180ms ease,outline 100ms,filter 180ms;transform-origin:bottom;animation:barRise 420ms cubic-bezier(0.34,1.16,0.64,1) backwards;}
+.bar-chart .bar{flex:1;background:linear-gradient(to top,var(--text) 0%,var(--text2) 70%,var(--text3) 100%);border-radius:3px 3px 0 0;min-height:4px;cursor:pointer;position:relative;transition:opacity 180ms ease,outline 100ms,filter 180ms,height 280ms cubic-bezier(0.4,0,0.2,1);}
 .bar-chart .bar:hover{opacity:1;outline:1px solid var(--accent);outline-offset:2px;filter:brightness(1.1);}
 .bar-chart .bar.dim{background:linear-gradient(to top,var(--text4),var(--text4));opacity:0.45;height:10px!important;min-height:10px;border-radius:2px 2px 0 0;}
 .bar-chart .bar.dim:hover{opacity:0.75;}
 .bar-chart .bar.empty{background:transparent;border-left:1px dashed var(--border2);border-right:none;border-top:none;border-bottom:none;min-height:14px;height:14px!important;cursor:default;opacity:0.35;border-radius:0;}
 .bar-chart .bar.empty:hover{outline:none;opacity:0.5;}
 .bar-chart .bar.today{background:linear-gradient(to top,#ffffff 0%,var(--text) 50%,var(--text2) 100%);outline:1.5px solid var(--accent);outline-offset:2px;box-shadow:0 0 12px rgba(245,245,245,0.18);}
-/* v2.3.10 · Dot indicator eliminado · sobresalía del frame del panel.
-   El highlight de today (outline + glow + gradient blanco) ya es suficientemente visible. */
-@keyframes barRise{from{transform:scaleY(0);opacity:0}to{transform:scaleY(1);opacity:1}}
 
 /* Tooltip · DENTRO del chart-wrap (sin translate up) para evitar clip por overflow:hidden del .panel */
 .bar-tooltip{position:absolute;background:var(--card3);border:1px solid var(--border2);border-radius:7px;padding:8px 12px;font-size:11px;color:var(--text);pointer-events:none;transform:translateX(-50%);white-space:nowrap;opacity:0;transition:opacity 120ms;z-index:10;box-shadow:0 6px 18px rgba(0,0,0,0.5);top:8px;}

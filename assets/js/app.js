@@ -5297,7 +5297,7 @@ window.renderBriefBarChart = function(monthKey){
     const value = values[d - 1];
     const bar = document.createElement('div');
     bar.className = 'bar';
-    bar.style.animationDelay = (d * 12) + 'ms'; // stagger profesional
+    // v2.3.11 · sin animation-delay (la animation se removió por causar bars invisibles)
     const dateStr = `${d} ${monthAbbr}`;
     if(isCurrentMonth && d > today){
       // Día futuro = empty
