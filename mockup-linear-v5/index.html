@@ -23,8 +23,8 @@
     --text-muted: #898989;
     --text-faint: #4a4a4a;
     --accent: #f4f4f4;
-    --green: #4ade80;
-    --green-dim: rgba(74, 222, 128, 0.12);
+    --green: #3a9d5d;
+    --green-dim: rgba(58, 157, 93, 0.10);
     --red: #f87171;
     --warm: #ffd166;
     --blue: #60a5fa;
@@ -75,27 +75,6 @@
   }
   body.cursor-active .cursor-glow { opacity: 1; }
   @media (max-width: 720px) { .cursor-glow { display: none; } }
-
-  /* Announce bar */
-  .announce {
-    background: rgba(74,222,128,0.04);
-    border-bottom: 1px solid rgba(74,222,128,0.12);
-    padding: 9px 40px;
-    text-align: center;
-    font-size: 12px;
-    color: var(--text-muted);
-    font-family: 'JetBrains Mono', monospace;
-    letter-spacing: 0.3px;
-    position: relative; z-index: 49;
-  }
-  .announce strong { color: var(--green); font-weight: 600; }
-  .announce a {
-    color: var(--text);
-    text-decoration: underline;
-    text-decoration-color: var(--text-faint);
-    text-underline-offset: 3px;
-    margin-left: 6px;
-  }
 
   /* NAV */
   nav.top {
@@ -160,7 +139,6 @@
     width: 5px; height: 5px;
     background: var(--green);
     border-radius: 50%;
-    box-shadow: 0 0 6px var(--green);
     animation: pulseDot 2s ease-in-out infinite;
   }
   @keyframes pulseDot {
@@ -201,8 +179,7 @@
   .eyebrow::before {
     content: '';
     width: 6px; height: 6px;
-    background: var(--green); border-radius: 50%;
-    box-shadow: 0 0 8px var(--green);
+    background: var(--text-muted); border-radius: 50%;
   }
 
   h1.hero-h1 {
@@ -261,9 +238,10 @@
   .cta-secondary:hover { border-color: var(--border-vivid); background: var(--bg-elevated); }
   .cta-secondary .chat-icon {
     width: 16px; height: 16px; border-radius: 4px;
-    background: var(--green);
+    background: var(--bg-card);
+    border: 1px solid var(--border-vivid);
     display: inline-flex; align-items: center; justify-content: center;
-    color: var(--bg); font-size: 9px; font-weight: 700;
+    color: var(--text); font-size: 9px; font-weight: 700;
     font-family: 'JetBrains Mono', monospace;
   }
 
@@ -275,9 +253,9 @@
   .trust-strip span { display: inline-flex; align-items: center; gap: 8px; }
   .trust-strip .check {
     width: 14px; height: 14px; border-radius: 50%;
-    border: 1px solid var(--green);
+    border: 1px solid var(--border-vivid);
     display: inline-flex; align-items: center; justify-content: center;
-    color: var(--green); font-size: 9px; font-weight: 700;
+    color: var(--text); font-size: 9px; font-weight: 700;
   }
 
   /* Dashboard mockup */
@@ -620,7 +598,7 @@
     font-size: 11px;
     font-weight: 700;
     margin-top: 1px;
-    background-image: linear-gradient(135deg, rgba(74,222,128,0.18), rgba(74,222,128,0.06));
+    background-image: linear-gradient(135deg, rgba(58,157,93,0.18), rgba(58,157,93,0.06));
   }
   .aria-bullets li strong {
     display: block;
@@ -656,7 +634,7 @@
   }
   .chat-name { font-size: 14px; font-weight: 500; }
   .chat-status {
-    font-size: 11px; color: var(--green);
+    font-size: 11px; color: var(--text-muted);
     font-family: 'JetBrains Mono', monospace; margin-top: 2px;
   }
   .chat-bubble {
@@ -674,8 +652,8 @@
     border-bottom-right-radius: 4px;
   }
   .chat-bubble.aria {
-    background: rgba(74, 222, 128, 0.07);
-    border: 1px solid rgba(74, 222, 128, 0.18);
+    background: rgba(58, 157, 93,0.07);
+    border: 1px solid rgba(58, 157, 93,0.18);
     border-bottom-left-radius: 4px;
   }
   .chat-bubble.aria::before {
@@ -683,7 +661,7 @@
     display: inline-block;
     font-family: 'JetBrains Mono', monospace;
     font-size: 9px; letter-spacing: 1.5px;
-    background: rgba(74, 222, 128, 0.18);
+    background: rgba(58, 157, 93,0.18);
     padding: 2px 6px; border-radius: 4px;
     color: var(--green); margin-right: 8px;
     vertical-align: middle; font-weight: 600;
@@ -787,7 +765,7 @@
     background: var(--text-faint);
     border-radius: 50%;
   }
-  .preview-nav-item.active .dot { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .preview-nav-item.active .dot { background: var(--text); }
   .preview-main {
     padding: 28px;
     text-align: left;
@@ -956,7 +934,7 @@
   .email-highlight {
     padding: 14px;
     background: var(--green-dim);
-    border: 1px solid rgba(74,222,128,0.2);
+    border: 1px solid rgba(58,157,93,0.2);
     border-radius: 8px;
     font-size: 12px;
     color: var(--text);
@@ -989,7 +967,7 @@
     font-family: 'JetBrains Mono', monospace;
     font-size: 10px;
     letter-spacing: 1.5px;
-    color: var(--green);
+    color: var(--text-muted);
     margin-bottom: 16px;
     display: inline-flex;
     align-items: center;
@@ -999,7 +977,7 @@
     content: '';
     height: 1px;
     width: 24px;
-    background: rgba(74,222,128,0.3);
+    background: var(--border-vivid);
   }
   .step-card h3 {
     font-size: 16px;
@@ -1063,9 +1041,9 @@
     font-size: 13px;
   }
   .compare-cell.dominio {
-    color: var(--green);
+    color: var(--text);
     font-weight: 500;
-    background: rgba(74,222,128,0.025);
+    background: rgba(255,255,255,0.025);
     position: relative;
   }
   .compare-cell.dominio::before {
@@ -1073,7 +1051,7 @@
     position: absolute;
     left: 0; top: 0; bottom: 0;
     width: 2px;
-    background: var(--green);
+    background: var(--border-vivid);
   }
   .compare-cell.x { color: var(--text-faint); }
 
@@ -1098,13 +1076,13 @@
   }
   .vertical-card:hover { border-color: var(--border-strong); transform: translateY(-3px); }
   .vertical-card.live {
-    border-color: rgba(74,222,128,0.3);
+    border-color: var(--border-vivid);
   }
   .vertical-card.live::before {
     content: '';
     position: absolute;
     inset: 0;
-    background: radial-gradient(circle at top right, rgba(74,222,128,0.06), transparent 60%);
+    background: radial-gradient(circle at top right, rgba(255,255,255,0.025), transparent 60%);
     pointer-events: none;
   }
   .vertical-badge {
@@ -1378,7 +1356,7 @@
     content: '';
     position: absolute;
     inset: 0;
-    background: radial-gradient(ellipse at center bottom, rgba(74,222,128,0.04), transparent 60%);
+    background: radial-gradient(ellipse at center bottom, rgba(255,255,255,0.025), transparent 60%);
     pointer-events: none;
   }
   .final-cta h2 { margin: 16px auto 24px; max-width: 700px; position: relative; }
@@ -1591,12 +1569,6 @@
 <body>
 
 <div class="cursor-glow" id="cursorGlow"></div>
-
-<!-- ANNOUNCE BAR -->
-<div class="announce">
-  <strong>⚡ 20 spots Founding</strong> · $97/mes locked-in de por vida ·
-  <a href="#pricing">Conocer condiciones →</a>
-</div>
 
 <!-- NAV -->
 <nav class="top" id="topnav">
