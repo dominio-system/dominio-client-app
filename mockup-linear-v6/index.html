@@ -13,19 +13,25 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
+    /* SYNCED with real dashboard cliente v2.3.11 tokens — do not drift */
     --bg: #0a0a0a;
-    --bg-elevated: #131313;
-    --bg-card: #181818;
-    --bg-hover: #1f1f1f;
+    --bg-elevated: #111111;        /* matches --card real */
+    --bg-card: #161616;            /* matches --card2 real */
+    --bg-hover: #1a1a1a;            /* matches --card3 real */
     --border: rgba(255,255,255,0.06);
-    --border-strong: rgba(255,255,255,0.13);
+    --border-strong: rgba(255,255,255,0.12); /* matches --border2 real */
     --border-vivid: rgba(255,255,255,0.22);
-    --text: #f4f4f4;
-    --text-muted: #898989;
-    --text-faint: #4a4a4a;
-    --accent: #f4f4f4;
-    --green: #3a9d5d;
-    --green-dim: rgba(58, 157, 93, 0.10);
+    --text: #f5f5f5;                /* matches --text real */
+    --text-muted: #a8a8a8;          /* matches --text2 real */
+    --text-faint: #666666;          /* matches --text4 real */
+    --accent: #ffffff;
+    /* ARIA tokens — ARIA uses WHITE accents, NOT green */
+    --aria: #ffffff;
+    --aria-s: rgba(255,255,255,0.05);
+    --aria-border: rgba(255,255,255,0.18);
+    /* Semantic only */
+    --green: #6fcf97;               /* matches --success real (mint, not forest) */
+    --green-dim: rgba(111,207,151,0.10);
     --red: #f87171;
     --warm: #ffd166;
     --blue: #60a5fa;
@@ -2000,11 +2006,11 @@
   .demo-cita strong { color: var(--text); font-weight: 500; }
   .demo-cita.confirmed { border-left-color: var(--text); background: rgba(255,255,255,0.04); }
   .demo-cita.aria {
-    border-left-color: var(--green);
-    background: var(--green-dim);
-    color: var(--green);
+    border-left-color: var(--aria);
+    background: var(--aria-s);
+    color: var(--text);
   }
-  .demo-cita.aria strong { color: var(--green); }
+  .demo-cita.aria strong { color: var(--text); }
   .demo-cita.empty {
     border-left-color: var(--text-faint);
     background: transparent;
@@ -2040,33 +2046,49 @@
   }
   .demo-chat-avatar {
     width: 36px; height: 36px;
-    background: var(--green);
-    color: #0a0a0a;
-    font-weight: 700;
+    background: var(--bg-hover);
+    border: 1px solid var(--border-strong);
+    color: var(--text);
+    font-weight: 600;
     border-radius: 50%;
     display: grid; place-items: center;
   }
   .demo-chat-head strong { display: block; font-size: 13px; }
   .demo-chat-head small { font-size: 10px; color: var(--text-faint); letter-spacing: 0.5px; }
-  .demo-chat-body { display: flex; flex-direction: column; gap: 8px; }
+  .demo-chat-body { display: flex; flex-direction: column; gap: 10px; }
+  /* MATCHES REAL DASHBOARD .msg styles · monochrome grey-on-grey */
   .demo-msg {
     padding: 8px 12px;
-    border-radius: 12px;
-    font-size: 13px;
-    max-width: 80%;
-    line-height: 1.4;
+    border-radius: 10px;
+    font-size: 12px;
+    max-width: 75%;
+    line-height: 1.45;
   }
   .demo-msg.in {
     align-self: flex-start;
-    background: var(--bg-hover);
+    background: var(--bg-card);          /* --card2 real */
     color: var(--text);
-    border-bottom-left-radius: 4px;
+    border: 1px solid var(--border);
   }
   .demo-msg.out {
     align-self: flex-end;
-    background: var(--green-dim);
-    color: var(--green);
-    border-bottom-right-radius: 4px;
+    background: var(--bg-hover);         /* --card3 real */
+    color: var(--text);
+    border: 1px solid var(--border-strong); /* --border2 real */
+  }
+  /* ARIA tag inside outgoing messages · matches .msg-by-aria real */
+  .demo-msg-aria-tag {
+    display: inline-block;
+    font-size: 9px;
+    background: var(--aria-s);
+    color: var(--aria);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.5px;
+    margin-right: 5px;
+    border: 1px solid var(--aria-border);
+    vertical-align: 1px;
   }
   .demo-drawer h4 {
     font-size: 13px; font-weight: 600;
@@ -2088,8 +2110,9 @@
   .demo-drawer-foot {
     margin-top: 12px;
     padding: 10px;
-    background: var(--green-dim);
-    color: var(--green);
+    background: var(--aria-s);
+    color: var(--aria);
+    border: 1px solid var(--aria-border);
     border-radius: 6px;
     font-size: 9px;
     letter-spacing: 0.8px;
@@ -3282,11 +3305,11 @@
           </div>
           <div class="demo-chat-body">
             <div class="demo-msg in">Hola, ¿tienen turno para limpieza facial el viernes?</div>
-            <div class="demo-msg out">¡Hola Laura! Sí, este viernes 15 tengo disponible 11:00 y 16:30. ¿Cuál prefieres?</div>
+            <div class="demo-msg out"><span class="demo-msg-aria-tag">ARIA</span>¡Hola Laura! Sí, este viernes 15 tengo disponible 11:00 y 16:30. ¿Cuál prefieres?</div>
             <div class="demo-msg in">11:00 está perfecto</div>
-            <div class="demo-msg out">Listo, te agendé limpieza facial · viernes 15 a las 11:00. Te confirmo por email. ¿Algo más?</div>
+            <div class="demo-msg out"><span class="demo-msg-aria-tag">ARIA</span>Listo, te agendé limpieza facial · viernes 15 a las 11:00. Te confirmo por email. ¿Algo más?</div>
             <div class="demo-msg in">No, gracias 😊</div>
-            <div class="demo-msg out">¡Perfecto! Nos vemos el viernes. Cualquier cambio, escríbeme acá mismo.</div>
+            <div class="demo-msg out"><span class="demo-msg-aria-tag">ARIA</span>¡Perfecto! Nos vemos el viernes. Cualquier cambio, escríbeme acá mismo.</div>
           </div>
         </div>
         <div class="demo-drawer">
