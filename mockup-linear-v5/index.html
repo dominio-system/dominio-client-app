@@ -1,0 +1,2632 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dominio System · automation platform</title>
+<meta name="description" content="ARIA atiende tu WhatsApp y agenda citas automático. Para negocios que trabajan por citas.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0a;
+    --bg-elevated: #131313;
+    --bg-card: #181818;
+    --bg-hover: #1f1f1f;
+    --border: rgba(255,255,255,0.06);
+    --border-strong: rgba(255,255,255,0.13);
+    --border-vivid: rgba(255,255,255,0.22);
+    --text: #f4f4f4;
+    --text-muted: #898989;
+    --text-faint: #4a4a4a;
+    --accent: #f4f4f4;
+    --green: #4ade80;
+    --green-dim: rgba(74, 222, 128, 0.12);
+    --red: #f87171;
+    --warm: #ffd166;
+    --blue: #60a5fa;
+  }
+
+  html {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-feature-settings: 'ss01', 'cv11';
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+  }
+  body { min-height: 100vh; overflow-x: hidden; position: relative; }
+  .mono { font-family: 'JetBrains Mono', 'SF Mono', monospace; }
+  a { color: inherit; text-decoration: none; }
+  button { font-family: inherit; cursor: pointer; border: none; background: none; }
+
+  /* Background grid texture */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.012) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.012) 1px, transparent 1px);
+    background-size: 56px 56px;
+    pointer-events: none;
+    z-index: 0;
+    mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+  }
+
+  /* Cursor glow */
+  .cursor-glow {
+    position: fixed;
+    width: 480px; height: 480px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,255,0.06), transparent 60%);
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    z-index: 1;
+    opacity: 0;
+    transition: opacity .4s;
+    mix-blend-mode: screen;
+    filter: blur(50px);
+  }
+  body.cursor-active .cursor-glow { opacity: 1; }
+  @media (max-width: 720px) { .cursor-glow { display: none; } }
+
+  /* Announce bar */
+  .announce {
+    background: rgba(74,222,128,0.04);
+    border-bottom: 1px solid rgba(74,222,128,0.12);
+    padding: 9px 40px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.3px;
+    position: relative; z-index: 49;
+  }
+  .announce strong { color: var(--green); font-weight: 600; }
+  .announce a {
+    color: var(--text);
+    text-decoration: underline;
+    text-decoration-color: var(--text-faint);
+    text-underline-offset: 3px;
+    margin-left: 6px;
+  }
+
+  /* NAV */
+  nav.top {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    padding: 16px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    backdrop-filter: blur(20px);
+    background: rgba(10,10,10,0.78);
+    border-bottom: 1px solid transparent;
+    transition: border-color .3s, padding .3s;
+  }
+  nav.top.scrolled { border-bottom-color: var(--border); padding: 12px 40px; }
+
+  .brand {
+    display: flex; align-items: center; gap: 12px;
+  }
+  .brand-mark {
+    width: 28px; height: 28px;
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid var(--border-strong);
+    border-radius: 7px;
+    background: linear-gradient(135deg, var(--bg-elevated), var(--bg-card));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+  }
+  .brand-text {
+    display: flex; flex-direction: column;
+    gap: 1px; line-height: 1;
+  }
+  .brand-name {
+    font-size: 14px; font-weight: 600;
+    letter-spacing: -0.25px;
+    color: var(--text);
+  }
+  .brand-tagline {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--text-faint);
+    letter-spacing: 1.8px;
+    text-transform: uppercase;
+  }
+
+  .nav-links {
+    display: flex; gap: 24px; align-items: center;
+    font-size: 13px; color: var(--text-muted);
+  }
+  .nav-links a { transition: color .2s; }
+  .nav-links a:hover { color: var(--text); }
+  .nav-cta {
+    padding: 8px 16px;
+    background: var(--accent); color: var(--bg);
+    border-radius: 7px;
+    font-weight: 500; font-size: 13px;
+    transition: opacity .2s, transform .15s;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .nav-cta::before {
+    content: '';
+    width: 5px; height: 5px;
+    background: var(--green);
+    border-radius: 50%;
+    box-shadow: 0 0 6px var(--green);
+    animation: pulseDot 2s ease-in-out infinite;
+  }
+  @keyframes pulseDot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+  .nav-cta:hover { opacity: .9; transform: translateY(-1px); }
+
+  /* HERO */
+  section.hero {
+    min-height: calc(100vh - 80px);
+    padding: 80px 40px 100px;
+    display: flex; align-items: center;
+    position: relative; overflow: hidden;
+    z-index: 2;
+  }
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.05fr;
+    gap: 72px;
+    align-items: center;
+    max-width: 1320px;
+    margin: 0 auto;
+    width: 100%;
+  }
+  .hero-left { position: relative; z-index: 2; }
+
+  .eyebrow {
+    font-size: 11px; letter-spacing: 2.5px;
+    color: var(--text-muted); font-weight: 500;
+    margin-bottom: 28px;
+    display: inline-flex; align-items: center; gap: 12px;
+    padding: 6px 12px;
+    border: 1px solid var(--border-strong);
+    border-radius: 100px;
+    background: var(--bg-elevated);
+  }
+  .eyebrow::before {
+    content: '';
+    width: 6px; height: 6px;
+    background: var(--green); border-radius: 50%;
+    box-shadow: 0 0 8px var(--green);
+  }
+
+  h1.hero-h1 {
+    font-size: clamp(44px, 6vw, 80px);
+    font-weight: 600; line-height: 1.04;
+    letter-spacing: -0.04em;
+    margin-bottom: 24px;
+  }
+  h1.hero-h1 em {
+    font-style: italic;
+    font-weight: 400;
+    color: var(--text-muted);
+  }
+
+  .hero-sub {
+    font-size: clamp(16px, 1.6vw, 19px);
+    color: var(--text-muted); line-height: 1.55;
+    margin-bottom: 36px; font-weight: 400; max-width: 520px;
+  }
+  .hero-sub strong { color: var(--text); font-weight: 500; }
+  .hero-sub .word {
+    display: inline-block; opacity: 0;
+    transform: translateY(8px);
+    animation: typeIn .5s forwards cubic-bezier(.16,1,.3,1);
+  }
+  @keyframes typeIn { to { opacity: 1; transform: translateY(0); } }
+
+  .hero-ctas {
+    display: flex; gap: 14px; align-items: center;
+    margin-bottom: 24px; flex-wrap: wrap;
+  }
+  .cta-primary {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 13px 22px;
+    background: var(--accent); color: var(--bg);
+    border-radius: 8px;
+    font-size: 14px; font-weight: 500; letter-spacing: -0.1px;
+    transition: transform .15s cubic-bezier(.16,1,.3,1), box-shadow .2s;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 1px 0 rgba(255,255,255,0.15) inset;
+  }
+  .cta-primary:hover { box-shadow: 0 14px 50px -10px rgba(255,255,255,0.25); }
+  .cta-primary:active { transform: scale(.97); }
+  .cta-primary .arrow { transition: transform .25s cubic-bezier(.16,1,.3,1); }
+  .cta-primary:hover .arrow { transform: translateX(4px); }
+
+  .cta-secondary {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 12px 20px;
+    color: var(--text);
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    font-size: 14px; font-weight: 500;
+    background: rgba(255,255,255,0.02);
+    transition: border-color .2s, background .2s;
+  }
+  .cta-secondary:hover { border-color: var(--border-vivid); background: var(--bg-elevated); }
+  .cta-secondary .chat-icon {
+    width: 16px; height: 16px; border-radius: 4px;
+    background: var(--green);
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--bg); font-size: 9px; font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .trust-strip {
+    display: flex; gap: 22px; flex-wrap: wrap;
+    margin-top: 4px;
+    font-size: 12px; color: var(--text-muted);
+  }
+  .trust-strip span { display: inline-flex; align-items: center; gap: 8px; }
+  .trust-strip .check {
+    width: 14px; height: 14px; border-radius: 50%;
+    border: 1px solid var(--green);
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--green); font-size: 9px; font-weight: 700;
+  }
+
+  /* Dashboard mockup */
+  .hero-right { position: relative; perspective: 1600px; z-index: 2; }
+  .dashboard-window {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-strong);
+    border-radius: 14px;
+    box-shadow: 0 60px 120px -30px rgba(0,0,0,0.8), 0 30px 60px -15px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.04);
+    overflow: hidden;
+    transform-style: preserve-3d;
+    will-change: transform;
+    animation: float 8s ease-in-out infinite;
+    transition: transform .4s cubic-bezier(.16,1,.3,1);
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-7px); }
+  }
+  .dashboard-titlebar {
+    height: 34px;
+    background: linear-gradient(to bottom, #1a1a1a, #141414);
+    display: flex; align-items: center;
+    padding: 0 14px;
+    border-bottom: 1px solid var(--border);
+    gap: 8px;
+  }
+  .dot { width: 11px; height: 11px; border-radius: 50%; }
+  .dot-red { background: #ff5f57; }
+  .dot-yellow { background: #febc2e; }
+  .dot-green { background: #28c840; }
+  .dashboard-titlebar .title {
+    margin-left: 12px;
+    font-size: 11px; color: var(--text-faint);
+    font-family: 'JetBrains Mono', monospace; letter-spacing: 0.5px;
+  }
+  .live-pill {
+    margin-left: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; color: var(--green);
+    background: var(--green-dim);
+    padding: 3px 7px; border-radius: 4px;
+    letter-spacing: 0.5px; font-weight: 600;
+    display: inline-flex; align-items: center; gap: 5px;
+  }
+  .live-pill::before {
+    content: '';
+    width: 5px; height: 5px;
+    background: var(--green);
+    border-radius: 50%;
+    animation: pulseDot 2s ease-in-out infinite;
+  }
+  .dashboard-tabs {
+    display: flex; border-bottom: 1px solid var(--border);
+    padding: 0 16px;
+    background: rgba(255,255,255,0.01);
+    overflow-x: auto;
+  }
+  .dashboard-tab {
+    padding: 14px 12px 12px;
+    font-size: 12px; color: var(--text-faint);
+    border-bottom: 2px solid transparent;
+    margin-right: 4px; font-weight: 500;
+    white-space: nowrap;
+  }
+  .dashboard-tab.active { color: var(--text); border-bottom-color: var(--accent); }
+  .dashboard-body { padding: 20px; position: relative; }
+  .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .kpi-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px 16px;
+    transition: transform .3s, border-color .3s;
+  }
+  .kpi-card:hover { border-color: var(--border-strong); transform: translateY(-2px); }
+  .kpi-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; letter-spacing: 1.5px;
+    color: var(--text-faint); margin-bottom: 6px;
+  }
+  .kpi-value {
+    font-size: 22px; font-weight: 600;
+    letter-spacing: -0.02em; line-height: 1; margin-bottom: 4px;
+  }
+  .kpi-delta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; color: var(--green); letter-spacing: 0.3px;
+  }
+  .kpi-delta.up::before { content: '↑ '; }
+
+  .chart-area {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px;
+    height: 110px;
+    display: flex; align-items: flex-end;
+    gap: 5px; position: relative;
+  }
+  .chart-bar {
+    flex: 1;
+    background: linear-gradient(to top, rgba(244,244,244,0.3), rgba(244,244,244,0.85));
+    border-radius: 3px 3px 0 0;
+    min-height: 20%;
+    transform-origin: bottom;
+    animation: barGrow .9s cubic-bezier(.16,1,.3,1) forwards;
+    opacity: 0;
+  }
+  .chart-bar:nth-child(2) { height: 28%; animation-delay: 1.5s; }
+  .chart-bar:nth-child(3) { height: 32%; animation-delay: 1.55s; }
+  .chart-bar:nth-child(4) { height: 30%; animation-delay: 1.6s; }
+  .chart-bar:nth-child(5) { height: 36%; animation-delay: 1.65s; }
+  .chart-bar:nth-child(6) { height: 30%; animation-delay: 1.7s; }
+  .chart-bar:nth-child(7) { height: 48%; animation-delay: 1.75s; }
+  .chart-bar:nth-child(8) { height: 52%; animation-delay: 1.8s; }
+  .chart-bar:nth-child(9) { height: 64%; animation-delay: 1.85s; }
+  .chart-bar:nth-child(10) { height: 72%; animation-delay: 1.9s; }
+  .chart-bar:nth-child(11) { height: 88%; animation-delay: 1.95s; }
+  .chart-bar:nth-child(12) { height: 96%; animation-delay: 2s; }
+  @keyframes barGrow {
+    from { transform: scaleY(0); opacity: 0; }
+    to { transform: scaleY(1); opacity: 1; }
+  }
+  .chart-label {
+    position: absolute; top: 14px; left: 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; letter-spacing: 1.5px;
+    color: var(--text-faint);
+  }
+  .aria-overlay {
+    position: absolute;
+    bottom: 20px; right: 20px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-strong);
+    border-radius: 12px;
+    padding: 14px 16px;
+    width: 244px;
+    box-shadow: 0 20px 50px -10px rgba(0,0,0,0.7);
+    opacity: 0;
+    transform: translateY(20px);
+    animation: ariaAppear .8s cubic-bezier(.16,1,.3,1) 2.5s forwards;
+  }
+  @keyframes ariaAppear { to { opacity: 1; transform: translateY(0); } }
+  .aria-overlay-tag {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px;
+    background: var(--green-dim);
+    color: var(--green);
+    padding: 2px 6px; border-radius: 4px;
+    letter-spacing: 1px; margin-bottom: 6px; font-weight: 600;
+  }
+  .aria-overlay-text { font-size: 12px; color: var(--text); line-height: 1.4; }
+  .aria-overlay-check { color: var(--green); margin-left: 4px; }
+  .aria-overlay-time {
+    margin-top: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; color: var(--text-faint);
+  }
+
+  /* Section common */
+  section { padding: 100px 40px; position: relative; z-index: 2; }
+  .container { max-width: 1120px; margin: 0 auto; }
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: 3px;
+    color: var(--text-faint); font-weight: 500;
+    margin-bottom: 20px;
+    display: inline-flex; align-items: center; gap: 10px;
+  }
+  .section-label::before {
+    content: '';
+    width: 14px; height: 1px;
+    background: var(--border-vivid);
+  }
+  h2 {
+    font-size: clamp(34px, 4.5vw, 52px);
+    font-weight: 500; line-height: 1.06;
+    letter-spacing: -0.03em; margin-bottom: 22px;
+  }
+  h2 em { font-style: italic; font-weight: 400; color: var(--text-muted); }
+  .section-sub {
+    font-size: 16px; color: var(--text-muted);
+    line-height: 1.55; max-width: 580px;
+    margin-bottom: 56px;
+  }
+
+  /* STACK ROW */
+  section.stack {
+    border-top: 1px solid var(--border);
+    text-align: center;
+    padding: 64px 40px;
+  }
+  .stack-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: 3px;
+    color: var(--text-faint); font-weight: 500;
+    margin-bottom: 28px;
+  }
+  .stack-grid {
+    display: grid; grid-template-columns: repeat(6, 1fr);
+    gap: 40px; max-width: 720px;
+    margin: 0 auto; align-items: center;
+  }
+  .stack-item {
+    font-size: 13px; color: var(--text-faint);
+    font-weight: 500; letter-spacing: 0.3px;
+    transition: color .3s, transform .3s;
+    animation: stackPulse 8s ease-in-out infinite;
+  }
+  .stack-item:nth-child(1) { animation-delay: 0s; }
+  .stack-item:nth-child(2) { animation-delay: 1.3s; }
+  .stack-item:nth-child(3) { animation-delay: 2.6s; }
+  .stack-item:nth-child(4) { animation-delay: 3.9s; }
+  .stack-item:nth-child(5) { animation-delay: 5.2s; }
+  .stack-item:nth-child(6) { animation-delay: 6.5s; }
+  @keyframes stackPulse {
+    0%, 90%, 100% { opacity: 0.45; }
+    5%, 10% { opacity: 0.95; }
+  }
+
+  /* STATS BANNER */
+  section.stats-banner {
+    border-top: 1px solid var(--border);
+    padding: 36px 40px;
+    background: linear-gradient(to bottom, rgba(255,255,255,0.012), transparent);
+  }
+  .stats-row {
+    max-width: 1120px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 28px;
+  }
+  .stat-cell {
+    text-align: center;
+    padding: 8px;
+  }
+  .stat-cell .num {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .stat-cell .num em {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    color: var(--green);
+    font-style: normal;
+    margin-left: 2px;
+  }
+  .stat-cell .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-faint);
+    letter-spacing: 1.5px;
+  }
+
+  /* PRODUCTO */
+  section.producto { border-top: 1px solid var(--border); }
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+  .feature-card {
+    padding: 28px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    transition: border-color .3s, transform .3s;
+    position: relative;
+    overflow: hidden;
+  }
+  .feature-card::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255,255,255,0.04), transparent 50%);
+    pointer-events: none; opacity: 0; transition: opacity .3s;
+  }
+  .feature-card:hover { border-color: var(--border-strong); transform: translateY(-3px); }
+  .feature-card:hover::before { opacity: 1; }
+  .feature-icon {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-strong);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 18px;
+    color: var(--text);
+  }
+  .feature-card h3 {
+    font-size: 17px; font-weight: 500;
+    letter-spacing: -0.01em; margin-bottom: 10px;
+  }
+  .feature-card p {
+    font-size: 13px; color: var(--text-muted);
+    line-height: 1.55;
+  }
+  .feature-card .feature-meta {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-faint);
+    letter-spacing: 1px;
+  }
+
+  /* ARIA */
+  section.aria-section {
+    border-top: 1px solid var(--border);
+  }
+  .aria-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 64px;
+    align-items: center;
+  }
+  .aria-bullets {
+    list-style: none;
+    margin-top: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .aria-bullets li {
+    display: grid;
+    grid-template-columns: 22px 1fr;
+    gap: 14px;
+    align-items: start;
+  }
+  .aria-bullets li::before {
+    content: '';
+    width: 22px; height: 22px;
+    background: var(--green-dim);
+    border: 1px solid var(--green);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--green);
+    font-size: 11px;
+    font-weight: 700;
+    margin-top: 1px;
+    background-image: linear-gradient(135deg, rgba(74,222,128,0.18), rgba(74,222,128,0.06));
+  }
+  .aria-bullets li strong {
+    display: block;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 4px;
+    letter-spacing: -0.01em;
+  }
+  .aria-bullets li p {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+
+  .chat-preview {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 30px 80px -20px rgba(0,0,0,0.5);
+  }
+  .chat-header {
+    display: flex; align-items: center; gap: 12px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 16px;
+  }
+  .chat-avatar {
+    width: 38px; height: 38px;
+    border-radius: 10px; background: #25d366;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .chat-name { font-size: 14px; font-weight: 500; }
+  .chat-status {
+    font-size: 11px; color: var(--green);
+    font-family: 'JetBrains Mono', monospace; margin-top: 2px;
+  }
+  .chat-bubble {
+    padding: 10px 14px; border-radius: 14px;
+    font-size: 13px; line-height: 1.5;
+    margin-bottom: 8px; max-width: 88%;
+    opacity: 0; transform: translateY(8px);
+    animation: bubbleIn .4s cubic-bezier(.16,1,.3,1) forwards;
+  }
+  @keyframes bubbleIn { to { opacity: 1; transform: translateY(0); } }
+  .chat-bubble.user {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    margin-left: auto;
+    border-bottom-right-radius: 4px;
+  }
+  .chat-bubble.aria {
+    background: rgba(74, 222, 128, 0.07);
+    border: 1px solid rgba(74, 222, 128, 0.18);
+    border-bottom-left-radius: 4px;
+  }
+  .chat-bubble.aria::before {
+    content: 'ARIA';
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; letter-spacing: 1.5px;
+    background: rgba(74, 222, 128, 0.18);
+    padding: 2px 6px; border-radius: 4px;
+    color: var(--green); margin-right: 8px;
+    vertical-align: middle; font-weight: 600;
+  }
+  .typing-dots { display: inline-flex; gap: 4px; padding: 4px 0; }
+  .typing-dots span {
+    width: 6px; height: 6px;
+    background: var(--text-muted);
+    border-radius: 50%;
+    animation: typingBounce 1s ease-in-out infinite;
+  }
+  .typing-dots span:nth-child(2) { animation-delay: .2s; }
+  .typing-dots span:nth-child(3) { animation-delay: .4s; }
+  @keyframes typingBounce {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+    30% { transform: translateY(-4px); opacity: 1; }
+  }
+  .chat-chips {
+    margin-top: 16px;
+    display: flex; flex-wrap: wrap; gap: 8px;
+  }
+  .chat-chip {
+    padding: 7px 13px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    font-size: 12px; color: var(--text-muted);
+    transition: all .2s;
+  }
+  .chat-chip:hover {
+    border-color: var(--border-strong);
+    color: var(--text);
+    background: var(--bg-hover);
+  }
+  .chat-chip:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* DASHBOARD PREVIEW SECTION */
+  section.dashboard-preview {
+    border-top: 1px solid var(--border);
+    text-align: center;
+  }
+  .dashboard-preview .container { max-width: 1200px; }
+  .preview-window {
+    margin-top: 56px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-strong);
+    border-radius: 18px;
+    box-shadow: 0 60px 120px -30px rgba(0,0,0,0.7), 0 30px 60px -15px rgba(0,0,0,0.4);
+    overflow: hidden;
+  }
+  .preview-window .titlebar {
+    height: 36px;
+    background: linear-gradient(to bottom, #1a1a1a, #141414);
+    display: flex; align-items: center;
+    padding: 0 16px; gap: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .preview-window .titlebar .title {
+    margin-left: 12px;
+    font-size: 12px;
+    color: var(--text-faint);
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.5px;
+  }
+  .preview-content {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    min-height: 400px;
+  }
+  .preview-sidebar {
+    border-right: 1px solid var(--border);
+    padding: 20px 14px;
+    background: rgba(255,255,255,0.01);
+  }
+  .preview-sidebar h4 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    color: var(--text-faint);
+    margin-bottom: 10px;
+    padding: 0 8px;
+  }
+  .preview-nav-item {
+    padding: 7px 10px;
+    font-size: 13px;
+    color: var(--text-muted);
+    border-radius: 6px;
+    margin-bottom: 2px;
+    display: flex; align-items: center; gap: 10px;
+    cursor: pointer;
+    transition: background .15s, color .15s;
+  }
+  .preview-nav-item:hover { background: var(--bg-card); color: var(--text); }
+  .preview-nav-item.active {
+    background: var(--bg-card);
+    color: var(--text);
+    font-weight: 500;
+  }
+  .preview-nav-item .dot {
+    width: 5px; height: 5px;
+    background: var(--text-faint);
+    border-radius: 50%;
+  }
+  .preview-nav-item.active .dot { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .preview-main {
+    padding: 28px;
+    text-align: left;
+  }
+  .preview-main-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .preview-main-header h3 {
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+  .preview-pill {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 4px 10px;
+    background: var(--green-dim);
+    color: var(--green);
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+  }
+  .preview-kpis {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .preview-kpi {
+    padding: 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+  }
+  .preview-kpi .lbl {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--text-faint);
+    letter-spacing: 1.5px;
+    margin-bottom: 6px;
+  }
+  .preview-kpi .val {
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .preview-kpi .delta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--green);
+  }
+  .preview-chart {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px;
+    height: 140px;
+    display: flex;
+    align-items: flex-end;
+    gap: 5px;
+    position: relative;
+  }
+  .preview-chart .lbl {
+    position: absolute;
+    top: 14px; left: 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; letter-spacing: 1.5px;
+    color: var(--text-faint);
+  }
+  .preview-chart-bar {
+    flex: 1;
+    background: linear-gradient(to top, rgba(244,244,244,0.3), rgba(244,244,244,0.8));
+    border-radius: 3px 3px 0 0;
+  }
+
+  /* REPORTE MENSUAL */
+  section.reporte {
+    border-top: 1px solid var(--border);
+  }
+  .reporte-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 64px;
+    align-items: center;
+  }
+  .email-mock {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-strong);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 30px 80px -20px rgba(0,0,0,0.5);
+  }
+  .email-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(255,255,255,0.012);
+  }
+  .email-from {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 8px;
+  }
+  .email-avatar {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--text), var(--text-muted));
+    color: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700;
+  }
+  .email-from-name {
+    font-size: 12px; font-weight: 500;
+  }
+  .email-from-addr {
+    font-size: 11px; color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .email-subject {
+    font-size: 15px; font-weight: 500;
+    letter-spacing: -0.01em;
+    color: var(--text);
+  }
+  .email-date {
+    font-size: 11px; color: var(--text-faint);
+    font-family: 'JetBrains Mono', monospace;
+    margin-top: 4px;
+  }
+  .email-body {
+    padding: 24px 20px;
+  }
+  .email-body p {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.55;
+    margin-bottom: 16px;
+  }
+  .email-kpi-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .email-kpi {
+    padding: 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    text-align: center;
+  }
+  .email-kpi .val {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+  .email-kpi .lbl {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px;
+    color: var(--text-faint);
+    letter-spacing: 1.5px;
+    margin-top: 2px;
+  }
+  .email-highlight {
+    padding: 14px;
+    background: var(--green-dim);
+    border: 1px solid rgba(74,222,128,0.2);
+    border-radius: 8px;
+    font-size: 12px;
+    color: var(--text);
+    line-height: 1.5;
+  }
+  .email-highlight strong { color: var(--green); }
+
+  /* SETUP / 4 PASOS */
+  section.setup-section {
+    border-top: 1px solid var(--border);
+    text-align: center;
+  }
+  .steps-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-top: 56px;
+  }
+  .step-card {
+    padding: 24px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    text-align: left;
+    position: relative;
+    transition: border-color .3s, transform .3s;
+  }
+  .step-card:hover { border-color: var(--border-strong); transform: translateY(-3px); }
+  .step-card-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    color: var(--green);
+    margin-bottom: 16px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .step-card-num::after {
+    content: '';
+    height: 1px;
+    width: 24px;
+    background: rgba(74,222,128,0.3);
+  }
+  .step-card h3 {
+    font-size: 16px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    margin-bottom: 8px;
+  }
+  .step-card p {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+  .step-card .step-time {
+    margin-top: 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-faint);
+    letter-spacing: 0.5px;
+  }
+
+  /* COMPARATIVA */
+  section.comparativa {
+    border-top: 1px solid var(--border);
+  }
+  .compare-table {
+    margin-top: 56px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .compare-row {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1fr 1fr;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    transition: background .2s;
+  }
+  .compare-row:last-child { border-bottom: none; }
+  .compare-row:hover { background: rgba(255,255,255,0.01); }
+  .compare-row.header {
+    background: rgba(255,255,255,0.02);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    color: var(--text-muted);
+  }
+  .compare-row.header .compare-cell { padding: 16px 20px; }
+  .compare-row.header .featured {
+    color: var(--text);
+    font-weight: 600;
+  }
+  .compare-cell {
+    padding: 18px 20px;
+    font-size: 14px;
+    color: var(--text-muted);
+  }
+  .compare-cell.label {
+    color: var(--text);
+    font-weight: 500;
+    font-size: 13px;
+  }
+  .compare-cell.dominio {
+    color: var(--green);
+    font-weight: 500;
+    background: rgba(74,222,128,0.025);
+    position: relative;
+  }
+  .compare-cell.dominio::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 2px;
+    background: var(--green);
+  }
+  .compare-cell.x { color: var(--text-faint); }
+
+  /* VERTICALES */
+  section.verticales {
+    border-top: 1px solid var(--border);
+  }
+  .verticales-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-top: 56px;
+  }
+  .vertical-card {
+    padding: 32px 28px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color .3s, transform .3s;
+  }
+  .vertical-card:hover { border-color: var(--border-strong); transform: translateY(-3px); }
+  .vertical-card.live {
+    border-color: rgba(74,222,128,0.3);
+  }
+  .vertical-card.live::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at top right, rgba(74,222,128,0.06), transparent 60%);
+    pointer-events: none;
+  }
+  .vertical-badge {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    letter-spacing: 1px;
+    margin-bottom: 16px;
+    font-weight: 600;
+  }
+  .vertical-badge.live {
+    background: var(--green-dim);
+    color: var(--green);
+  }
+  .vertical-badge.soon {
+    background: var(--bg-card);
+    color: var(--text-faint);
+  }
+  .vertical-card .icon {
+    font-size: 40px;
+    line-height: 1;
+    margin-bottom: 14px;
+  }
+  .vertical-card h3 {
+    font-size: 20px;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+  }
+  .vertical-card .desc {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.55;
+    margin-bottom: 20px;
+  }
+  .vertical-stats {
+    border-top: 1px solid var(--border);
+    padding-top: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .vertical-stats span {
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .vertical-stats span::before {
+    content: '→';
+    color: var(--text-faint);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+  }
+
+  /* PRICING */
+  section.pricing {
+    border-top: 1px solid var(--border);
+    text-align: center;
+  }
+  .price-card {
+    margin: 56px auto 0;
+    max-width: 480px;
+    padding: 44px 36px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-strong);
+    border-radius: 18px;
+    text-align: left;
+    position: relative;
+    box-shadow: 0 30px 80px -20px rgba(0,0,0,0.5);
+  }
+  .price-card::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: 18px;
+    padding: 1px;
+    background: linear-gradient(135deg, rgba(255,209,102,0.3), transparent 40%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+  .founding-badge {
+    position: absolute;
+    top: -14px; left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, var(--warm), #f4a836);
+    color: var(--bg);
+    padding: 6px 16px;
+    border-radius: 100px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; font-weight: 700;
+    letter-spacing: 1.5px;
+    animation: badgePulse 2.5s ease-in-out infinite;
+    box-shadow: 0 8px 24px -6px rgba(255,209,102,0.3);
+  }
+  @keyframes badgePulse {
+    0%, 100% { box-shadow: 0 8px 24px -6px rgba(255,209,102,0.3); }
+    50% { box-shadow: 0 8px 32px -4px rgba(255,209,102,0.5); }
+  }
+  .price-tier {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; letter-spacing: 2px;
+    color: var(--text-faint); margin-bottom: 16px;
+  }
+  .price-amount { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; }
+  .price-amount .num {
+    font-size: 60px; font-weight: 600;
+    letter-spacing: -0.04em; line-height: 1;
+  }
+  .price-amount .period { font-size: 14px; color: var(--text-muted); }
+  .price-annual {
+    font-size: 13px; color: var(--text-muted);
+    margin-bottom: 16px;
+  }
+  .price-public {
+    font-size: 12px; color: var(--warm);
+    margin-bottom: 28px; line-height: 1.45;
+    padding: 12px;
+    background: rgba(255,209,102,0.05);
+    border: 1px solid rgba(255,209,102,0.15);
+    border-radius: 8px;
+  }
+  .price-features {
+    list-style: none; margin-bottom: 28px;
+    display: flex; flex-direction: column;
+  }
+  .price-features li {
+    padding: 10px 0;
+    border-top: 1px solid var(--border);
+    font-size: 13px; color: var(--text-muted);
+    display: flex; align-items: center; gap: 12px;
+  }
+  .price-features li::before {
+    content: '✓'; color: var(--green);
+    font-size: 11px; flex-shrink: 0;
+    font-weight: 700;
+  }
+  .price-card .cta-primary { width: 100%; justify-content: center; }
+  .price-trust {
+    margin-top: 14px; font-size: 11px;
+    color: var(--text-faint); text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.5px;
+  }
+
+  /* ENTERPRISE */
+  section.enterprise {
+    border-top: 1px solid var(--border);
+  }
+  .enterprise-card {
+    margin-top: 48px;
+    padding: 56px 48px;
+    background: linear-gradient(135deg, var(--bg-elevated), var(--bg-card));
+    border: 1px solid var(--border-strong);
+    border-radius: 18px;
+    position: relative;
+    overflow: hidden;
+  }
+  .enterprise-card::before {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 60%;
+    height: 100%;
+    background: radial-gradient(ellipse at top right, rgba(96,165,250,0.05), transparent 60%);
+    pointer-events: none;
+  }
+  .enterprise-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 56px;
+    position: relative;
+    z-index: 1;
+  }
+  .enterprise-left .enterprise-pill {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 4px 10px;
+    background: rgba(96,165,250,0.12);
+    color: var(--blue);
+    border-radius: 4px;
+    letter-spacing: 1.5px;
+    margin-bottom: 16px;
+    font-weight: 600;
+  }
+  .enterprise-left h3 {
+    font-size: 30px;
+    font-weight: 500;
+    letter-spacing: -0.03em;
+    margin-bottom: 16px;
+    line-height: 1.1;
+  }
+  .enterprise-left p {
+    font-size: 14px;
+    color: var(--text-muted);
+    line-height: 1.6;
+    margin-bottom: 24px;
+  }
+  .enterprise-req {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-faint);
+    margin-bottom: 24px;
+    letter-spacing: 0.5px;
+  }
+  .enterprise-features {
+    list-style: none;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .enterprise-features li {
+    font-size: 12px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+  }
+  .enterprise-features li::before {
+    content: '🔒';
+    font-size: 10px;
+    filter: grayscale(1) brightness(0.7);
+  }
+
+  /* FAQ */
+  section.faq { border-top: 1px solid var(--border); }
+  .faq .container { max-width: 760px; }
+  details.faq-item {
+    border-top: 1px solid var(--border);
+    padding: 26px 0; cursor: pointer;
+  }
+  details.faq-item:last-child { border-bottom: 1px solid var(--border); }
+  details.faq-item summary {
+    font-size: 16px; font-weight: 500;
+    letter-spacing: -0.01em; list-style: none;
+    display: flex; justify-content: space-between; align-items: center;
+    user-select: none;
+  }
+  details.faq-item summary:hover { color: var(--text); }
+  details.faq-item summary::-webkit-details-marker { display: none; }
+  details.faq-item summary::after {
+    content: '+';
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 20px; color: var(--text-muted);
+    font-weight: 300;
+  }
+  details.faq-item[open] summary::after { content: '−'; }
+  details.faq-item .answer {
+    margin-top: 14px; font-size: 14px;
+    color: var(--text-muted); line-height: 1.6;
+    animation: fadeIn .3s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  /* FINAL CTA */
+  section.final-cta {
+    border-top: 1px solid var(--border);
+    text-align: center; padding: 140px 40px;
+    position: relative;
+    overflow: hidden;
+  }
+  .final-cta::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center bottom, rgba(74,222,128,0.04), transparent 60%);
+    pointer-events: none;
+  }
+  .final-cta h2 { margin: 16px auto 24px; max-width: 700px; position: relative; }
+  .final-cta p {
+    font-size: 15px; color: var(--text-muted);
+    margin-bottom: 40px;
+    max-width: 480px;
+    margin-left: auto; margin-right: auto;
+    line-height: 1.6;
+    position: relative;
+  }
+  .final-ctas {
+    display: inline-flex; gap: 14px;
+    align-items: center; flex-wrap: wrap;
+    justify-content: center;
+    position: relative;
+  }
+
+  /* FOOTER */
+  footer {
+    padding: 72px 40px 32px;
+    border-top: 1px solid var(--border);
+    background: rgba(255,255,255,0.012);
+  }
+  .footer-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+    gap: 48px;
+    max-width: 1200px;
+    margin: 0 auto 48px;
+  }
+  .footer-brand p {
+    margin-top: 16px;
+    font-size: 13px; color: var(--text-muted);
+    line-height: 1.6; max-width: 280px;
+  }
+  .footer-col h4 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: 2px;
+    color: var(--text-faint); font-weight: 500;
+    margin-bottom: 18px;
+  }
+  .footer-col ul { list-style: none; }
+  .footer-col li {
+    padding: 6px 0;
+    font-size: 13px; color: var(--text-muted);
+    transition: color .15s; cursor: pointer;
+  }
+  .footer-col li:hover { color: var(--text); }
+  .footer-bottom {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding-top: 32px;
+    border-top: 1px solid var(--border);
+    display: flex; justify-content: space-between;
+    align-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; color: var(--text-faint);
+    letter-spacing: 0.5px;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .footer-social { display: flex; gap: 10px; }
+  .footer-social a {
+    width: 28px; height: 28px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    transition: border-color .15s, background .15s, transform .2s;
+  }
+  .footer-social a:hover {
+    border-color: var(--border-strong);
+    background: var(--bg-elevated);
+    transform: translateY(-2px);
+  }
+
+  /* PERSISTENT ARIA WIDGET */
+  .aria-widget {
+    position: fixed;
+    bottom: 24px; right: 24px;
+    z-index: 60;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-strong);
+    border-radius: 14px;
+    padding: 12px 14px 12px 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 20px 50px -10px rgba(0,0,0,0.7);
+    cursor: pointer;
+    transition: transform .25s cubic-bezier(.16,1,.3,1), border-color .2s;
+    max-width: 320px;
+    transform: translateY(8px);
+    opacity: 0;
+    animation: widgetIn .6s cubic-bezier(.16,1,.3,1) 1.5s forwards;
+  }
+  @keyframes widgetIn {
+    to { transform: translateY(0); opacity: 1; }
+  }
+  .aria-widget:hover {
+    transform: translateY(-2px);
+    border-color: var(--border-vivid);
+  }
+  .aria-widget-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: var(--green);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--bg); font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    flex-shrink: 0;
+    position: relative;
+  }
+  .aria-widget-icon::after {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    border-radius: 12px;
+    border: 1px solid var(--green);
+    opacity: 0.4;
+    animation: widgetPulse 2s ease-out infinite;
+  }
+  @keyframes widgetPulse {
+    0% { transform: scale(1); opacity: 0.4; }
+    100% { transform: scale(1.3); opacity: 0; }
+  }
+  .aria-widget-text {
+    font-size: 12px;
+    color: var(--text);
+    line-height: 1.4;
+  }
+  .aria-widget-text strong {
+    display: block;
+    color: var(--text);
+    font-size: 11px;
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+  .aria-widget-text small {
+    color: var(--text-muted);
+    font-size: 11px;
+  }
+  @media (max-width: 720px) {
+    .aria-widget { max-width: calc(100vw - 32px); right: 16px; bottom: 16px; }
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 1080px) {
+    .hero-grid { grid-template-columns: 1fr; gap: 56px; }
+    .hero-right { order: 2; }
+    .aria-grid, .reporte-grid { grid-template-columns: 1fr; gap: 48px; }
+    .preview-content { grid-template-columns: 1fr; }
+    .preview-sidebar { border-right: none; border-bottom: 1px solid var(--border); }
+    .enterprise-grid { grid-template-columns: 1fr; gap: 32px; }
+  }
+  @media (max-width: 960px) {
+    .features-grid { grid-template-columns: 1fr 1fr; }
+    .verticales-grid { grid-template-columns: 1fr; }
+    .steps-grid { grid-template-columns: 1fr 1fr; }
+    .stack-grid { grid-template-columns: repeat(3, 1fr); gap: 28px 24px; }
+    .stats-row { grid-template-columns: repeat(2, 1fr); gap: 20px; }
+    .preview-kpis { grid-template-columns: repeat(2, 1fr); }
+    .compare-row { grid-template-columns: 1fr 1fr; }
+    .compare-row .compare-cell:nth-child(3),
+    .compare-row .compare-cell:nth-child(4) { display: none; }
+    .enterprise-features { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 720px) {
+    nav.top { padding: 14px 20px; }
+    nav.top.scrolled { padding: 10px 20px; }
+    .nav-links { gap: 12px; }
+    .nav-links a:not(.nav-cta) { display: none; }
+    .announce { padding: 8px 20px; font-size: 11px; }
+    section.hero { padding: 60px 20px 60px; }
+    section { padding: 64px 20px; }
+    .footer-grid { grid-template-columns: 1fr 1fr; gap: 32px; }
+    .footer-bottom { flex-direction: column; gap: 12px; }
+    .aria-overlay { display: none; }
+    h1.hero-h1 { font-size: 42px; }
+    .hero-ctas { flex-direction: column; align-items: stretch; }
+    .cta-primary, .cta-secondary { justify-content: center; }
+    .features-grid { grid-template-columns: 1fr; }
+    .steps-grid { grid-template-columns: 1fr; }
+    .price-amount .num { font-size: 48px; }
+  }
+
+  /* REVEAL */
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity .8s cubic-bezier(.16,1,.3,1), transform .8s cubic-bezier(.16,1,.3,1);
+  }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+  .reveal.delay-1 { transition-delay: .08s; }
+  .reveal.delay-2 { transition-delay: .16s; }
+  .reveal.delay-3 { transition-delay: .24s; }
+  .reveal.delay-4 { transition-delay: .32s; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+    .reveal { opacity: 1; transform: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="cursor-glow" id="cursorGlow"></div>
+
+<!-- ANNOUNCE BAR -->
+<div class="announce">
+  <strong>⚡ 20 spots Founding</strong> · $97/mes locked-in de por vida ·
+  <a href="#pricing">Conocer condiciones →</a>
+</div>
+
+<!-- NAV -->
+<nav class="top" id="topnav">
+  <a href="#" class="brand">
+    <span class="brand-mark">
+      <svg width="16" height="11" viewBox="0 0 22 14" fill="none">
+        <path d="M0 7H2.5V2H6V13H10V2H13.5V7H17" stroke="#f4f4f4" stroke-width="1.6" stroke-linecap="square" stroke-linejoin="miter"/>
+        <circle cx="19.5" cy="7" r="1.8" fill="#f4f4f4"/>
+      </svg>
+    </span>
+    <div class="brand-text">
+      <span class="brand-name">Dominio System</span>
+      <span class="brand-tagline">automation platform</span>
+    </div>
+  </a>
+  <div class="nav-links">
+    <a href="#producto">Producto</a>
+    <a href="#aria">ARIA</a>
+    <a href="#verticales">Verticales</a>
+    <a href="#pricing">Planes</a>
+    <a href="#faq">Preguntas</a>
+    <a href="#empezar" class="nav-cta">Empezar</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-grid">
+
+    <div class="hero-left">
+      <div class="eyebrow mono">PARA NEGOCIOS QUE TRABAJAN POR CITAS</div>
+
+      <h1 class="hero-h1">
+        Llena tu agenda<br>
+        <em>mientras estás con un cliente.</em>
+      </h1>
+
+      <p class="hero-sub" id="heroSub">
+        <span class="word"><strong>ARIA</strong></span>
+        <span class="word">atiende</span>
+        <span class="word">tu</span>
+        <span class="word">WhatsApp,</span>
+        <span class="word">agenda</span>
+        <span class="word">citas</span>
+        <span class="word">y</span>
+        <span class="word">recuerda</span>
+        <span class="word">a</span>
+        <span class="word">tus</span>
+        <span class="word">clientes</span>
+        <span class="word">—</span>
+        <span class="word">todo</span>
+        <span class="word">automático.</span>
+      </p>
+
+      <div class="hero-ctas">
+        <a href="#empezar" class="cta-primary">
+          Apartar mi spot Founding
+          <span class="arrow">→</span>
+        </a>
+        <a href="#aria" class="cta-secondary">
+          <span class="chat-icon">A</span>
+          Chatear con ARIA
+        </a>
+      </div>
+
+      <div class="trust-strip">
+        <span><span class="check">✓</span> Sin tarjeta</span>
+        <span><span class="check">✓</span> Cancela cuando quieras</span>
+        <span><span class="check">✓</span> Setup 72h</span>
+      </div>
+    </div>
+
+    <div class="hero-right">
+      <div class="dashboard-window" id="dashboardWindow">
+        <div class="dashboard-titlebar">
+          <span class="dot dot-red"></span>
+          <span class="dot dot-yellow"></span>
+          <span class="dot dot-green"></span>
+          <span class="title mono">Dominio System · Brief</span>
+          <span class="live-pill">LIVE</span>
+        </div>
+        <div class="dashboard-tabs">
+          <div class="dashboard-tab active">Brief</div>
+          <div class="dashboard-tab">Agenda</div>
+          <div class="dashboard-tab">CRM 360</div>
+          <div class="dashboard-tab">ARIA</div>
+          <div class="dashboard-tab">Campañas</div>
+        </div>
+        <div class="dashboard-body">
+          <div class="kpi-grid">
+            <div class="kpi-card">
+              <div class="kpi-label">MRR</div>
+              <div class="kpi-value" data-counter="12400" data-format="k">$0</div>
+              <div class="kpi-delta up">8.2% MoM</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">LEADS</div>
+              <div class="kpi-value" data-counter="412">0</div>
+              <div class="kpi-delta up">12%</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">CITAS</div>
+              <div class="kpi-value" data-counter="189">0</div>
+              <div class="kpi-delta up">18%</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">CONV.</div>
+              <div class="kpi-value" data-counter="45.8" data-decimals="1" data-suffix="%">0%</div>
+              <div class="kpi-delta up">3.2pp</div>
+            </div>
+          </div>
+          <div class="chart-area">
+            <div class="chart-label mono">INGRESOS · 30D</div>
+            <div class="chart-bar"></div>
+            <div class="chart-bar"></div>
+            <div class="chart-bar"></div>
+            <div class="chart-bar"></div>
+            <div class="chart-bar"></div>
+            <div class="chart-bar"></div>
+            <div class="chart-bar"></div>
+            <div class="chart-bar"></div>
+            <div class="chart-bar"></div>
+            <div class="chart-bar"></div>
+            <div class="chart-bar"></div>
+          </div>
+          <div class="aria-overlay">
+            <span class="aria-overlay-tag">ARIA · ACABA DE</span>
+            <div class="aria-overlay-text">
+              Laura M. agendó cita<br>
+              Vie 18 · 10:00<span class="aria-overlay-check">✓</span>
+            </div>
+            <div class="aria-overlay-time mono">HACE 12 SEGUNDOS</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- STACK -->
+<section class="stack">
+  <div class="stack-label mono">CONSTRUIDO SOBRE</div>
+  <div class="stack-grid">
+    <div class="stack-item">Meta</div>
+    <div class="stack-item">Supabase</div>
+    <div class="stack-item">Resend</div>
+    <div class="stack-item">GitHub</div>
+    <div class="stack-item">n8n</div>
+    <div class="stack-item">Vercel</div>
+  </div>
+</section>
+
+<!-- STATS BANNER -->
+<section class="stats-banner">
+  <div class="stats-row">
+    <div class="stat-cell">
+      <div class="num">&lt;3<em>s</em></div>
+      <div class="label mono">RESPUESTA ARIA</div>
+    </div>
+    <div class="stat-cell">
+      <div class="num">Real<em>time</em></div>
+      <div class="label mono">SINCRONIZACIÓN</div>
+    </div>
+    <div class="stat-cell">
+      <div class="num">AES-<em>256</em></div>
+      <div class="label mono">BACKUPS DIARIOS</div>
+    </div>
+    <div class="stat-cell">
+      <div class="num">72<em>h</em></div>
+      <div class="label mono">SETUP COMPLETO</div>
+    </div>
+  </div>
+</section>
+
+<!-- PRODUCTO -->
+<section class="producto" id="producto">
+  <div class="container">
+    <div class="section-label mono reveal">PRODUCTO</div>
+    <h2 class="reveal">Todo lo que tu negocio necesita,<br><em>en un solo lugar.</em></h2>
+    <p class="section-sub reveal delay-1">
+      Dashboard nativo, IA conversacional, WhatsApp oficial y reportes en vivo. Sin agencias intermediarias, sin tools sueltas pegadas con cinta adhesiva.
+    </p>
+
+    <div class="features-grid">
+
+      <div class="feature-card reveal delay-1" data-mouse-card>
+        <div class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="14" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/></svg>
+        </div>
+        <h3>Dashboard nativo</h3>
+        <p>App de escritorio Mac (Windows próximamente). Realtime con Supabase, sin tabs perdidos del navegador.</p>
+        <div class="feature-meta mono">MACOS · WIN Q3 2026</div>
+      </div>
+
+      <div class="feature-card reveal delay-2" data-mouse-card>
+        <div class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+        </div>
+        <h3>Automatización 24/7</h3>
+        <p>ARIA opera mientras duermes, los fines de semana y feriados. Tú decides qué casos llegan a tu mano y cuáles ejecuta sola.</p>
+        <div class="feature-meta mono">UPTIME 99.9%</div>
+      </div>
+
+      <div class="feature-card reveal delay-3" data-mouse-card>
+        <div class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8v.5z"/></svg>
+        </div>
+        <h3>WhatsApp oficial</h3>
+        <p>Meta Cloud API verificada. Tu número, tu historial, check azul. Cero riesgo de ban — no usamos QR scraping.</p>
+        <div class="feature-meta mono">META BUSINESS · VERIFIED</div>
+      </div>
+
+      <div class="feature-card reveal delay-1" data-mouse-card>
+        <div class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        </div>
+        <h3>Integraciones nativas</h3>
+        <p>Meta, Supabase, Resend, n8n. Stack abierto, sin lock-in. Tu data se exporta a CSV cuando tú quieras.</p>
+        <div class="feature-meta mono">API V1 · ENTERPRISE</div>
+      </div>
+
+      <div class="feature-card reveal delay-2" data-mouse-card>
+        <div class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+        </div>
+        <h3>Reportes en vivo</h3>
+        <p>KPIs actualizados al segundo: MRR, leads, citas, conversión. Reporte mensual automático al día 1.</p>
+        <div class="feature-meta mono">REALTIME · MOM TRACKING</div>
+      </div>
+
+      <div class="feature-card reveal delay-3" data-mouse-card>
+        <div class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <h3>Seguridad</h3>
+        <p>RLS por tenant, AES-256 at rest, TLS en tránsito. SLA 99.9% con backups encriptados diarios.</p>
+        <div class="feature-meta mono">SLA 99.9% · ROW-LEVEL SECURITY</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ARIA SECTION -->
+<section class="aria-section" id="aria">
+  <div class="container">
+    <div class="aria-grid">
+
+      <div>
+        <div class="section-label mono reveal">ARIA · ASISTENTE IA</div>
+        <h2 class="reveal">Responde por ti,<br>agenda por ti,<br><em>cancela por ti.</em></h2>
+        <p class="section-sub reveal delay-1" style="margin-bottom: 0;">
+          ARIA es el agente real entrenado para tu vertical. Conversa, califica, agenda y notifica. Tú solo te enfocas en atender la consulta.
+        </p>
+
+        <ul class="aria-bullets reveal delay-2">
+          <li>
+            <div>
+              <strong>Conversación natural en WhatsApp</strong>
+              <p>Responde &lt;3 segundos. Entiende contexto, recordando 30 días de historial por cliente.</p>
+            </div>
+          </li>
+          <li>
+            <div>
+              <strong>Acciones reales (no solo respuestas)</strong>
+              <p>Agenda, reagenda, cancela y cobra. Ejecuta en tu agenda, no solo "te avisa".</p>
+            </div>
+          </li>
+          <li>
+            <div>
+              <strong>Aprobación humana cuando importa</strong>
+              <p>Casos sensibles (reembolsos, urgencias) pasan por ti antes de ejecutar.</p>
+            </div>
+          </li>
+          <li>
+            <div>
+              <strong>Pre-entrenada para tu industria</strong>
+              <p>12 reglas listas para clínica estética. 8+ servicios pre-cargados. Dentista y barbería Q3-Q4 2026.</p>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <div class="chat-preview reveal delay-2">
+        <div class="chat-header">
+          <div class="chat-avatar">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M12 2a10 10 0 0 0-8.7 14.9L2 22l5.3-1.3A10 10 0 1 0 12 2z" fill="#fff"/>
+            </svg>
+          </div>
+          <div>
+            <div class="chat-name">Laura Martínez</div>
+            <div class="chat-status mono">● online · respondió en 2.4s</div>
+          </div>
+        </div>
+        <div id="chatBody"></div>
+        <div class="chat-chips" id="chatChips">
+          <button class="chat-chip" data-scenario="agendar">Agendar limpieza</button>
+          <button class="chat-chip" data-scenario="horarios">Ver horarios</button>
+          <button class="chat-chip" data-scenario="cancelar">Cancelar cita</button>
+          <button class="chat-chip" data-scenario="reset" id="resetChip" style="display: none;">Reiniciar</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- DASHBOARD PREVIEW -->
+<section class="dashboard-preview">
+  <div class="container">
+    <div class="section-label mono reveal" style="display: inline-flex;">DASHBOARD NATIVO</div>
+    <h2 class="reveal">Tu negocio, <em>medido en tiempo real.</em></h2>
+    <p class="section-sub reveal delay-1" style="margin: 0 auto 0; text-align: left;">
+      Brief · Agenda · CRM 360 · ARIA · Campañas · Marketing · Reportes · Billing. Todo en una sola app nativa.
+    </p>
+
+    <div class="preview-window reveal delay-2">
+      <div class="titlebar">
+        <span class="dot dot-red"></span>
+        <span class="dot dot-yellow"></span>
+        <span class="dot dot-green"></span>
+        <span class="title mono">Dominio System · clínica-estetica-11</span>
+      </div>
+
+      <div class="preview-content">
+
+        <div class="preview-sidebar">
+          <h4>WORKSPACE</h4>
+          <div class="preview-nav-item active"><span class="dot"></span> Brief</div>
+          <div class="preview-nav-item"><span class="dot"></span> Agenda</div>
+          <div class="preview-nav-item"><span class="dot"></span> CRM 360</div>
+          <div class="preview-nav-item"><span class="dot"></span> ARIA</div>
+          <div class="preview-nav-item"><span class="dot"></span> Campañas</div>
+          <div class="preview-nav-item"><span class="dot"></span> Marketing</div>
+          <div class="preview-nav-item"><span class="dot"></span> Reportes</div>
+          <div class="preview-nav-item"><span class="dot"></span> Billing</div>
+        </div>
+
+        <div class="preview-main">
+          <div class="preview-main-header">
+            <h3>Brief · Mayo 2026</h3>
+            <span class="preview-pill">LIVE · ÚLTIMA SYNC HACE 4s</span>
+          </div>
+
+          <div class="preview-kpis">
+            <div class="preview-kpi">
+              <div class="lbl">INGRESOS MES</div>
+              <div class="val">$12.4k</div>
+              <div class="delta">↑ 8.2% MoM</div>
+            </div>
+            <div class="preview-kpi">
+              <div class="lbl">LEADS</div>
+              <div class="val">412</div>
+              <div class="delta">↑ 12%</div>
+            </div>
+            <div class="preview-kpi">
+              <div class="lbl">CITAS</div>
+              <div class="val">189</div>
+              <div class="delta">↑ 18%</div>
+            </div>
+            <div class="preview-kpi">
+              <div class="lbl">CONVERSIÓN</div>
+              <div class="val">45.8%</div>
+              <div class="delta">↑ 3.2pp</div>
+            </div>
+          </div>
+
+          <div class="preview-chart">
+            <span class="lbl mono">INGRESOS DIARIOS · 30D</span>
+            <div class="preview-chart-bar" style="height: 30%;"></div>
+            <div class="preview-chart-bar" style="height: 36%;"></div>
+            <div class="preview-chart-bar" style="height: 34%;"></div>
+            <div class="preview-chart-bar" style="height: 42%;"></div>
+            <div class="preview-chart-bar" style="height: 38%;"></div>
+            <div class="preview-chart-bar" style="height: 48%;"></div>
+            <div class="preview-chart-bar" style="height: 44%;"></div>
+            <div class="preview-chart-bar" style="height: 52%;"></div>
+            <div class="preview-chart-bar" style="height: 50%;"></div>
+            <div class="preview-chart-bar" style="height: 60%;"></div>
+            <div class="preview-chart-bar" style="height: 58%;"></div>
+            <div class="preview-chart-bar" style="height: 68%;"></div>
+            <div class="preview-chart-bar" style="height: 64%;"></div>
+            <div class="preview-chart-bar" style="height: 76%;"></div>
+            <div class="preview-chart-bar" style="height: 72%;"></div>
+            <div class="preview-chart-bar" style="height: 80%;"></div>
+            <div class="preview-chart-bar" style="height: 88%;"></div>
+            <div class="preview-chart-bar" style="height: 92%;"></div>
+            <div class="preview-chart-bar" style="height: 96%;"></div>
+            <div class="preview-chart-bar" style="height: 100%;"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- REPORTE MENSUAL -->
+<section class="reporte">
+  <div class="container">
+    <div class="reporte-grid">
+
+      <div>
+        <div class="section-label mono reveal">REPORTE MENSUAL</div>
+        <h2 class="reveal">Tu negocio,<br><em>explicado.</em></h2>
+        <p class="section-sub reveal delay-1" style="margin-bottom: 24px;">
+          Día 1 de cada mes, en tu correo. Sin pedirlo, sin armarlo a mano.
+        </p>
+        <ul class="aria-bullets reveal delay-2" style="margin-top: 16px;">
+          <li>
+            <div>
+              <strong>KPIs ejecutivos del mes</strong>
+              <p>Citas, leads calificados, conversión, ingresos, no-show rate.</p>
+            </div>
+          </li>
+          <li>
+            <div>
+              <strong>Servicio top y peor performance</strong>
+              <p>Qué está pagando la renta y qué hay que ajustar.</p>
+            </div>
+          </li>
+          <li>
+            <div>
+              <strong>Métricas de ARIA</strong>
+              <p>Conversaciones atendidas, resolución autónoma, casos escalados.</p>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <div class="email-mock reveal delay-2">
+        <div class="email-header">
+          <div class="email-from">
+            <div class="email-avatar">DS</div>
+            <div>
+              <div class="email-from-name">Dominio System</div>
+              <div class="email-from-addr mono">reportes@dominiosystem.com</div>
+            </div>
+          </div>
+          <div class="email-subject">Tu mes en Dominio · 412 leads · 189 citas</div>
+          <div class="email-date mono">1 DE JUNIO · 09:00 AM</div>
+        </div>
+        <div class="email-body">
+          <p>Hola Marcela, este es tu resumen de mayo. <strong>+18% MoM</strong> en citas cerradas y <strong>+12%</strong> en leads. ARIA atendió 612 conversaciones con 89% de resolución autónoma.</p>
+
+          <div class="email-kpi-row">
+            <div class="email-kpi">
+              <div class="val">$12.4k</div>
+              <div class="lbl mono">INGRESOS</div>
+            </div>
+            <div class="email-kpi">
+              <div class="val">189</div>
+              <div class="lbl mono">CITAS</div>
+            </div>
+            <div class="email-kpi">
+              <div class="val">45.8%</div>
+              <div class="lbl mono">CONV.</div>
+            </div>
+          </div>
+
+          <div class="email-highlight">
+            <strong>Servicio top del mes:</strong> Limpieza facial profunda · $4,128 ingresos · 42 citas · 12% MoM ↑
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- SETUP 72H -->
+<section class="setup-section">
+  <div class="container">
+    <div class="section-label mono reveal" style="display: inline-flex;">SETUP · 72 HORAS</div>
+    <h2 class="reveal">De cero a <em>automatizado</em><br>en 4 pasos.</h2>
+    <p class="section-sub reveal delay-1" style="margin: 0 auto 0;">
+      Self-serve guiado. Si te trabas, escríbele al fundador por WhatsApp — onboarding personal incluido en Founding.
+    </p>
+
+    <div class="steps-grid">
+      <div class="step-card reveal delay-1">
+        <div class="step-card-num mono">PASO 01</div>
+        <h3>Descarga</h3>
+        <p>macOS .dmg directo desde la cuenta. Windows próximamente Q3 2026.</p>
+        <div class="step-time mono">2 MIN</div>
+      </div>
+      <div class="step-card reveal delay-2">
+        <div class="step-card-num mono">PASO 02</div>
+        <h3>Configura</h3>
+        <p>Eliges vertical. Servicios pre-cargados. Timezone. Datos del negocio.</p>
+        <div class="step-time mono">5 MIN</div>
+      </div>
+      <div class="step-card reveal delay-3">
+        <div class="step-card-num mono">PASO 03</div>
+        <h3>Conecta WhatsApp</h3>
+        <p>Meta Cloud API OAuth. Verificación check azul. Webhook activo.</p>
+        <div class="step-time mono">3 MIN</div>
+      </div>
+      <div class="step-card reveal delay-4">
+        <div class="step-card-num mono">PASO 04</div>
+        <h3>ARIA toma control</h3>
+        <p>Responde mensajes entrantes desde el segundo cero. 24/7 desde ya.</p>
+        <div class="step-time mono">INMEDIATO</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COMPARATIVA -->
+<section class="comparativa">
+  <div class="container">
+    <div class="section-label mono reveal">COMPARATIVA</div>
+    <h2 class="reveal">Por qué Dominio System<br><em>no es otra agencia.</em></h2>
+    <p class="section-sub reveal delay-1">
+      Otras opciones que probaste antes — y por qué Dominio es distinto.
+    </p>
+
+    <div class="compare-table reveal delay-2">
+      <div class="compare-row header">
+        <div class="compare-cell mono">CARACTERÍSTICA</div>
+        <div class="compare-cell mono featured">DOMINIO SYSTEM</div>
+        <div class="compare-cell mono">AGENCIA</div>
+        <div class="compare-cell mono">HUBSPOT / ZOHO</div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-cell label">Setup</div>
+        <div class="compare-cell dominio">72 horas</div>
+        <div class="compare-cell x">2-4 semanas</div>
+        <div class="compare-cell x">2-6 semanas</div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-cell label">IA conversacional</div>
+        <div class="compare-cell dominio">ARIA pre-entrenada</div>
+        <div class="compare-cell x">Scripts humanos</div>
+        <div class="compare-cell x">Add-on costoso</div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-cell label">WhatsApp Cloud API</div>
+        <div class="compare-cell dominio">Oficial · check azul</div>
+        <div class="compare-cell x">Workarounds</div>
+        <div class="compare-cell x">No nativo</div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-cell label">24/7 sin staff</div>
+        <div class="compare-cell dominio">Sí · automático</div>
+        <div class="compare-cell x">Horario oficina</div>
+        <div class="compare-cell x">Solo workflows</div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-cell label">Costo mensual</div>
+        <div class="compare-cell dominio">$97 USD locked-in</div>
+        <div class="compare-cell x">$2k-$10k</div>
+        <div class="compare-cell x">$500-$1.5k + impl</div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-cell label">Tu data</div>
+        <div class="compare-cell dominio">Tuya · export CSV</div>
+        <div class="compare-cell x">En manos agencia</div>
+        <div class="compare-cell x">Lock-in vendor</div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-cell label">Personalización</div>
+        <div class="compare-cell dominio">Por vertical · 12 reglas</div>
+        <div class="compare-cell x">Templates genéricos</div>
+        <div class="compare-cell x">Genérica</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- VERTICALES -->
+<section class="verticales" id="verticales">
+  <div class="container">
+    <div class="section-label mono reveal">VERTICALES</div>
+    <h2 class="reveal">Hecho a la medida<br><em>de tu nicho.</em></h2>
+    <p class="section-sub reveal delay-1">
+      ARIA está entrenada por industria — no es un chatbot genérico que tienes que enseñar desde cero.
+    </p>
+
+    <div class="verticales-grid">
+
+      <div class="vertical-card live reveal delay-1">
+        <span class="vertical-badge live mono">● LIVE</span>
+        <div class="icon">💆</div>
+        <h3>Clínica estética</h3>
+        <p class="desc">Vertical LIVE en producción. ARIA agenda limpiezas, peelings, depilación. Conoce contraindicaciones básicas y deriva al doctor cuando corresponde.</p>
+        <div class="vertical-stats">
+          <span>8 servicios pre-cargados</span>
+          <span>12 reglas ARIA activas</span>
+          <span>200+ clínicas activas en LATAM</span>
+        </div>
+      </div>
+
+      <div class="vertical-card reveal delay-2">
+        <span class="vertical-badge soon mono">Q3 2026</span>
+        <div class="icon">🦷</div>
+        <h3>Dentista</h3>
+        <p class="desc">Template en construcción. Limpiezas, consultas, ortodoncia, urgencias. Recordatorio de control cada 6 meses automático.</p>
+        <div class="vertical-stats">
+          <span>10 servicios planeados</span>
+          <span>Recordatorios cada 6 meses</span>
+          <span>Manejo de urgencias dentales</span>
+        </div>
+      </div>
+
+      <div class="vertical-card reveal delay-3">
+        <span class="vertical-badge soon mono">Q4 2026</span>
+        <div class="icon">✂️</div>
+        <h3>Barbería &amp; salón</h3>
+        <p class="desc">Template Q4 2026. Cortes, color, alisado. Lealtad por cliente recurrente, recordatorios cada 3-4 semanas.</p>
+        <div class="vertical-stats">
+          <span>15+ servicios planeados</span>
+          <span>Cliente recurrente cada 3-4 sem</span>
+          <span>Programa de lealtad integrado</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pricing" id="pricing">
+  <div class="container">
+    <div class="section-label mono reveal" style="display: inline-flex;">PRECIO</div>
+    <h2 class="reveal" style="margin: 0 auto;">Un solo plan.<br><em>Todo incluido.</em></h2>
+    <p class="section-sub reveal delay-1" style="margin: 0 auto 0;">
+      Sin tiers confusos. Sin add-ons ocultos. Founding $97 locked-in de por vida — sin tarjeta hoy.
+    </p>
+
+    <div class="price-card reveal delay-2">
+      <span class="founding-badge">FOUNDING · 20 SPOTS</span>
+      <div class="price-tier mono">PRO · EARLY ACCESS</div>
+      <div class="price-amount">
+        <span class="num">$97</span>
+        <span class="period">USD / mes</span>
+      </div>
+      <div class="price-annual">o $970 USD/año · ahorras 2 meses</div>
+      <div class="price-public">
+        Precio locked-in de por vida. Plan público sube a <strong style="color:var(--text)">$197 USD/mes</strong> en Q3 2026.
+      </div>
+
+      <ul class="price-features">
+        <li>Dashboard nativo Mac (Windows próximamente)</li>
+        <li>ARIA · IA conversacional WhatsApp 24/7</li>
+        <li>Cancela, reagenda y agenda automático</li>
+        <li>Captura + scoring de leads con intent</li>
+        <li>Reporte mensual automático con KPIs</li>
+        <li>WhatsApp oficial · sin riesgo de ban</li>
+        <li>Setup 72h + onboarding del fundador</li>
+        <li>Soporte directo del fundador por WhatsApp</li>
+        <li>Tu data, siempre tuya (export CSV + backups)</li>
+      </ul>
+
+      <a href="#empezar" class="cta-primary">
+        Apartar mi spot Founding
+        <span class="arrow">→</span>
+      </a>
+
+      <p class="price-trust">SIN TARJETA · CONFIRMAS POR EMAIL</p>
+    </div>
+  </div>
+</section>
+
+<!-- ENTERPRISE -->
+<section class="enterprise">
+  <div class="container">
+    <div class="enterprise-card">
+      <div class="enterprise-grid">
+
+        <div class="enterprise-left">
+          <span class="enterprise-pill mono">BY INVITATION</span>
+          <h3>Enterprise · multi-sede,<br>franquicias y grupos.</h3>
+          <p>Para operaciones con 3+ sucursales o 500+ citas/mes que necesitan stack custom, SLA dedicado y soporte 1:1.</p>
+          <div class="enterprise-req mono">REQUISITO MÍNIMO · 3+ SUCURSALES · 500+ CITAS/MES</div>
+          <a href="#" class="cta-secondary">
+            Sumarme a lista de espera
+          </a>
+        </div>
+
+        <div>
+          <ul class="enterprise-features">
+            <li>API v1 + webhooks</li>
+            <li>SSO (SAML)</li>
+            <li>Multi-sede &amp; multi-tenant</li>
+            <li>SLA dedicado</li>
+            <li>Stack custom</li>
+            <li>Account manager 1:1</li>
+            <li>Onboarding white-glove</li>
+            <li>Soporte 24/7 dedicado</li>
+          </ul>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="faq" id="faq">
+  <div class="container">
+    <div class="section-label mono reveal" style="display: inline-flex;">PREGUNTAS</div>
+    <h2 class="reveal" style="margin: 16px 0 56px;">Lo que la gente <em>siempre</em><br>nos pregunta.</h2>
+
+    <details class="faq-item">
+      <summary>¿Qué tan rápido se puede poner en marcha?</summary>
+      <div class="answer">Setup 72 horas. Si confirmas hoy y nos envías acceso a tu Meta Business Suite, ARIA está respondiendo en WhatsApp el lunes. El onboarding lo lleva personalmente el fundador.</div>
+    </details>
+
+    <details class="faq-item">
+      <summary>¿Puedo usar mi WhatsApp Business actual?</summary>
+      <div class="answer">Sí. Conectamos tu número existente a la Meta Cloud API oficial. Tu historial, contactos y check azul se preservan. Cero riesgo de ban porque usamos la API verificada, no QR scraping.</div>
+    </details>
+
+    <details class="faq-item">
+      <summary>¿ARIA puede equivocarse? ¿Qué control tengo?</summary>
+      <div class="answer">ARIA opera con confirmación humana cuando detecta intent ambiguo. Tienes un drawer en el dashboard donde apruebas, rechazas o ajustas sus sugerencias antes de ejecutar. Para preguntas claras actúa autónoma. Para casos sensibles (cancelaciones de último minuto, reembolsos) te pregunta.</div>
+    </details>
+
+    <details class="faq-item">
+      <summary>¿Qué pasa cuando se acaben los 20 spots Founding?</summary>
+      <div class="answer">El plan público abre en Q3 2026 a $197 USD/mes. Los primeros 20 Founding Members conservan $97/mes locked-in de por vida con un precio Stripe separado que no sube con cambios futuros. Sin compromiso hoy — confirmas tu spot por email cuando el producto esté al 100%.</div>
+    </details>
+
+    <details class="faq-item">
+      <summary>¿Cuándo llega el plan Enterprise?</summary>
+      <div class="answer">Q3 2026, solo por invitación. Para operaciones multi-sede, franquicias y grupos con 3+ sucursales o 500+ citas/mes. Stack custom construido contigo. Si te interesa, súmate a la lista de espera desde la sección Enterprise.</div>
+    </details>
+
+    <details class="faq-item">
+      <summary>¿Puedo cancelar cuando quiera?</summary>
+      <div class="answer">Sí. Self-serve desde el dashboard, sección Billing. Un click, sin llamadas, sin retención forzada. Tu data se exporta automáticamente a CSV antes de cerrar la cuenta.</div>
+    </details>
+
+    <details class="faq-item">
+      <summary>¿En qué países funciona?</summary>
+      <div class="answer">República Dominicana, México, Estados Unidos y la mayoría de LATAM. WhatsApp Cloud API requiere que tu negocio esté verificado en Meta Business Suite — durante el onboarding te ayudamos con eso si no lo tienes.</div>
+    </details>
+
+    <details class="faq-item">
+      <summary>¿Cómo gestiono varios negocios bajo una misma cuenta?</summary>
+      <div class="answer">Cada negocio es un tenant separado con su propio dashboard, WhatsApp y ARIA. Para grupos con 3+ sucursales, considera Enterprise — un solo workspace con vista consolidada multi-sede.</div>
+    </details>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="final-cta" id="empezar">
+  <div class="section-label mono" style="display: inline-flex;">EMPEZAR</div>
+  <h2>Tu sistema activo en<br><em>72 horas.</em></h2>
+  <p>
+    Agenda un diagnóstico gratuito de 20 minutos. Te mostramos cómo se vería aplicado a tu negocio.
+  </p>
+  <div class="final-ctas">
+    <a href="#" class="cta-primary">
+      Apartar mi spot Founding
+      <span class="arrow">→</span>
+    </a>
+    <a href="#" class="cta-secondary">
+      <span class="chat-icon">A</span>
+      Chatear con ARIA
+    </a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <a href="#" class="brand">
+        <span class="brand-mark">
+          <svg width="16" height="11" viewBox="0 0 22 14" fill="none">
+            <path d="M0 7H2.5V2H6V13H10V2H13.5V7H17" stroke="#f4f4f4" stroke-width="1.6" stroke-linecap="square"/>
+            <circle cx="19.5" cy="7" r="1.8" fill="#f4f4f4"/>
+          </svg>
+        </span>
+        <div class="brand-text">
+          <span class="brand-name">Dominio System</span>
+          <span class="brand-tagline">automation platform</span>
+        </div>
+      </a>
+      <p>Sistemas de automatización con IA para negocios que no tienen tiempo de gestionar leads manualmente.</p>
+    </div>
+    <div class="footer-col">
+      <h4>PRODUCTO</h4>
+      <ul><li>Dashboard</li><li>ARIA IA</li><li>Verticales</li><li>Precios</li></ul>
+    </div>
+    <div class="footer-col">
+      <h4>EMPRESA</h4>
+      <ul><li>Acerca</li><li>Blog</li><li>Casos de éxito</li><li>Contacto</li></ul>
+    </div>
+    <div class="footer-col">
+      <h4>RECURSOS</h4>
+      <ul><li>Docs</li><li>API reference</li><li>Preguntas</li><li>SLA</li></ul>
+    </div>
+    <div class="footer-col">
+      <h4>LEGAL</h4>
+      <ul><li>Términos</li><li>Privacidad</li><li>Cookies</li><li>DPA</li></ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div>© 2026 DOMINIO SYSTEM · RD · MX · USA · automation platform</div>
+    <div class="footer-social">
+      <a href="#" aria-label="X">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+      </a>
+      <a href="#" aria-label="GitHub">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.385-1.335-1.755-1.335-1.755-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.4 3-.405 1.02.005 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+      </a>
+      <a href="#" aria-label="LinkedIn">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.063 2.063 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+      </a>
+    </div>
+  </div>
+</footer>
+
+<!-- PERSISTENT ARIA WIDGET -->
+<div class="aria-widget" onclick="document.getElementById('aria').scrollIntoView({behavior:'smooth'})">
+  <div class="aria-widget-icon">A</div>
+  <div class="aria-widget-text">
+    <strong>Chatea con ARIA</strong>
+    <small>¿Te ayudo a ver si Dominio encaja?</small>
+  </div>
+</div>
+
+<script>
+  // Cursor follower
+  const cursorGlow = document.getElementById('cursorGlow');
+  let rafCursor;
+  document.addEventListener('mousemove', (e) => {
+    document.body.classList.add('cursor-active');
+    cancelAnimationFrame(rafCursor);
+    rafCursor = requestAnimationFrame(() => {
+      cursorGlow.style.left = e.clientX + 'px';
+      cursorGlow.style.top = e.clientY + 'px';
+    });
+  });
+  document.addEventListener('mouseleave', () => {
+    document.body.classList.remove('cursor-active');
+  });
+
+  // Word typing
+  document.querySelectorAll('#heroSub .word').forEach((w, i) => {
+    w.style.animationDelay = (300 + i * 70) + 'ms';
+  });
+
+  // Nav scroll
+  const nav = document.getElementById('topnav');
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 16) nav.classList.add('scrolled');
+    else nav.classList.remove('scrolled');
+  });
+
+  // Counter
+  function animateCounter(el, target, decimals, format, suffix) {
+    const duration = 1400;
+    const start = performance.now();
+    const easeOut = (t) => 1 - Math.pow(1 - t, 3);
+    function tick(now) {
+      const p = Math.min((now - start) / duration, 1);
+      const value = target * easeOut(p);
+      let display;
+      if (format === 'k') display = '$' + (value / 1000).toFixed(1) + 'k';
+      else if (decimals > 0) display = value.toFixed(decimals);
+      else display = Math.round(value).toLocaleString('es-ES');
+      el.textContent = display + (suffix || '');
+      if (p < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+  const counterObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        const el = entry.target;
+        animateCounter(el, parseFloat(el.dataset.counter), parseInt(el.dataset.decimals || 0), el.dataset.format, el.dataset.suffix || '');
+        counterObserver.unobserve(el);
+      }
+    });
+  }, { threshold: 0.4 });
+  document.querySelectorAll('[data-counter]').forEach((el) => counterObserver.observe(el));
+  setTimeout(() => {
+    document.querySelectorAll('.dashboard-window [data-counter]').forEach((el) => {
+      animateCounter(el, parseFloat(el.dataset.counter), parseInt(el.dataset.decimals || 0), el.dataset.format, el.dataset.suffix || '');
+    });
+  }, 800);
+
+  // Chat
+  const chatBody = document.getElementById('chatBody');
+  const chatChips = document.getElementById('chatChips');
+  const resetChip = document.getElementById('resetChip');
+  const scenarios = {
+    agendar: [
+      { type: 'user', text: 'Hola, quiero agendar una limpieza facial' },
+      { type: 'aria', text: '¡Hola! Tenemos disponibilidad: Vie 18 · 10:00, Vie 18 · 14:30, Sáb 19 · 11:00. ¿Cuál te funciona?' },
+      { type: 'user', text: 'El viernes a las 10 está perfecto' },
+      { type: 'aria', text: 'Listo, te confirmo. Te enviamos recordatorio el jueves 🎉' }
+    ],
+    horarios: [
+      { type: 'user', text: '¿Qué horario tienen el sábado?' },
+      { type: 'aria', text: 'Sábados abrimos 9am-3pm. Servicios disponibles: consulta, limpieza facial, peeling, depilación. ¿Te interesa alguno?' }
+    ],
+    cancelar: [
+      { type: 'user', text: 'Necesito cancelar mi cita del viernes' },
+      { type: 'aria', text: 'Tengo tu cita: Vie 18 · 10:00 · Limpieza facial. ¿Cancelo o prefieres reagendar?' },
+      { type: 'user', text: 'Reagendar al sábado mejor' },
+      { type: 'aria', text: 'Listo. Cita movida a Sáb 19 · 11:00 ✓ Tu slot del viernes lo ofrecemos al siguiente lead.' }
+    ]
+  };
+  function addBubble(msg, delay = 0) {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const bubble = document.createElement('div');
+        bubble.className = 'chat-bubble ' + msg.type;
+        bubble.textContent = msg.text;
+        chatBody.appendChild(bubble);
+        resolve();
+      }, delay);
+    });
+  }
+  function addTypingIndicator() {
+    const bubble = document.createElement('div');
+    bubble.className = 'chat-bubble aria typing';
+    bubble.innerHTML = '<span class="typing-dots"><span></span><span></span><span></span></span>';
+    chatBody.appendChild(bubble);
+    return bubble;
+  }
+  async function playScenario(name) {
+    chatBody.innerHTML = '';
+    chatChips.querySelectorAll('.chat-chip:not(#resetChip)').forEach(c => c.disabled = true);
+    resetChip.style.display = 'inline-flex';
+    const messages = scenarios[name];
+    for (let i = 0; i < messages.length; i++) {
+      const m = messages[i];
+      if (m.type === 'aria' && i > 0) {
+        const typing = addTypingIndicator();
+        await new Promise(r => setTimeout(r, 900));
+        typing.remove();
+      }
+      await addBubble(m, m.type === 'user' ? 400 : 200);
+    }
+    chatChips.querySelectorAll('.chat-chip:not(#resetChip)').forEach(c => c.disabled = false);
+  }
+  function resetChat() {
+    chatBody.innerHTML = '';
+    resetChip.style.display = 'none';
+    initialChat();
+  }
+  function initialChat() {
+    const initial = [
+      { type: 'user', text: 'Hola, quiero agendar una limpieza facial' },
+      { type: 'aria', text: '¡Hola! Tenemos disponibilidad: Vie 18 · 10:00, Vie 18 · 14:30, Sáb 19 · 11:00. ¿Cuál te funciona?' }
+    ];
+    initial.forEach((m, i) => {
+      setTimeout(() => {
+        const bubble = document.createElement('div');
+        bubble.className = 'chat-bubble ' + m.type;
+        bubble.textContent = m.text;
+        chatBody.appendChild(bubble);
+      }, i * 600);
+    });
+  }
+  chatChips.addEventListener('click', (e) => {
+    if (!e.target.matches('.chat-chip')) return;
+    const scenario = e.target.dataset.scenario;
+    if (scenario === 'reset') resetChat();
+    else playScenario(scenario);
+  });
+  const chatObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        initialChat();
+        chatObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.3 });
+  chatObserver.observe(document.querySelector('.chat-preview'));
+
+  // Reveal
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        revealObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+  document.querySelectorAll('.reveal').forEach((el) => revealObserver.observe(el));
+
+  // Hover gradient
+  document.querySelectorAll('[data-mouse-card]').forEach((card) => {
+    card.addEventListener('mousemove', (e) => {
+      const rect = card.getBoundingClientRect();
+      card.style.setProperty('--mouse-x', ((e.clientX - rect.left) / rect.width) * 100 + '%');
+      card.style.setProperty('--mouse-y', ((e.clientY - rect.top) / rect.height) * 100 + '%');
+    });
+  });
+
+  // Magnetic CTA
+  document.querySelectorAll('.cta-primary').forEach((btn) => {
+    btn.addEventListener('mousemove', (e) => {
+      const rect = btn.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      btn.style.transform = `translate(${(e.clientX - cx) * 0.12}px, ${(e.clientY - cy) * 0.18}px)`;
+    });
+    btn.addEventListener('mouseleave', () => { btn.style.transform = 'translate(0, 0)'; });
+  });
+
+  // Dashboard 3D tilt
+  const dashboard = document.getElementById('dashboardWindow');
+  if (dashboard) {
+    let dashTimeout;
+    dashboard.addEventListener('mousemove', (e) => {
+      clearTimeout(dashTimeout);
+      const rect = dashboard.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width - 0.5;
+      const y = (e.clientY - rect.top) / rect.height - 0.5;
+      dashboard.style.transform = `rotateX(${-y * 6}deg) rotateY(${x * 8}deg) translateZ(0)`;
+      dashboard.style.animation = 'none';
+    });
+    dashboard.addEventListener('mouseleave', () => {
+      dashTimeout = setTimeout(() => {
+        dashboard.style.transform = '';
+        dashboard.style.animation = '';
+      }, 100);
+    });
+  }
+</script>
+
+</body>
+</html>
