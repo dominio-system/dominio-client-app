@@ -126,6 +126,7 @@
   }
   .nav-links a { transition: color .2s; }
   .nav-links a:hover { color: var(--text); }
+  .nav-login { color: var(--text); }
   .nav-cta {
     padding: 8px 16px;
     background: var(--accent); color: var(--bg);
@@ -845,6 +846,159 @@
     border-radius: 3px 3px 0 0;
   }
 
+  /* SIGNUP FLOW (TRIAL 14D) */
+  section.signup-flow { border-top: 1px solid var(--border); }
+  .wizard-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 56px;
+    margin-top: 56px;
+    align-items: center;
+  }
+  .wizard-steps { display: flex; flex-direction: column; gap: 16px; }
+  .wizard-step {
+    display: grid;
+    grid-template-columns: 40px 1fr;
+    gap: 18px;
+    padding: 18px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    align-items: center;
+    transition: border-color .3s, transform .2s;
+  }
+  .wizard-step.active {
+    border-color: var(--green);
+    box-shadow: 0 0 0 1px rgba(58,157,93,0.12);
+  }
+  .wizard-step:hover { border-color: var(--border-strong); transform: translateX(4px); }
+  .wizard-num {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px; font-weight: 600;
+    color: var(--text-muted);
+  }
+  .wizard-step.active .wizard-num {
+    background: var(--green-dim);
+    border-color: var(--green);
+    color: var(--green);
+  }
+  .wizard-content h4 {
+    font-size: 14px; font-weight: 500;
+    letter-spacing: -0.01em; margin-bottom: 4px;
+  }
+  .wizard-content p { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
+  .wizard-content .wtime {
+    font-size: 10px; color: var(--text-faint);
+    margin-top: 4px; letter-spacing: 0.5px;
+  }
+  .signup-form {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-strong);
+    border-radius: 16px;
+    padding: 32px;
+    box-shadow: 0 30px 80px -20px rgba(0,0,0,0.5);
+  }
+  .signup-form-title { font-size: 16px; font-weight: 500; margin-bottom: 20px; }
+  .vertical-chips {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+    margin-bottom: 20px;
+  }
+  .vchip {
+    padding: 14px 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: all .2s;
+    font-size: 13px;
+    color: var(--text);
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+  }
+  .vchip:hover { border-color: var(--border-strong); background: var(--bg-hover); }
+  .vchip.selected { border-color: var(--green); background: var(--green-dim); color: var(--green); }
+  .vchip .vemoji { font-size: 20px; }
+  .vchip .vtag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px; color: var(--text-faint);
+    letter-spacing: 0.5px;
+  }
+  .vchip .vtag.live { color: var(--green); }
+  .vchip.coming { opacity: 0.55; }
+  .signup-divider {
+    height: 1px; background: var(--border);
+    margin: 20px 0; position: relative;
+  }
+  .signup-divider span {
+    position: absolute; top: -8px; left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg-elevated);
+    padding: 0 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; color: var(--text-faint);
+    letter-spacing: 1px;
+  }
+  .oauth-btn {
+    width: 100%;
+    padding: 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    font-size: 13px; color: var(--text);
+    display: flex; align-items: center; justify-content: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: background .2s, border-color .2s;
+    margin-bottom: 10px;
+  }
+  .oauth-btn:hover { background: var(--bg-hover); border-color: var(--border-vivid); }
+  .oauth-btn .g {
+    width: 16px; height: 16px;
+    background: #fff; color: #000;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 11px;
+  }
+  .signup-email {
+    width: 100%;
+    padding: 12px 14px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 13px; color: var(--text);
+    font-family: inherit;
+    outline: none;
+    transition: border-color .2s;
+    margin-bottom: 10px;
+  }
+  .signup-email:focus { border-color: var(--border-vivid); }
+  .signup-email::placeholder { color: var(--text-faint); }
+  .signup-submit {
+    width: 100%;
+    padding: 13px;
+    background: var(--accent); color: var(--bg);
+    border-radius: 8px;
+    font-size: 14px; font-weight: 500;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: box-shadow .2s, transform .15s;
+  }
+  .signup-submit:hover { box-shadow: 0 14px 40px -10px rgba(255,255,255,0.2); }
+  .signup-submit:active { transform: scale(.98); }
+  .signup-submit .arrow { transition: transform .25s cubic-bezier(.16,1,.3,1); }
+  .signup-submit:hover .arrow { transform: translateX(4px); }
+  .signup-trust {
+    margin-top: 14px;
+    font-size: 10px; color: var(--text-faint);
+    text-align: center;
+    letter-spacing: 0.5px;
+  }
+
   /* REPORTE MENSUAL */
   section.reporte {
     border-top: 1px solid var(--border);
@@ -1155,35 +1309,30 @@
     position: relative;
     box-shadow: 0 30px 80px -20px rgba(0,0,0,0.5);
   }
-  .price-card::before {
-    content: '';
-    position: absolute;
-    inset: -1px;
-    border-radius: 18px;
-    padding: 1px;
-    background: linear-gradient(135deg, rgba(255,209,102,0.3), transparent 40%);
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    pointer-events: none;
-  }
-  .founding-badge {
-    position: absolute;
-    top: -14px; left: 50%;
-    transform: translateX(-50%);
-    background: linear-gradient(135deg, var(--warm), #f4a836);
-    color: var(--bg);
-    padding: 6px 16px;
+  .price-toggle {
+    display: inline-flex;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
     border-radius: 100px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10px; font-weight: 700;
-    letter-spacing: 1.5px;
-    animation: badgePulse 2.5s ease-in-out infinite;
-    box-shadow: 0 8px 24px -6px rgba(255,209,102,0.3);
+    padding: 4px;
+    margin: 40px auto 32px;
   }
-  @keyframes badgePulse {
-    0%, 100% { box-shadow: 0 8px 24px -6px rgba(255,209,102,0.3); }
-    50% { box-shadow: 0 8px 32px -4px rgba(255,209,102,0.5); }
+  .price-toggle button {
+    padding: 8px 18px;
+    color: var(--text-muted);
+    font-size: 13px; font-weight: 500;
+    border-radius: 100px;
+    transition: all .2s;
+  }
+  .price-toggle button.active { background: var(--accent); color: var(--bg); }
+  .price-toggle .save {
+    margin-left: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    background: var(--green-dim);
+    color: var(--green);
+    padding: 2px 5px; border-radius: 3px;
+    letter-spacing: 0.5px;
   }
   .price-tier {
     font-family: 'JetBrains Mono', monospace;
@@ -1196,17 +1345,9 @@
     letter-spacing: -0.04em; line-height: 1;
   }
   .price-amount .period { font-size: 14px; color: var(--text-muted); }
-  .price-annual {
-    font-size: 13px; color: var(--text-muted);
-    margin-bottom: 16px;
-  }
-  .price-public {
-    font-size: 12px; color: var(--warm);
-    margin-bottom: 28px; line-height: 1.45;
-    padding: 12px;
-    background: rgba(255,209,102,0.05);
-    border: 1px solid rgba(255,209,102,0.15);
-    border-radius: 8px;
+  .price-trial {
+    font-size: 13px; color: var(--green);
+    margin-bottom: 28px; font-weight: 500;
   }
   .price-features {
     list-style: none; margin-bottom: 28px;
@@ -1219,7 +1360,7 @@
     display: flex; align-items: center; gap: 12px;
   }
   .price-features li::before {
-    content: '✓'; color: var(--green);
+    content: '✓'; color: var(--text-muted);
     font-size: 11px; flex-shrink: 0;
     font-weight: 700;
   }
@@ -1508,7 +1649,7 @@
   @media (max-width: 1080px) {
     .hero-grid { grid-template-columns: 1fr; gap: 56px; }
     .hero-right { order: 2; }
-    .aria-grid, .reporte-grid { grid-template-columns: 1fr; gap: 48px; }
+    .aria-grid, .reporte-grid, .wizard-grid { grid-template-columns: 1fr; gap: 48px; }
     .preview-content { grid-template-columns: 1fr; }
     .preview-sidebar { border-right: none; border-bottom: 1px solid var(--border); }
     .enterprise-grid { grid-template-columns: 1fr; gap: 32px; }
@@ -1590,7 +1731,8 @@
     <a href="#verticales">Verticales</a>
     <a href="#pricing">Planes</a>
     <a href="#faq">Preguntas</a>
-    <a href="#empezar" class="nav-cta">Empezar</a>
+    <a href="#login" class="nav-login">Iniciar sesión</a>
+    <a href="#empezar" class="nav-cta">Empezar 14 días gratis</a>
   </div>
 </nav>
 
@@ -1625,7 +1767,7 @@
 
       <div class="hero-ctas">
         <a href="#empezar" class="cta-primary">
-          Apartar mi spot Founding
+          Empezar 14 días gratis
           <span class="arrow">→</span>
         </a>
         <a href="#aria" class="cta-secondary">
@@ -1635,9 +1777,9 @@
       </div>
 
       <div class="trust-strip">
+        <span><span class="check">✓</span> 14 días gratis</span>
         <span><span class="check">✓</span> Sin tarjeta</span>
-        <span><span class="check">✓</span> Cancela cuando quieras</span>
-        <span><span class="check">✓</span> Setup 72h</span>
+        <span><span class="check">✓</span> Cancelas cuando quieras</span>
       </div>
     </div>
 
@@ -1648,7 +1790,7 @@
           <span class="dot dot-yellow"></span>
           <span class="dot dot-green"></span>
           <span class="title mono">Dominio System · Brief</span>
-          <span class="live-pill">LIVE</span>
+          <span class="live-pill">TRIAL · DÍA 3/14</span>
         </div>
         <div class="dashboard-tabs">
           <div class="dashboard-tab active">Brief</div>
@@ -1968,6 +2110,99 @@
   </div>
 </section>
 
+<!-- EMPEZAR · FLUJO TRIAL 14D -->
+<section class="signup-flow" id="empezar">
+  <div class="container">
+    <div class="section-label mono reveal" style="display:inline-flex;">EMPEZAR · 14 DÍAS GRATIS</div>
+    <h2 class="reveal">Crea tu cuenta y<br><em>ARIA empieza a trabajar.</em></h2>
+    <p class="section-sub reveal delay-1">
+      Sin tarjeta. Sin llamadas con vendedor. Self-serve guiado: creas cuenta, eliges tu vertical, conectas WhatsApp y ARIA toma control. 14 días de acceso completo.
+    </p>
+
+    <div class="wizard-grid">
+
+      <div class="wizard-steps">
+        <div class="wizard-step active reveal">
+          <div class="wizard-num">1</div>
+          <div class="wizard-content">
+            <h4>Crea tu cuenta</h4>
+            <p>Google OAuth o email magic link. Passwordless.</p>
+            <div class="wtime mono">30 SEGUNDOS</div>
+          </div>
+        </div>
+        <div class="wizard-step reveal delay-1">
+          <div class="wizard-num">2</div>
+          <div class="wizard-content">
+            <h4>Elige tu vertical</h4>
+            <p>Clínica, dentista o barbería. Servicios y reglas ARIA pre-cargadas.</p>
+            <div class="wtime mono">1 MINUTO</div>
+          </div>
+        </div>
+        <div class="wizard-step reveal delay-2">
+          <div class="wizard-num">3</div>
+          <div class="wizard-content">
+            <h4>Conecta WhatsApp</h4>
+            <p>Meta Cloud API oficial. Verificación check azul.</p>
+            <div class="wtime mono">2 MINUTOS</div>
+          </div>
+        </div>
+        <div class="wizard-step reveal delay-3">
+          <div class="wizard-num">4</div>
+          <div class="wizard-content">
+            <h4>ARIA empieza</h4>
+            <p>Responde, agenda y recuerda. 24/7. Día 1 al 14 gratis.</p>
+            <div class="wtime mono">INMEDIATO</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="signup-form reveal delay-2" id="login">
+        <div class="signup-form-title">¿Qué tipo de negocio tienes?</div>
+
+        <div class="vertical-chips">
+          <button class="vchip selected" data-v="clinica">
+            <span class="vemoji">💆</span>
+            <span class="vname">Clínica estética</span>
+            <span class="vtag live">LIVE</span>
+          </button>
+          <button class="vchip coming" data-v="dentista">
+            <span class="vemoji">🦷</span>
+            <span class="vname">Dentista</span>
+            <span class="vtag">Q3 2026</span>
+          </button>
+          <button class="vchip coming" data-v="barberia">
+            <span class="vemoji">✂️</span>
+            <span class="vname">Barbería</span>
+            <span class="vtag">Q4 2026</span>
+          </button>
+          <button class="vchip" data-v="otro">
+            <span class="vemoji">+</span>
+            <span class="vname">Otro</span>
+            <span class="vtag">CUSTOM</span>
+          </button>
+        </div>
+
+        <div class="signup-divider"><span>O EMPIEZA DIRECTO</span></div>
+
+        <button class="oauth-btn">
+          <span class="g">G</span>
+          Continuar con Google
+        </button>
+
+        <input type="email" class="signup-email" placeholder="tu@email.com" aria-label="Email">
+
+        <button class="signup-submit">
+          Empezar 14 días gratis
+          <span class="arrow">→</span>
+        </button>
+
+        <p class="signup-trust mono">14 DÍAS GRATIS · SIN TARJETA · CANCELAS CUANDO QUIERAS</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
 <!-- REPORTE MENSUAL -->
 <section class="reporte">
   <div class="container">
@@ -2041,44 +2276,6 @@
   </div>
 </section>
 
-<!-- SETUP 72H -->
-<section class="setup-section">
-  <div class="container">
-    <div class="section-label mono reveal" style="display: inline-flex;">SETUP · 72 HORAS</div>
-    <h2 class="reveal">De cero a <em>automatizado</em><br>en 4 pasos.</h2>
-    <p class="section-sub reveal delay-1" style="margin: 0 auto 0;">
-      Self-serve guiado. Si te trabas, escríbele al fundador por WhatsApp — onboarding personal incluido en Founding.
-    </p>
-
-    <div class="steps-grid">
-      <div class="step-card reveal delay-1">
-        <div class="step-card-num mono">PASO 01</div>
-        <h3>Descarga</h3>
-        <p>macOS .dmg directo desde la cuenta. Windows próximamente Q3 2026.</p>
-        <div class="step-time mono">2 MIN</div>
-      </div>
-      <div class="step-card reveal delay-2">
-        <div class="step-card-num mono">PASO 02</div>
-        <h3>Configura</h3>
-        <p>Eliges vertical. Servicios pre-cargados. Timezone. Datos del negocio.</p>
-        <div class="step-time mono">5 MIN</div>
-      </div>
-      <div class="step-card reveal delay-3">
-        <div class="step-card-num mono">PASO 03</div>
-        <h3>Conecta WhatsApp</h3>
-        <p>Meta Cloud API OAuth. Verificación check azul. Webhook activo.</p>
-        <div class="step-time mono">3 MIN</div>
-      </div>
-      <div class="step-card reveal delay-4">
-        <div class="step-card-num mono">PASO 04</div>
-        <h3>ARIA toma control</h3>
-        <p>Responde mensajes entrantes desde el segundo cero. 24/7 desde ya.</p>
-        <div class="step-time mono">INMEDIATO</div>
-      </div>
-    </div>
-  </div>
-</section>
-
 <!-- COMPARATIVA -->
 <section class="comparativa">
   <div class="container">
@@ -2097,7 +2294,7 @@
       </div>
       <div class="compare-row">
         <div class="compare-cell label">Setup</div>
-        <div class="compare-cell dominio">72 horas</div>
+        <div class="compare-cell dominio">5 minutos</div>
         <div class="compare-cell x">2-4 semanas</div>
         <div class="compare-cell x">2-6 semanas</div>
       </div>
@@ -2121,7 +2318,7 @@
       </div>
       <div class="compare-row">
         <div class="compare-cell label">Costo mensual</div>
-        <div class="compare-cell dominio">$97 USD locked-in</div>
+        <div class="compare-cell dominio">$197 · 14d gratis</div>
         <div class="compare-cell x">$2k-$10k</div>
         <div class="compare-cell x">$500-$1.5k + impl</div>
       </div>
@@ -2196,22 +2393,23 @@
 <section class="pricing" id="pricing">
   <div class="container">
     <div class="section-label mono reveal" style="display: inline-flex;">PRECIO</div>
-    <h2 class="reveal" style="margin: 0 auto;">Un solo plan.<br><em>Todo incluido.</em></h2>
+    <h2 class="reveal" style="margin: 0 auto;">Un plan. 14 días gratis.<br><em>Sin tarjeta.</em></h2>
     <p class="section-sub reveal delay-1" style="margin: 0 auto 0;">
-      Sin tiers confusos. Sin add-ons ocultos. Founding $97 locked-in de por vida — sin tarjeta hoy.
+      Acceso completo durante 14 días. Al día 15 eliges si sigues o cancelas — si no haces nada, tu cuenta se pausa sola.
     </p>
 
+    <div class="price-toggle reveal delay-1">
+      <button class="active" data-period="monthly">Mensual</button>
+      <button data-period="annual">Anual <span class="save">2 MESES GRATIS</span></button>
+    </div>
+
     <div class="price-card reveal delay-2">
-      <span class="founding-badge">FOUNDING · 20 SPOTS</span>
-      <div class="price-tier mono">PRO · EARLY ACCESS</div>
+      <div class="price-tier mono">PRO</div>
       <div class="price-amount">
-        <span class="num">$97</span>
-        <span class="period">USD / mes</span>
+        <span class="num" id="priceNum">$197</span>
+        <span class="period" id="pricePeriod">USD / mes</span>
       </div>
-      <div class="price-annual">o $970 USD/año · ahorras 2 meses</div>
-      <div class="price-public">
-        Precio locked-in de por vida. Plan público sube a <strong style="color:var(--text)">$197 USD/mes</strong> en Q3 2026.
-      </div>
+      <div class="price-trial">→ 14 días gratis · cobramos al día 15 solo si confirmas</div>
 
       <ul class="price-features">
         <li>Dashboard nativo Mac (Windows próximamente)</li>
@@ -2220,17 +2418,17 @@
         <li>Captura + scoring de leads con intent</li>
         <li>Reporte mensual automático con KPIs</li>
         <li>WhatsApp oficial · sin riesgo de ban</li>
-        <li>Setup 72h + onboarding del fundador</li>
-        <li>Soporte directo del fundador por WhatsApp</li>
+        <li>Onboarding self-serve guiado en 5 minutos</li>
+        <li>Soporte por WhatsApp y email</li>
         <li>Tu data, siempre tuya (export CSV + backups)</li>
       </ul>
 
       <a href="#empezar" class="cta-primary">
-        Apartar mi spot Founding
+        Empezar 14 días gratis
         <span class="arrow">→</span>
       </a>
 
-      <p class="price-trust">SIN TARJETA · CONFIRMAS POR EMAIL</p>
+      <p class="price-trust">SIN TARJETA · CANCELAS CUANDO QUIERAS</p>
     </div>
   </div>
 </section>
@@ -2276,8 +2474,18 @@
     <h2 class="reveal" style="margin: 16px 0 56px;">Lo que la gente <em>siempre</em><br>nos pregunta.</h2>
 
     <details class="faq-item">
-      <summary>¿Qué tan rápido se puede poner en marcha?</summary>
-      <div class="answer">Setup 72 horas. Si confirmas hoy y nos envías acceso a tu Meta Business Suite, ARIA está respondiendo en WhatsApp el lunes. El onboarding lo lleva personalmente el fundador.</div>
+      <summary>¿Qué incluye el trial de 14 días?</summary>
+      <div class="answer">Acceso completo al plan Pro: dashboard nativo, ARIA conectada a tu WhatsApp Cloud API, captura y scoring de leads, reporte mensual. Sin tarjeta requerida durante los 14 días.</div>
+    </details>
+
+    <details class="faq-item">
+      <summary>¿Qué pasa al día 15?</summary>
+      <div class="answer">Si confirmaste tu método de pago: cobramos $197/mes (o $1,970/año si elegiste anual) y tu cuenta sigue activa sin interrupción. Si no confirmaste: tu cuenta se pausa automáticamente. Tu data queda guardada 90 días y puedes exportarla a CSV antes.</div>
+    </details>
+
+    <details class="faq-item">
+      <summary>¿Puedo extender el trial?</summary>
+      <div class="answer">Si llegas al día 14 y todavía estás evaluando, escríbenos a hola@dominiosystem.com y te damos 7 días más. Una sola extensión por cuenta.</div>
     </details>
 
     <details class="faq-item">
@@ -2291,18 +2499,13 @@
     </details>
 
     <details class="faq-item">
-      <summary>¿Qué pasa cuando se acaben los 20 spots Founding?</summary>
-      <div class="answer">El plan público abre en Q3 2026 a $197 USD/mes. Los primeros 20 Founding Members conservan $97/mes locked-in de por vida con un precio Stripe separado que no sube con cambios futuros. Sin compromiso hoy — confirmas tu spot por email cuando el producto esté al 100%.</div>
-    </details>
-
-    <details class="faq-item">
       <summary>¿Cuándo llega el plan Enterprise?</summary>
       <div class="answer">Q3 2026, solo por invitación. Para operaciones multi-sede, franquicias y grupos con 3+ sucursales o 500+ citas/mes. Stack custom construido contigo. Si te interesa, súmate a la lista de espera desde la sección Enterprise.</div>
     </details>
 
     <details class="faq-item">
       <summary>¿Puedo cancelar cuando quiera?</summary>
-      <div class="answer">Sí. Self-serve desde el dashboard, sección Billing. Un click, sin llamadas, sin retención forzada. Tu data se exporta automáticamente a CSV antes de cerrar la cuenta.</div>
+      <div class="answer">Sí. Self-serve desde el dashboard, sección Billing. Un click, sin llamadas, sin retención forzada. Si cancelas durante el trial no se cobra nada. Si cancelas después, mantienes acceso hasta el final del periodo pagado.</div>
     </details>
 
     <details class="faq-item">
@@ -2318,18 +2521,18 @@
 </section>
 
 <!-- FINAL CTA -->
-<section class="final-cta" id="empezar">
+<section class="final-cta" id="cta-final">
   <div class="section-label mono" style="display: inline-flex;">EMPEZAR</div>
-  <h2>Tu sistema activo en<br><em>72 horas.</em></h2>
+  <h2>Tu sistema activo en<br><em>5 minutos.</em></h2>
   <p>
-    Agenda un diagnóstico gratuito de 20 minutos. Te mostramos cómo se vería aplicado a tu negocio.
+    14 días gratis. Sin tarjeta. Si no encaja, cancelas en un click — no se cobra nada.
   </p>
   <div class="final-ctas">
-    <a href="#" class="cta-primary">
-      Apartar mi spot Founding
+    <a href="#empezar" class="cta-primary">
+      Empezar 14 días gratis
       <span class="arrow">→</span>
     </a>
-    <a href="#" class="cta-secondary">
+    <a href="#aria" class="cta-secondary">
       <span class="chat-icon">A</span>
       Chatear con ARIA
     </a>
@@ -2598,6 +2801,32 @@
       }, 100);
     });
   }
+
+  // Vertical chip selection (signup wizard)
+  document.querySelectorAll('.vchip').forEach((chip) => {
+    chip.addEventListener('click', () => {
+      if (chip.classList.contains('coming')) return;
+      document.querySelectorAll('.vchip').forEach(c => c.classList.remove('selected'));
+      chip.classList.add('selected');
+    });
+  });
+
+  // Price toggle mensual/anual
+  const priceNum = document.getElementById('priceNum');
+  const pricePeriod = document.getElementById('pricePeriod');
+  document.querySelectorAll('.price-toggle button').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.price-toggle button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      if (btn.dataset.period === 'monthly') {
+        priceNum.textContent = '$197';
+        pricePeriod.textContent = 'USD / mes';
+      } else {
+        priceNum.textContent = '$1,970';
+        pricePeriod.textContent = 'USD / año';
+      }
+    });
+  });
 </script>
 
 </body>
