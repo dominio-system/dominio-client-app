@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body { width:1200px; height:630px; overflow:hidden; }
+  body {
+    background:#0a0a0a;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;
+    color:#f4f4f4;
+    position:relative;
+    display:flex; flex-direction:column; justify-content:center;
+    padding:90px;
+  }
+  .grid {
+    position:absolute; inset:0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.022) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(255,255,255,0.022) 1px,transparent 1px);
+    background-size:60px 60px;
+    -webkit-mask-image:radial-gradient(ellipse at 30% 40%,black 20%,transparent 75%);
+    mask-image:radial-gradient(ellipse at 30% 40%,black 20%,transparent 75%);
+  }
+  .glow {
+    position:absolute; top:-200px; right:-200px;
+    width:700px; height:700px; border-radius:50%;
+    background:radial-gradient(circle,rgba(111,207,151,0.10),transparent 60%);
+    filter:blur(40px);
+  }
+  .brand { display:flex; align-items:center; gap:16px; margin-bottom:48px; position:relative; }
+  .mark {
+    width:56px; height:56px; border-radius:14px;
+    background:#161616; border:1px solid rgba(255,255,255,0.13);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .brand-name { font-size:30px; font-weight:700; letter-spacing:-0.02em; }
+  .brand-tag { font-size:13px; color:#666; letter-spacing:5px; text-transform:lowercase; margin-top:6px; font-family:'Courier New',monospace; }
+  h1 {
+    font-size:78px; font-weight:700; line-height:1.05;
+    letter-spacing:-0.04em; position:relative; max-width:1000px;
+  }
+  h1 em { font-style:italic; color:#9a9a9a; font-weight:600; }
+  .sub {
+    font-size:26px; color:#a8a8a8; margin-top:32px;
+    line-height:1.45; position:relative; max-width:880px;
+  }
+  .foot {
+    position:absolute; bottom:70px; left:90px; right:90px;
+    display:flex; justify-content:space-between; align-items:center;
+    font-family:'Courier New',monospace; font-size:15px;
+    color:#555; letter-spacing:2px; text-transform:uppercase;
+  }
+  .pill {
+    display:inline-flex; align-items:center; gap:10px;
+    color:#6fcf97;
+  }
+  .dot { width:10px; height:10px; border-radius:50%; background:#6fcf97; }
+</style>
+</head>
+<body>
+  <div class="grid"></div>
+  <div class="glow"></div>
+
+  <div class="brand">
+    <div class="mark">
+      <svg width="30" height="19" viewBox="0 0 22 14" fill="none">
+        <path d="M0 7H2.5V2H6V13H10V2H13.5V7H17" stroke="#f4f4f4" stroke-width="1.8" stroke-linecap="square" stroke-linejoin="miter"/>
+        <circle cx="19.5" cy="7" r="2" fill="#6fcf97"/>
+      </svg>
+    </div>
+    <div>
+      <div class="brand-name">Dominio System</div>
+      <div class="brand-tag">automation plattform</div>
+    </div>
+  </div>
+
+  <h1>ARIA agenda <em>por ti.</em></h1>
+  <div class="sub">Contesta WhatsApp, agenda citas y recuerda a tus clientes. Todo automático — sin que toques el teléfono.</div>
+
+  <div class="foot">
+    <span class="pill"><span class="dot"></span> Para negocios que trabajan por citas</span>
+    <span>dominiosystem.com</span>
+  </div>
+</body>
+</html>
