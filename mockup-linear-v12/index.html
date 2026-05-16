@@ -1,0 +1,4996 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dominio System · automation plattform</title>
+<!-- intentional double-T in "plattform" · brand-kit official · do not "fix" -->
+<meta name="description" content="Dominio System es la automation plattform que llena la agenda de tu negocio mientras tú atiendes clientes.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    /* SYNCED with real dashboard cliente v2.3.11 tokens — do not drift */
+    --bg: #0a0a0a;
+    --bg-elevated: #111111;        /* matches --card real */
+    --bg-card: #161616;            /* matches --card2 real */
+    --bg-hover: #1a1a1a;            /* matches --card3 real */
+    --border: rgba(255,255,255,0.06);
+    --border-strong: rgba(255,255,255,0.12); /* matches --border2 real */
+    --border-vivid: rgba(255,255,255,0.22);
+    --text: #f5f5f5;                /* matches --text real */
+    --text-muted: #a8a8a8;          /* matches --text2 real */
+    --text-faint: #666666;          /* matches --text4 real */
+    --accent: #ffffff;
+    /* ARIA tokens — ARIA uses WHITE accents, NOT green */
+    --aria: #ffffff;
+    --aria-s: rgba(255,255,255,0.05);
+    --aria-border: rgba(255,255,255,0.18);
+    /* Semantic only */
+    --green: #6fcf97;               /* matches --success real (mint, not forest) */
+    --green-dim: rgba(111,207,151,0.10);
+    --red: #f87171;
+    --warm: #ffd166;
+    --blue: #60a5fa;
+  }
+
+  html {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-feature-settings: 'ss01', 'cv11';
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+  }
+  body { min-height: 100vh; overflow-x: hidden; position: relative; }
+  .mono { font-family: 'JetBrains Mono', 'SF Mono', monospace; }
+  a { color: inherit; text-decoration: none; }
+  button { font-family: inherit; cursor: pointer; border: none; background: none; }
+
+  /* Background grid texture */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.012) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.012) 1px, transparent 1px);
+    background-size: 56px 56px;
+    pointer-events: none;
+    z-index: 0;
+    mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+  }
+
+  /* Cursor glow */
+  .cursor-glow {
+    position: fixed;
+    width: 480px; height: 480px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,255,0.06), transparent 60%);
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    z-index: 1;
+    opacity: 0;
+    transition: opacity .4s;
+    mix-blend-mode: screen;
+    filter: blur(50px);
+  }
+  body.cursor-active .cursor-glow { opacity: 1; }
+  @media (max-width: 720px) { .cursor-glow { display: none; } }
+
+  /* NAV */
+  nav.top {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    padding: 16px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    backdrop-filter: blur(20px);
+    background: rgba(10,10,10,0.78);
+    border-bottom: 1px solid transparent;
+    transition: border-color .3s, padding .3s;
+  }
+  nav.top.scrolled { border-bottom-color: var(--border); padding: 12px 40px; }
+
+  .brand {
+    display: flex; align-items: center; gap: 12px;
+  }
+  .brand-mark {
+    width: 28px; height: 28px;
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid var(--border-strong);
+    border-radius: 7px;
+    background: linear-gradient(135deg, var(--bg-elevated), var(--bg-card));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+  }
+  .brand-text {
+    display: flex; flex-direction: column;
+    gap: 1px; line-height: 1;
+  }
+  .brand-name {
+    font-size: 14px; font-weight: 600;
+    letter-spacing: -0.25px;
+    color: var(--text);
+  }
+  .brand-tagline {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--text-faint);
+    letter-spacing: 1.8px;
+    text-transform: uppercase;
+  }
+
+  .nav-links {
+    display: flex; gap: 24px; align-items: center;
+    font-size: 13px; color: var(--text-muted);
+  }
+  .nav-links a { transition: color .2s; }
+  .nav-links a:hover { color: var(--text); }
+  .nav-login { color: var(--text); }
+  .nav-cta {
+    padding: 8px 16px;
+    background: var(--accent); color: var(--bg);
+    border-radius: 7px;
+    font-weight: 500; font-size: 13px;
+    transition: opacity .2s, transform .15s;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .nav-cta::before {
+    content: '';
+    width: 5px; height: 5px;
+    background: var(--green);
+    border-radius: 50%;
+    animation: pulseDot 2s ease-in-out infinite;
+  }
+  @keyframes pulseDot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+  .nav-cta:hover { opacity: .9; transform: translateY(-1px); }
+
+  /* HERO */
+  section.hero {
+    min-height: calc(100vh - 80px);
+    padding: 80px 40px 100px;
+    display: flex; align-items: center;
+    position: relative; overflow: hidden;
+    z-index: 2;
+  }
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.05fr;
+    gap: 72px;
+    align-items: center;
+    max-width: 1320px;
+    margin: 0 auto;
+    width: 100%;
+  }
+  .hero-left { position: relative; z-index: 2; }
+
+  .eyebrow {
+    font-size: 11px; letter-spacing: 2.5px;
+    color: var(--text-muted); font-weight: 500;
+    margin-bottom: 28px;
+    display: inline-flex; align-items: center; gap: 12px;
+    padding: 6px 12px;
+    border: 1px solid var(--border-strong);
+    border-radius: 100px;
+    background: var(--bg-elevated);
+  }
+  .eyebrow::before {
+    content: '';
+    width: 6px; height: 6px;
+    background: var(--text-muted); border-radius: 50%;
+  }
+
+  h1.hero-h1 {
+    font-size: clamp(44px, 6vw, 80px);
+    font-weight: 600; line-height: 1.04;
+    letter-spacing: -0.04em;
+    margin-bottom: 24px;
+  }
+  h1.hero-h1 em {
+    font-style: italic;
+    font-weight: 400;
+    color: var(--text-muted);
+  }
+
+  .hero-sub {
+    font-size: clamp(16px, 1.6vw, 19px);
+    color: var(--text-muted); line-height: 1.55;
+    margin-bottom: 36px; font-weight: 400; max-width: 520px;
+  }
+  .hero-sub strong { color: var(--text); font-weight: 500; }
+  .hero-sub .word {
+    display: inline-block; opacity: 0;
+    transform: translateY(8px);
+    animation: typeIn .5s forwards cubic-bezier(.16,1,.3,1);
+  }
+  @keyframes typeIn { to { opacity: 1; transform: translateY(0); } }
+
+  .hero-ctas {
+    display: flex; gap: 14px; align-items: center;
+    margin-bottom: 24px; flex-wrap: wrap;
+  }
+  .cta-primary {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 13px 22px;
+    background: var(--accent); color: var(--bg);
+    border-radius: 8px;
+    font-size: 14px; font-weight: 500; letter-spacing: -0.1px;
+    transition: transform .15s cubic-bezier(.16,1,.3,1), box-shadow .2s;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 1px 0 rgba(255,255,255,0.15) inset;
+  }
+  .cta-primary:hover { box-shadow: 0 14px 50px -10px rgba(255,255,255,0.25); }
+  .cta-primary:active { transform: scale(.97); }
+  .cta-primary .arrow { transition: transform .25s cubic-bezier(.16,1,.3,1); }
+  .cta-primary:hover .arrow { transform: translateX(4px); }
+
+  .cta-secondary {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 12px 20px;
+    color: var(--text);
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    font-size: 14px; font-weight: 500;
+    background: rgba(255,255,255,0.02);
+    transition: border-color .2s, background .2s;
+  }
+  .cta-secondary:hover { border-color: var(--border-vivid); background: var(--bg-elevated); }
+  .cta-secondary .chat-icon {
+    width: 16px; height: 16px; border-radius: 4px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-vivid);
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--text); font-size: 9px; font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .trust-strip {
+    display: flex; gap: 22px; flex-wrap: wrap;
+    margin-top: 4px;
+    font-size: 12px; color: var(--text-muted);
+  }
+  .trust-strip span { display: inline-flex; align-items: center; gap: 8px; }
+  .trust-strip .check {
+    width: 14px; height: 14px; border-radius: 50%;
+    border: 1px solid var(--border-vivid);
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--text); font-size: 9px; font-weight: 700;
+  }
+
+  /* Dashboard mockup */
+  .hero-right { position: relative; perspective: 1600px; z-index: 2; }
+  .dashboard-window {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-strong);
+    border-radius: 14px;
+    box-shadow: 0 60px 120px -30px rgba(0,0,0,0.8), 0 30px 60px -15px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.04);
+    overflow: hidden;
+    transform-style: preserve-3d;
+    will-change: transform;
+    animation: float 8s ease-in-out infinite;
+    transition: transform .4s cubic-bezier(.16,1,.3,1);
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-7px); }
+  }
+  .dashboard-titlebar {
+    height: 34px;
+    background: linear-gradient(to bottom, #1a1a1a, #141414);
+    display: flex; align-items: center;
+    padding: 0 14px;
+    border-bottom: 1px solid var(--border);
+    gap: 8px;
+  }
+  .dot { width: 11px; height: 11px; border-radius: 50%; }
+  .dot-red { background: #ff5f57; }
+  .dot-yellow { background: #febc2e; }
+  .dot-green { background: #28c840; }
+  .dashboard-titlebar .title {
+    margin-left: 12px;
+    font-size: 11px; color: var(--text-faint);
+    font-family: 'JetBrains Mono', monospace; letter-spacing: 0.5px;
+  }
+  .live-pill {
+    margin-left: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; color: var(--green);
+    background: var(--green-dim);
+    padding: 3px 7px; border-radius: 4px;
+    letter-spacing: 0.5px; font-weight: 600;
+    display: inline-flex; align-items: center; gap: 5px;
+  }
+  .live-pill::before {
+    content: '';
+    width: 5px; height: 5px;
+    background: var(--green);
+    border-radius: 50%;
+    animation: pulseDot 2s ease-in-out infinite;
+  }
+  .dashboard-tabs {
+    display: flex; border-bottom: 1px solid var(--border);
+    padding: 0 16px;
+    background: rgba(255,255,255,0.01);
+    overflow-x: auto;
+  }
+  .dashboard-tab {
+    padding: 14px 12px 12px;
+    font-size: 12px; color: var(--text-faint);
+    border-bottom: 2px solid transparent;
+    margin-right: 4px; font-weight: 500;
+    white-space: nowrap;
+  }
+  .dashboard-tab.active { color: var(--text); border-bottom-color: var(--accent); }
+  .dashboard-body { padding: 20px; position: relative; }
+  .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .kpi-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px 16px;
+    transition: transform .3s, border-color .3s;
+  }
+  .kpi-card:hover { border-color: var(--border-strong); transform: translateY(-2px); }
+  .kpi-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; letter-spacing: 1.5px;
+    color: var(--text-faint); margin-bottom: 6px;
+  }
+  .kpi-value {
+    font-size: 22px; font-weight: 600;
+    letter-spacing: -0.02em; line-height: 1; margin-bottom: 4px;
+  }
+  .kpi-delta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; color: var(--green); letter-spacing: 0.3px;
+  }
+  .kpi-delta.up::before { content: '↑ '; }
+
+  .chart-area {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px;
+    height: 110px;
+    display: flex; align-items: flex-end;
+    gap: 5px; position: relative;
+  }
+  .chart-bar {
+    flex: 1;
+    background: linear-gradient(to top, rgba(244,244,244,0.3), rgba(244,244,244,0.85));
+    border-radius: 3px 3px 0 0;
+    min-height: 20%;
+    transform-origin: bottom;
+    animation: barGrow .9s cubic-bezier(.16,1,.3,1) forwards;
+    opacity: 0;
+  }
+  .chart-bar:nth-child(2) { height: 28%; animation-delay: 1.5s; }
+  .chart-bar:nth-child(3) { height: 32%; animation-delay: 1.55s; }
+  .chart-bar:nth-child(4) { height: 30%; animation-delay: 1.6s; }
+  .chart-bar:nth-child(5) { height: 36%; animation-delay: 1.65s; }
+  .chart-bar:nth-child(6) { height: 30%; animation-delay: 1.7s; }
+  .chart-bar:nth-child(7) { height: 48%; animation-delay: 1.75s; }
+  .chart-bar:nth-child(8) { height: 52%; animation-delay: 1.8s; }
+  .chart-bar:nth-child(9) { height: 64%; animation-delay: 1.85s; }
+  .chart-bar:nth-child(10) { height: 72%; animation-delay: 1.9s; }
+  .chart-bar:nth-child(11) { height: 88%; animation-delay: 1.95s; }
+  .chart-bar:nth-child(12) { height: 96%; animation-delay: 2s; }
+  @keyframes barGrow {
+    from { transform: scaleY(0); opacity: 0; }
+    to { transform: scaleY(1); opacity: 1; }
+  }
+  .chart-label {
+    position: absolute; top: 14px; left: 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; letter-spacing: 1.5px;
+    color: var(--text-faint);
+  }
+  .aria-overlay {
+    position: absolute;
+    bottom: 20px; right: 20px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-strong);
+    border-radius: 12px;
+    padding: 14px 16px;
+    width: 244px;
+    box-shadow: 0 20px 50px -10px rgba(0,0,0,0.7);
+    opacity: 0;
+    transform: translateY(20px);
+    animation: ariaAppear .8s cubic-bezier(.16,1,.3,1) 2.5s forwards;
+  }
+  @keyframes ariaAppear { to { opacity: 1; transform: translateY(0); } }
+  .aria-overlay-tag {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px;
+    background: var(--green-dim);
+    color: var(--green);
+    padding: 2px 6px; border-radius: 4px;
+    letter-spacing: 1px; margin-bottom: 6px; font-weight: 600;
+  }
+  .aria-overlay-text { font-size: 12px; color: var(--text); line-height: 1.4; }
+  .aria-overlay-check { color: var(--green); margin-left: 4px; }
+  .aria-overlay-time {
+    margin-top: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; color: var(--text-faint);
+  }
+
+  /* Section common */
+  section { padding: 100px 40px; position: relative; z-index: 2; }
+  .container { max-width: 1120px; margin: 0 auto; }
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: 3px;
+    color: var(--text-faint); font-weight: 500;
+    margin-bottom: 20px;
+    display: inline-flex; align-items: center; gap: 10px;
+  }
+  .section-label::before {
+    content: '';
+    width: 14px; height: 1px;
+    background: var(--border-vivid);
+  }
+  h2 {
+    font-size: clamp(34px, 4.5vw, 52px);
+    font-weight: 500; line-height: 1.06;
+    letter-spacing: -0.03em; margin-bottom: 22px;
+  }
+  h2 em { font-style: italic; font-weight: 400; color: var(--text-muted); }
+  .section-sub {
+    font-size: 16px; color: var(--text-muted);
+    line-height: 1.55; max-width: 580px;
+    margin-bottom: 56px;
+  }
+
+  /* STACK ROW */
+  section.stack {
+    border-top: 1px solid var(--border);
+    text-align: center;
+    padding: 64px 40px;
+  }
+  .stack-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: 3px;
+    color: var(--text-faint); font-weight: 500;
+    margin-bottom: 28px;
+  }
+  .stack-grid {
+    display: grid; grid-template-columns: repeat(6, 1fr);
+    gap: 40px; max-width: 720px;
+    margin: 0 auto; align-items: center;
+  }
+  .stack-item {
+    font-size: 13px; color: var(--text-faint);
+    font-weight: 500; letter-spacing: 0.3px;
+    transition: color .3s, transform .3s;
+    animation: stackPulse 8s ease-in-out infinite;
+  }
+  .stack-item:nth-child(1) { animation-delay: 0s; }
+  .stack-item:nth-child(2) { animation-delay: 1.3s; }
+  .stack-item:nth-child(3) { animation-delay: 2.6s; }
+  .stack-item:nth-child(4) { animation-delay: 3.9s; }
+  .stack-item:nth-child(5) { animation-delay: 5.2s; }
+  .stack-item:nth-child(6) { animation-delay: 6.5s; }
+  @keyframes stackPulse {
+    0%, 90%, 100% { opacity: 0.45; }
+    5%, 10% { opacity: 0.95; }
+  }
+
+  /* STATS BANNER */
+  section.stats-banner {
+    border-top: 1px solid var(--border);
+    padding: 36px 40px;
+    background: linear-gradient(to bottom, rgba(255,255,255,0.012), transparent);
+  }
+  .stats-row {
+    max-width: 1120px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 28px;
+  }
+  .stat-cell {
+    text-align: center;
+    padding: 8px;
+  }
+  .stat-cell .num {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .stat-cell .num em {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    color: var(--green);
+    font-style: normal;
+    margin-left: 2px;
+  }
+  .stat-cell .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-faint);
+    letter-spacing: 1.5px;
+  }
+
+  /* PRODUCTO */
+  section.producto { border-top: 1px solid var(--border); }
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+  .feature-card {
+    padding: 28px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    transition: border-color .3s, transform .3s;
+    position: relative;
+    overflow: hidden;
+  }
+  .feature-card::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255,255,255,0.04), transparent 50%);
+    pointer-events: none; opacity: 0; transition: opacity .3s;
+  }
+  .feature-card:hover { border-color: var(--border-strong); transform: translateY(-3px); }
+  .feature-card:hover::before { opacity: 1; }
+  .feature-icon {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-strong);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 18px;
+    color: var(--text);
+  }
+  .feature-card h3 {
+    font-size: 17px; font-weight: 500;
+    letter-spacing: -0.01em; margin-bottom: 10px;
+  }
+  .feature-card p {
+    font-size: 13px; color: var(--text-muted);
+    line-height: 1.55;
+  }
+  .feature-card .feature-meta {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-faint);
+    letter-spacing: 1px;
+  }
+
+  /* ARIA */
+  section.aria-section {
+    border-top: 1px solid var(--border);
+  }
+  .aria-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 64px;
+    align-items: center;
+  }
+  .aria-bullets {
+    list-style: none;
+    margin-top: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .aria-bullets li {
+    display: grid;
+    grid-template-columns: 22px 1fr;
+    gap: 14px;
+    align-items: start;
+  }
+  .aria-bullets li::before {
+    content: '';
+    width: 22px; height: 22px;
+    background: var(--green-dim);
+    border: 1px solid var(--green);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--green);
+    font-size: 11px;
+    font-weight: 700;
+    margin-top: 1px;
+    background-image: linear-gradient(135deg, rgba(58,157,93,0.18), rgba(58,157,93,0.06));
+  }
+  .aria-bullets li strong {
+    display: block;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 4px;
+    letter-spacing: -0.01em;
+  }
+  .aria-bullets li p {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+
+  .chat-preview {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 30px 80px -20px rgba(0,0,0,0.5);
+  }
+  .chat-header {
+    display: flex; align-items: center; gap: 12px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 16px;
+  }
+  .chat-avatar {
+    width: 38px; height: 38px;
+    border-radius: 10px; background: #25d366;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .chat-name { font-size: 14px; font-weight: 500; }
+  .chat-status {
+    font-size: 11px; color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace; margin-top: 2px;
+  }
+  .chat-bubble {
+    padding: 10px 14px; border-radius: 14px;
+    font-size: 13px; line-height: 1.5;
+    margin-bottom: 8px; max-width: 88%;
+    opacity: 0; transform: translateY(8px);
+    animation: bubbleIn .4s cubic-bezier(.16,1,.3,1) forwards;
+  }
+  @keyframes bubbleIn { to { opacity: 1; transform: translateY(0); } }
+  .chat-bubble.user {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    margin-left: auto;
+    border-bottom-right-radius: 4px;
+  }
+  .chat-bubble.aria {
+    background: rgba(58, 157, 93,0.07);
+    border: 1px solid rgba(58, 157, 93,0.18);
+    border-bottom-left-radius: 4px;
+  }
+  .chat-bubble.aria::before {
+    content: 'ARIA';
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; letter-spacing: 1.5px;
+    background: rgba(58, 157, 93,0.18);
+    padding: 2px 6px; border-radius: 4px;
+    color: var(--green); margin-right: 8px;
+    vertical-align: middle; font-weight: 600;
+  }
+  .typing-dots { display: inline-flex; gap: 4px; padding: 4px 0; }
+  .typing-dots span {
+    width: 6px; height: 6px;
+    background: var(--text-muted);
+    border-radius: 50%;
+    animation: typingBounce 1s ease-in-out infinite;
+  }
+  .typing-dots span:nth-child(2) { animation-delay: .2s; }
+  .typing-dots span:nth-child(3) { animation-delay: .4s; }
+  @keyframes typingBounce {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+    30% { transform: translateY(-4px); opacity: 1; }
+  }
+  .chat-chips {
+    margin-top: 16px;
+    display: flex; flex-wrap: wrap; gap: 8px;
+  }
+  .chat-chip {
+    padding: 7px 13px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    font-size: 12px; color: var(--text-muted);
+    transition: all .2s;
+  }
+  .chat-chip:hover {
+    border-color: var(--border-strong);
+    color: var(--text);
+    background: var(--bg-hover);
+  }
+  .chat-chip:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* DASHBOARD PREVIEW SECTION */
+  section.dashboard-preview {
+    border-top: 1px solid var(--border);
+    text-align: center;
+  }
+  .dashboard-preview .container { max-width: 1200px; }
+  .preview-window {
+    margin-top: 56px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-strong);
+    border-radius: 18px;
+    box-shadow: 0 60px 120px -30px rgba(0,0,0,0.7), 0 30px 60px -15px rgba(0,0,0,0.4);
+    overflow: hidden;
+  }
+  .preview-window .titlebar {
+    height: 36px;
+    background: linear-gradient(to bottom, #1a1a1a, #141414);
+    display: flex; align-items: center;
+    padding: 0 16px; gap: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .preview-window .titlebar .title {
+    margin-left: 12px;
+    font-size: 12px;
+    color: var(--text-faint);
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.5px;
+  }
+  .preview-content {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    min-height: 400px;
+  }
+  .preview-sidebar {
+    border-right: 1px solid var(--border);
+    padding: 20px 14px;
+    background: rgba(255,255,255,0.01);
+  }
+  .preview-sidebar h4 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    color: var(--text-faint);
+    margin-bottom: 10px;
+    padding: 0 8px;
+  }
+  .preview-nav-item {
+    padding: 7px 10px;
+    font-size: 13px;
+    color: var(--text-muted);
+    border-radius: 6px;
+    margin-bottom: 2px;
+    display: flex; align-items: center; gap: 10px;
+    cursor: pointer;
+    transition: background .15s, color .15s;
+  }
+  .preview-nav-item:hover { background: var(--bg-card); color: var(--text); }
+  .preview-nav-item.active {
+    background: var(--bg-card);
+    color: var(--text);
+    font-weight: 500;
+  }
+  .preview-nav-item .dot {
+    width: 5px; height: 5px;
+    background: var(--text-faint);
+    border-radius: 50%;
+  }
+  .preview-nav-item.active .dot { background: var(--text); }
+  .preview-main {
+    padding: 28px;
+    text-align: left;
+  }
+  .preview-main-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .preview-main-header h3 {
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+  .preview-pill {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 4px 10px;
+    background: var(--green-dim);
+    color: var(--green);
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+  }
+  .preview-kpis {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .preview-kpi {
+    padding: 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+  }
+  .preview-kpi .lbl {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--text-faint);
+    letter-spacing: 1.5px;
+    margin-bottom: 6px;
+  }
+  .preview-kpi .val {
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .preview-kpi .delta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--green);
+  }
+  .preview-chart {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px;
+    height: 140px;
+    display: flex;
+    align-items: flex-end;
+    gap: 5px;
+    position: relative;
+  }
+  .preview-chart .lbl {
+    position: absolute;
+    top: 14px; left: 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; letter-spacing: 1.5px;
+    color: var(--text-faint);
+  }
+  .preview-chart-bar {
+    flex: 1;
+    background: linear-gradient(to top, rgba(244,244,244,0.3), rgba(244,244,244,0.8));
+    border-radius: 3px 3px 0 0;
+  }
+
+  /* SIGNUP FLOW (TRIAL 14D) */
+  section.signup-flow { border-top: 1px solid var(--border); }
+  .wizard-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 56px;
+    margin-top: 56px;
+    align-items: center;
+  }
+  .wizard-steps { display: flex; flex-direction: column; gap: 16px; }
+  .wizard-step {
+    display: grid;
+    grid-template-columns: 40px 1fr;
+    gap: 18px;
+    padding: 18px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    align-items: center;
+    transition: border-color .3s, transform .2s;
+  }
+  .wizard-step.active {
+    border-color: var(--green);
+    box-shadow: 0 0 0 1px rgba(58,157,93,0.12);
+  }
+  .wizard-step:hover { border-color: var(--border-strong); transform: translateX(4px); }
+  .wizard-num {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px; font-weight: 600;
+    color: var(--text-muted);
+  }
+  .wizard-step.active .wizard-num {
+    background: var(--green-dim);
+    border-color: var(--green);
+    color: var(--green);
+  }
+  .wizard-content h4 {
+    font-size: 14px; font-weight: 500;
+    letter-spacing: -0.01em; margin-bottom: 4px;
+  }
+  .wizard-content p { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
+  .wizard-content .wtime {
+    font-size: 10px; color: var(--text-faint);
+    margin-top: 4px; letter-spacing: 0.5px;
+  }
+  .signup-form {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-strong);
+    border-radius: 16px;
+    padding: 32px;
+    box-shadow: 0 30px 80px -20px rgba(0,0,0,0.5);
+  }
+  .signup-form-title { font-size: 16px; font-weight: 500; margin-bottom: 20px; }
+  .vertical-chips {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+    margin-bottom: 20px;
+  }
+  .vchip {
+    padding: 14px 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: all .2s;
+    font-size: 13px;
+    color: var(--text);
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+  }
+  .vchip:hover { border-color: var(--border-strong); background: var(--bg-hover); }
+  .vchip.selected { border-color: var(--green); background: var(--green-dim); color: var(--green); }
+  .vchip .vemoji { font-size: 20px; }
+  .vchip .vtag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px; color: var(--text-faint);
+    letter-spacing: 0.5px;
+  }
+  .vchip .vtag.live { color: var(--green); }
+  .vchip.coming { opacity: 0.55; }
+  /* "+ Otro / Ver más" trigger chip */
+  .vchip-more { border-style: dashed; opacity: 1; }
+  .vchip-more.expanded { border-color: var(--green); color: var(--green); }
+  .vchip-more.expanded .vtag { color: var(--green); }
+  /* Expandable additional verticals */
+  .vchips-more {
+    margin-bottom: 20px;
+    animation: vchipsReveal 280ms cubic-bezier(.16,1,.3,1);
+  }
+  .vchips-more[hidden] { display: none; }
+  @keyframes vchipsReveal {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: none; }
+  }
+  @media (max-width: 480px) {
+    .vchips-more { grid-template-columns: 1fr; }
+  }
+  .signup-divider {
+    height: 1px; background: var(--border);
+    margin: 20px 0; position: relative;
+  }
+  .signup-divider span {
+    position: absolute; top: -8px; left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg-elevated);
+    padding: 0 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; color: var(--text-faint);
+    letter-spacing: 1px;
+  }
+  .oauth-btn {
+    width: 100%;
+    padding: 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    font-size: 13px; color: var(--text);
+    display: flex; align-items: center; justify-content: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: background .2s, border-color .2s;
+    margin-bottom: 10px;
+  }
+  .oauth-btn:hover { background: var(--bg-hover); border-color: var(--border-vivid); }
+  .oauth-btn .g {
+    width: 16px; height: 16px;
+    background: #fff; color: #000;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 11px;
+  }
+  .signup-email {
+    width: 100%;
+    padding: 12px 14px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 13px; color: var(--text);
+    font-family: inherit;
+    outline: none;
+    transition: border-color .2s;
+    margin-bottom: 10px;
+  }
+  .signup-email:focus { border-color: var(--border-vivid); }
+  .signup-email::placeholder { color: var(--text-faint); }
+  .signup-submit {
+    width: 100%;
+    padding: 13px;
+    background: var(--accent); color: var(--bg);
+    border-radius: 8px;
+    font-size: 14px; font-weight: 500;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: box-shadow .2s, transform .15s;
+  }
+  .signup-submit:hover { box-shadow: 0 14px 40px -10px rgba(255,255,255,0.2); }
+  .signup-submit:active { transform: scale(.98); }
+  .signup-submit .arrow { transition: transform .25s cubic-bezier(.16,1,.3,1); }
+  .signup-submit:hover .arrow { transform: translateX(4px); }
+  .signup-trust {
+    margin-top: 14px;
+    font-size: 10px; color: var(--text-faint);
+    text-align: center;
+    letter-spacing: 0.5px;
+    line-height: 1.5;
+  }
+
+  /* WAITLIST SUCCESS · inline reveal inside signup form */
+  #signup-waitlist-success {
+    animation: waitlistSlide 360ms cubic-bezier(.16,1,.3,1);
+  }
+  @keyframes waitlistSlide {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: none; }
+  }
+  .waitlist-icon {
+    width: 48px; height: 48px;
+    background: var(--green-dim);
+    color: var(--green);
+    border: 1px solid rgba(111,207,151,0.30);
+    border-radius: 50%;
+    display: grid; place-items: center;
+    font-size: 22px;
+    margin: 0 auto 14px;
+  }
+  .waitlist-title {
+    font-size: 20px;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    text-align: center;
+    margin-bottom: 10px;
+  }
+  .waitlist-sub {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.6;
+    text-align: center;
+    margin-bottom: 14px;
+  }
+  .waitlist-email {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.5px;
+    padding: 8px 14px;
+    background: var(--bg-card);
+    border-radius: 6px;
+    display: inline-block;
+    margin: 0 auto 4px;
+    text-align: center;
+  }
+  .waitlist-divider {
+    margin: 24px 0;
+    height: 1px;
+    background: var(--border);
+  }
+  .waitlist-upsell {
+    background: linear-gradient(180deg, rgba(111,207,151,0.05) 0%, transparent 100%);
+    border: 1px solid rgba(111,207,151,0.20);
+    border-radius: 10px;
+    padding: 18px;
+    text-align: center;
+  }
+  .waitlist-upsell-eyebrow {
+    font-size: 9px;
+    color: var(--green);
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+  }
+  .waitlist-upsell h4 {
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    margin-bottom: 8px;
+    color: var(--text);
+  }
+  .waitlist-upsell h4 strong { color: var(--green); font-weight: 600; }
+  .waitlist-upsell p {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin-bottom: 14px;
+  }
+  .waitlist-upgrade-btn {
+    background: var(--green) !important;
+    color: var(--bg) !important;
+    width: 100%;
+    margin-bottom: 10px;
+  }
+  .waitlist-upgrade-btn:hover {
+    background: #8ad9ac !important;
+  }
+  .waitlist-back-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-family: inherit;
+    font-size: 11px;
+    cursor: pointer;
+    padding: 4px;
+    text-align: center;
+    width: 100%;
+  }
+  .waitlist-back-btn:hover { color: var(--text); }
+
+  /* center alignment for waitlist email when in flex column */
+  #signup-waitlist-success { display: flex; flex-direction: column; align-items: center; }
+  #signup-waitlist-success .waitlist-upsell { width: 100%; }
+
+  /* REPORTE MENSUAL */
+  section.reporte {
+    border-top: 1px solid var(--border);
+  }
+  .reporte-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 64px;
+    align-items: center;
+  }
+  .email-mock {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-strong);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 30px 80px -20px rgba(0,0,0,0.5);
+  }
+  .email-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(255,255,255,0.012);
+  }
+  .email-from {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 8px;
+  }
+  .email-avatar {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--text), var(--text-muted));
+    color: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700;
+  }
+  .email-from-name {
+    font-size: 12px; font-weight: 500;
+  }
+  .email-from-addr {
+    font-size: 11px; color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .email-subject {
+    font-size: 15px; font-weight: 500;
+    letter-spacing: -0.01em;
+    color: var(--text);
+  }
+  .email-date {
+    font-size: 11px; color: var(--text-faint);
+    font-family: 'JetBrains Mono', monospace;
+    margin-top: 4px;
+  }
+  .email-body {
+    padding: 24px 20px;
+  }
+  .email-body p {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.55;
+    margin-bottom: 16px;
+  }
+  .email-kpi-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .email-kpi {
+    padding: 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    text-align: center;
+  }
+  .email-kpi .val {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+  .email-kpi .lbl {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px;
+    color: var(--text-faint);
+    letter-spacing: 1.5px;
+    margin-top: 2px;
+  }
+  .email-highlight {
+    padding: 14px;
+    background: var(--green-dim);
+    border: 1px solid rgba(58,157,93,0.2);
+    border-radius: 8px;
+    font-size: 12px;
+    color: var(--text);
+    line-height: 1.5;
+  }
+  .email-highlight strong { color: var(--green); }
+
+  /* SETUP / 4 PASOS */
+  section.setup-section {
+    border-top: 1px solid var(--border);
+    text-align: center;
+  }
+  .steps-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-top: 56px;
+  }
+  .step-card {
+    padding: 24px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    text-align: left;
+    position: relative;
+    transition: border-color .3s, transform .3s;
+  }
+  .step-card:hover { border-color: var(--border-strong); transform: translateY(-3px); }
+  .step-card-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .step-card-num::after {
+    content: '';
+    height: 1px;
+    width: 24px;
+    background: var(--border-vivid);
+  }
+  .step-card h3 {
+    font-size: 16px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    margin-bottom: 8px;
+  }
+  .step-card p {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+  .step-card .step-time {
+    margin-top: 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-faint);
+    letter-spacing: 0.5px;
+  }
+
+  /* COMPARATIVA */
+  section.comparativa {
+    border-top: 1px solid var(--border);
+  }
+  .compare-table {
+    margin-top: 56px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .compare-row {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1fr 1fr;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    transition: background .2s;
+  }
+  .compare-row:last-child { border-bottom: none; }
+  .compare-row:hover { background: rgba(255,255,255,0.01); }
+  .compare-row.header {
+    background: rgba(255,255,255,0.02);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    color: var(--text-muted);
+  }
+  .compare-row.header .compare-cell { padding: 16px 20px; }
+  .compare-row.header .featured {
+    color: var(--text);
+    font-weight: 600;
+  }
+  .compare-cell {
+    padding: 18px 20px;
+    font-size: 14px;
+    color: var(--text-muted);
+  }
+  .compare-cell.label {
+    color: var(--text);
+    font-weight: 500;
+    font-size: 13px;
+  }
+  .compare-cell.dominio {
+    color: var(--text);
+    font-weight: 500;
+    background: rgba(255,255,255,0.025);
+    position: relative;
+  }
+  .compare-cell.dominio::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 2px;
+    background: var(--border-vivid);
+  }
+  .compare-cell.x { color: var(--text-faint); }
+
+  /* VERTICALES */
+  section.verticales {
+    border-top: 1px solid var(--border);
+  }
+  .verticales-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-top: 56px;
+  }
+  .verticales-grid .vertical-card.live {
+    grid-column: span 2;
+  }
+  .vertical-card {
+    padding: 32px 28px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color .3s, transform .3s;
+  }
+  .vertical-card:hover { border-color: var(--border-strong); transform: translateY(-3px); }
+  .vertical-card.live {
+    border-color: var(--border-vivid);
+  }
+  .vertical-card.live::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at top right, rgba(255,255,255,0.025), transparent 60%);
+    pointer-events: none;
+  }
+  .vertical-badge {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    letter-spacing: 1px;
+    margin-bottom: 16px;
+    font-weight: 600;
+  }
+  .vertical-badge.live {
+    background: var(--green-dim);
+    color: var(--green);
+  }
+  .vertical-badge.soon {
+    background: var(--bg-card);
+    color: var(--text-faint);
+  }
+  .vertical-card .icon {
+    font-size: 40px;
+    line-height: 1;
+    margin-bottom: 14px;
+  }
+  .vertical-card h3 {
+    font-size: 20px;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+  }
+  .vertical-card .desc {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.55;
+    margin-bottom: 20px;
+  }
+  .vertical-stats {
+    border-top: 1px solid var(--border);
+    padding-top: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .vertical-stats span {
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .vertical-stats span::before {
+    content: '→';
+    color: var(--text-faint);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+  }
+
+  /* PRICING */
+  section.pricing {
+    border-top: 1px solid var(--border);
+    text-align: center;
+  }
+  .price-card {
+    margin: 56px auto 0;
+    max-width: 480px;
+    padding: 44px 36px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-strong);
+    border-radius: 18px;
+    text-align: left;
+    position: relative;
+    box-shadow: 0 30px 80px -20px rgba(0,0,0,0.5);
+  }
+  .price-toggle {
+    display: inline-flex;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 4px;
+    margin: 40px auto 32px;
+  }
+  .price-toggle button {
+    padding: 8px 18px;
+    color: var(--text-muted);
+    font-size: 13px; font-weight: 500;
+    border-radius: 100px;
+    transition: all .2s;
+  }
+  .price-toggle button.active { background: var(--accent); color: var(--bg); }
+  .price-toggle .save {
+    margin-left: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    background: var(--green-dim);
+    color: var(--green);
+    padding: 2px 5px; border-radius: 3px;
+    letter-spacing: 0.5px;
+  }
+  .price-tier {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; letter-spacing: 2px;
+    color: var(--text-faint); margin-bottom: 16px;
+  }
+  .price-amount { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; }
+  .price-amount .num {
+    font-size: 60px; font-weight: 600;
+    letter-spacing: -0.04em; line-height: 1;
+  }
+  .price-amount .period { font-size: 14px; color: var(--text-muted); }
+  .price-trial {
+    font-size: 13px; color: var(--green);
+    margin-bottom: 28px; font-weight: 500;
+  }
+  .price-features {
+    list-style: none; margin-bottom: 28px;
+    display: flex; flex-direction: column;
+  }
+  .price-features li {
+    padding: 10px 0;
+    border-top: 1px solid var(--border);
+    font-size: 13px; color: var(--text-muted);
+    display: flex; align-items: center; gap: 12px;
+  }
+  .price-features li::before {
+    content: '✓'; color: var(--text-muted);
+    font-size: 11px; flex-shrink: 0;
+    font-weight: 700;
+  }
+  .price-card .cta-primary { width: 100%; justify-content: center; }
+  .price-trust {
+    margin-top: 14px; font-size: 11px;
+    color: var(--text-faint); text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.5px;
+  }
+
+  /* PRICING GRID · Founding + Pro */
+  .pricing-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    max-width: 960px;
+    margin: 32px auto 0;
+    text-align: left;
+  }
+  .pricing-grid .price-card {
+    margin: 0;
+    max-width: none;
+    padding: 36px 32px;
+  }
+  .price-card.founding {
+    border: 1px solid rgba(58, 157, 93, 0.30);
+    background: linear-gradient(180deg, rgba(58,157,93,0.04) 0%, var(--bg-elevated) 60%);
+  }
+  .price-card.featured {
+    border: 1px solid var(--border-vivid);
+  }
+  .founding-badge {
+    position: absolute;
+    top: -10px; left: 24px;
+    background: var(--green-dim);
+    color: var(--green);
+    border: 1px solid rgba(58,157,93,0.35);
+    padding: 4px 10px;
+    border-radius: 100px;
+    font-size: 9px;
+    letter-spacing: 1px;
+  }
+  .price-recommended {
+    position: absolute;
+    top: -10px; right: 24px;
+    background: var(--accent);
+    color: var(--bg);
+    padding: 4px 10px;
+    border-radius: 100px;
+    font-size: 9px;
+    letter-spacing: 1px;
+    font-weight: 600;
+  }
+  .founding-cta {
+    width: 100%;
+    justify-content: center;
+    border: 1px solid rgba(58,157,93,0.40);
+    color: var(--green);
+  }
+  .founding-cta:hover { background: var(--green-dim); }
+  .founding-progress {
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px solid var(--border);
+  }
+  .founding-bar {
+    height: 4px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 100px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+  .founding-bar-fill {
+    height: 100%;
+    background: var(--green);
+    border-radius: 100px;
+    transition: width 600ms ease-out;
+  }
+  .founding-progress-text {
+    font-size: 10px;
+    color: var(--green);
+    letter-spacing: 1.2px;
+    text-align: center;
+  }
+  .price-disclaimer {
+    margin: 24px auto 0;
+    font-size: 10px;
+    color: var(--text-faint);
+    letter-spacing: 1px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* ENTERPRISE */
+  section.enterprise {
+    border-top: 1px solid var(--border);
+  }
+  .enterprise-card {
+    margin-top: 48px;
+    padding: 56px 48px;
+    background: linear-gradient(135deg, var(--bg-elevated), var(--bg-card));
+    border: 1px solid var(--border-strong);
+    border-radius: 18px;
+    position: relative;
+    overflow: hidden;
+  }
+  .enterprise-card::before {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 60%;
+    height: 100%;
+    background: radial-gradient(ellipse at top right, rgba(96,165,250,0.05), transparent 60%);
+    pointer-events: none;
+  }
+  .enterprise-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 56px;
+    position: relative;
+    z-index: 1;
+  }
+  .enterprise-left .enterprise-pill {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 4px 10px;
+    background: rgba(96,165,250,0.12);
+    color: var(--blue);
+    border-radius: 4px;
+    letter-spacing: 1.5px;
+    margin-bottom: 16px;
+    font-weight: 600;
+  }
+  .enterprise-left h3 {
+    font-size: 30px;
+    font-weight: 500;
+    letter-spacing: -0.03em;
+    margin-bottom: 16px;
+    line-height: 1.1;
+  }
+  .enterprise-left p {
+    font-size: 14px;
+    color: var(--text-muted);
+    line-height: 1.6;
+    margin-bottom: 24px;
+  }
+  .enterprise-req {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-faint);
+    margin-bottom: 24px;
+    letter-spacing: 0.5px;
+  }
+  .enterprise-features {
+    list-style: none;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .enterprise-features li {
+    font-size: 12px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+  }
+  .enterprise-features li::before {
+    content: '🔒';
+    font-size: 10px;
+    filter: grayscale(1) brightness(0.7);
+  }
+
+  /* FAQ */
+  section.faq { border-top: 1px solid var(--border); }
+  .faq .container { max-width: 760px; }
+  details.faq-item {
+    border-top: 1px solid var(--border);
+    padding: 26px 0; cursor: pointer;
+  }
+  details.faq-item:last-child { border-bottom: 1px solid var(--border); }
+  details.faq-item summary {
+    font-size: 16px; font-weight: 500;
+    letter-spacing: -0.01em; list-style: none;
+    display: flex; justify-content: space-between; align-items: center;
+    user-select: none;
+  }
+  details.faq-item summary:hover { color: var(--text); }
+  details.faq-item summary::-webkit-details-marker { display: none; }
+  details.faq-item summary::after {
+    content: '+';
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 20px; color: var(--text-muted);
+    font-weight: 300;
+  }
+  details.faq-item[open] summary::after { content: '−'; }
+  details.faq-item .answer {
+    margin-top: 14px; font-size: 14px;
+    color: var(--text-muted); line-height: 1.6;
+    animation: fadeIn .3s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  /* FINAL CTA */
+  section.final-cta {
+    border-top: 1px solid var(--border);
+    text-align: center; padding: 140px 40px;
+    position: relative;
+    overflow: hidden;
+  }
+  .final-cta::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center bottom, rgba(255,255,255,0.025), transparent 60%);
+    pointer-events: none;
+  }
+  .final-cta h2 { margin: 16px auto 24px; max-width: 700px; position: relative; }
+  .final-cta p {
+    font-size: 15px; color: var(--text-muted);
+    margin-bottom: 40px;
+    max-width: 480px;
+    margin-left: auto; margin-right: auto;
+    line-height: 1.6;
+    position: relative;
+  }
+  .final-ctas {
+    display: inline-flex; gap: 14px;
+    align-items: center; flex-wrap: wrap;
+    justify-content: center;
+    position: relative;
+  }
+
+  /* FOOTER */
+  footer {
+    padding: 72px 40px 32px;
+    border-top: 1px solid var(--border);
+    background: rgba(255,255,255,0.012);
+  }
+  .footer-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+    gap: 48px;
+    max-width: 1200px;
+    margin: 0 auto 48px;
+  }
+  .footer-brand p {
+    margin-top: 16px;
+    font-size: 13px; color: var(--text-muted);
+    line-height: 1.6; max-width: 280px;
+  }
+  .footer-col h4 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: 2px;
+    color: var(--text-faint); font-weight: 500;
+    margin-bottom: 18px;
+  }
+  .footer-col ul { list-style: none; }
+  .footer-col li {
+    padding: 6px 0;
+    font-size: 13px; color: var(--text-muted);
+    transition: color .15s; cursor: pointer;
+  }
+  .footer-col li:hover { color: var(--text); }
+  .footer-bottom {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding-top: 32px;
+    border-top: 1px solid var(--border);
+    display: flex; justify-content: space-between;
+    align-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; color: var(--text-faint);
+    letter-spacing: 0.5px;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .footer-social { display: flex; gap: 10px; }
+  .footer-social a {
+    width: 28px; height: 28px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    transition: border-color .15s, background .15s, transform .2s;
+  }
+  .footer-social a:hover {
+    border-color: var(--border-strong);
+    background: var(--bg-elevated);
+    transform: translateY(-2px);
+  }
+
+  /* ============================================
+     ARIA CHAT WIDGET · funcional (matches prod)
+     ============================================ */
+  #aria-btn {
+    position: fixed;
+    bottom: 24px; right: 24px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-strong);
+    border-radius: 14px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    box-shadow: 0 20px 40px -10px rgba(0,0,0,0.5);
+    z-index: 500;
+    transition: all 220ms cubic-bezier(.16,1,.3,1);
+    max-width: 280px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    color: inherit;
+    font-family: inherit;
+    text-align: left;
+    transform: translateY(8px);
+    opacity: 0;
+    animation: widgetIn .6s cubic-bezier(.16,1,.3,1) 1.5s forwards;
+  }
+  @keyframes widgetIn {
+    to { transform: translateY(0); opacity: 1; }
+  }
+  #aria-btn:hover { transform: translateY(-2px); border-color: var(--text-muted); }
+  #aria-btn.hiding { opacity: 0; transform: translateY(20px); pointer-events: none; }
+  .aria-btn-avatar {
+    width: 34px; height: 34px;
+    border-radius: 10px;
+    background: var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    color: #000;
+    font-weight: 700;
+    font-size: 13px;
+    flex-shrink: 0;
+    position: relative;
+    letter-spacing: -1px;
+  }
+  .aria-btn-avatar::after {
+    content: '';
+    position: absolute;
+    bottom: -2px; right: -2px;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--green);
+    border: 2px solid var(--bg-elevated);
+  }
+  .aria-btn-body { flex: 1; min-width: 0; }
+  .aria-btn-name { font-size: 12px; font-weight: 500; letter-spacing: -0.01em; color: var(--text); }
+  .aria-btn-msg {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 2px;
+    line-height: 1.4;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  #aria-widget {
+    position: fixed;
+    bottom: 24px; right: 24px;
+    width: 380px;
+    max-width: calc(100vw - 48px);
+    height: 600px;
+    max-height: calc(100vh - 80px);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-strong);
+    border-radius: 14px;
+    display: flex;
+    flex-direction: column;
+    z-index: 600;
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+    pointer-events: none;
+    transition: all 260ms cubic-bezier(.16,1,.3,1);
+    overflow: hidden;
+    box-shadow: 0 30px 60px -15px rgba(0,0,0,0.6);
+  }
+  #aria-widget.open { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+  .aria-wh {
+    padding: 16px 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .aria-wh-avatar {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    background: var(--accent);
+    color: #000;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    letter-spacing: -1px;
+    position: relative;
+  }
+  .aria-wh-avatar::after {
+    content: '';
+    position: absolute;
+    bottom: -2px; right: -2px;
+    width: 11px; height: 11px;
+    border-radius: 50%;
+    background: var(--green);
+    border: 2px solid var(--bg-elevated);
+  }
+  .aria-wh-info { flex: 1; }
+  .aria-wh-name { font-size: 13px; font-weight: 500; letter-spacing: -0.01em; }
+  .aria-wh-status {
+    font-size: 10px;
+    color: var(--green);
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.1em;
+    margin-top: 2px;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .aria-wh-status::before {
+    content: '';
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: currentColor;
+    animation: ariaPulse 1.6s infinite;
+  }
+  @keyframes ariaPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+  .aria-close {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 6px;
+    transition: all 160ms;
+  }
+  .aria-close:hover { color: var(--text); background: var(--bg-card); }
+  .aria-msgs {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .aria-msgs::-webkit-scrollbar { width: 4px; }
+  .aria-msgs::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 2px; }
+  .msg-bubble {
+    max-width: 85%;
+    padding: 10px 14px;
+    font-size: 13px;
+    line-height: 1.55;
+    border-radius: 12px;
+  }
+  .msg-bubble.aria-m {
+    align-self: flex-start;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+  .msg-bubble.user-m {
+    align-self: flex-end;
+    background: var(--bg-hover);
+    border: 1px solid var(--border-strong);
+    color: var(--text);
+  }
+  .msg-system {
+    align-self: center;
+    font-size: 10px;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    padding: 4px 10px;
+    background: var(--bg-card);
+    border-radius: 10px;
+    letter-spacing: 0.1em;
+  }
+  .aria-quick {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 10px 18px;
+    border-top: 1px solid var(--border);
+    background: var(--bg-card);
+    max-height: 100px;
+    overflow-y: auto;
+  }
+  .aria-quick::-webkit-scrollbar { width: 3px; }
+  .quick-btn {
+    background: var(--bg-hover);
+    border: 1px solid var(--border-strong);
+    color: var(--text-muted);
+    padding: 6px 10px;
+    font-size: 11px;
+    border-radius: 14px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 160ms;
+    white-space: nowrap;
+  }
+  .quick-btn:hover { color: var(--text); border-color: var(--text-muted); }
+  .aria-compose {
+    padding: 14px 18px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .aria-compose input {
+    flex: 1;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px 14px;
+    border-radius: 20px;
+    font-family: inherit;
+    font-size: 13px;
+    outline: none;
+  }
+  .aria-compose input::placeholder { color: var(--text-muted); }
+  .aria-send {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    transition: all 160ms;
+    font-size: 16px;
+  }
+  .aria-send:hover { background: #fff; transform: scale(1.05); }
+
+  @media (max-width: 720px) {
+    #aria-btn { max-width: calc(100vw - 32px); right: 16px; bottom: 16px; }
+    #aria-widget { right: 16px; bottom: 16px; left: 16px; width: auto; max-width: none; }
+  }
+
+  /* ============================================
+     FOUNDING MODAL · captura form
+     ============================================ */
+  .founding-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 240ms cubic-bezier(.22,1,.36,1);
+  }
+  .founding-modal-backdrop.open { opacity: 1; pointer-events: auto; }
+  .founding-modal {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-strong);
+    border-radius: 14px;
+    width: 100%;
+    max-width: 520px;
+    max-height: 92vh;
+    overflow-y: auto;
+    padding: 32px;
+    transform: translateY(20px) scale(0.98);
+    transition: transform 300ms cubic-bezier(.22,1,.36,1);
+    box-shadow: 0 40px 80px -20px rgba(0,0,0,0.7);
+  }
+  .founding-modal-backdrop.open .founding-modal { transform: translateY(0) scale(1); }
+  .fm-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    gap: 16px;
+  }
+  .fm-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 3px;
+    margin-bottom: 6px;
+  }
+  .fm-title {
+    font-size: 22px;
+    font-weight: 500;
+    letter-spacing: -0.025em;
+    line-height: 1.25;
+    color: var(--text);
+  }
+  .fm-close {
+    background: transparent;
+    border: 1px solid var(--border);
+    width: 34px; height: 34px;
+    border-radius: 8px;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 160ms;
+    font-size: 18px;
+    line-height: 1;
+  }
+  .fm-close:hover { color: var(--text); border-color: var(--text-muted); }
+  .fm-sub {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.6;
+    margin-bottom: 24px;
+  }
+  .fm-form { display: flex; flex-direction: column; gap: 14px; }
+  .fm-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .fm-field label {
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .fm-field input,
+  .fm-field select {
+    width: 100%;
+    padding: 11px 13px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 14px;
+    transition: border-color 160ms;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .fm-field select {
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='10' height='6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23a8a8a8' stroke-width='1.3' fill='none'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 32px;
+  }
+  .fm-field input:focus,
+  .fm-field select:focus {
+    outline: none;
+    border-color: var(--text-muted);
+    background: var(--bg-hover);
+  }
+  .fm-field input::placeholder { color: var(--text-muted); }
+  .fm-field.error input,
+  .fm-field.error select { border-color: var(--red); }
+  .fm-submit {
+    margin-top: 8px;
+    padding: 13px;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 180ms;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .fm-submit:hover:not(:disabled) {
+    background: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(255,255,255,0.12);
+  }
+  .fm-submit:disabled { opacity: 0.5; cursor: wait; }
+  .fm-footnote {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-align: center;
+    margin-top: 10px;
+    line-height: 1.55;
+  }
+  .fm-footnote strong { color: var(--text-muted); font-weight: 500; }
+  .fm-error {
+    background: rgba(248,113,113,0.08);
+    border: 1px solid rgba(248,113,113,0.30);
+    color: var(--red);
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    display: none;
+  }
+  .fm-error.show { display: block; }
+  .fm-success { text-align: center; padding: 20px 0; }
+  .fm-success-icon {
+    font-size: 52px;
+    margin-bottom: 14px;
+    color: var(--green);
+  }
+  .fm-success-title {
+    font-size: 20px;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    margin-bottom: 10px;
+    color: var(--text);
+  }
+  .fm-success-sub {
+    font-size: 14px;
+    color: var(--text-muted);
+    line-height: 1.65;
+    margin-bottom: 8px;
+  }
+  .fm-success-sub strong { color: var(--text); font-weight: 500; }
+  .fm-success-email {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+    letter-spacing: 0.5px;
+    margin-top: 14px;
+    padding: 10px 14px;
+    background: var(--bg-card);
+    border-radius: 6px;
+    display: inline-block;
+  }
+  .fm-spin {
+    width: 14px; height: 14px;
+    border: 2px solid rgba(0,0,0,0.2);
+    border-top-color: #000;
+    border-radius: 50%;
+    animation: fmSpin 700ms linear infinite;
+    display: none;
+  }
+  .fm-submit.loading .fm-spin { display: inline-block; }
+  .fm-submit.loading .fm-label { opacity: 0.6; }
+  @keyframes fmSpin { to { transform: rotate(360deg); } }
+  @media (max-width: 720px) {
+    .founding-modal { padding: 24px 20px; border-radius: 12px; }
+    .fm-row { grid-template-columns: 1fr; }
+    .fm-title { font-size: 19px; }
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 1080px) {
+    .hero-grid { grid-template-columns: 1fr; gap: 56px; }
+    .hero-right { order: 2; }
+    .aria-grid, .reporte-grid, .wizard-grid { grid-template-columns: 1fr; gap: 48px; }
+    .preview-content { grid-template-columns: 1fr; }
+    .preview-sidebar { border-right: none; border-bottom: 1px solid var(--border); }
+    .enterprise-grid { grid-template-columns: 1fr; gap: 32px; }
+  }
+  @media (max-width: 960px) {
+    .features-grid { grid-template-columns: 1fr 1fr; }
+    .verticales-grid { grid-template-columns: 1fr 1fr; }
+    .steps-grid { grid-template-columns: 1fr 1fr; }
+    .stack-grid { grid-template-columns: repeat(3, 1fr); gap: 28px 24px; }
+    .stats-row { grid-template-columns: repeat(2, 1fr); gap: 20px; }
+    .preview-kpis { grid-template-columns: repeat(2, 1fr); }
+    .compare-row { grid-template-columns: 1fr 1fr; }
+    .compare-row .compare-cell:nth-child(3),
+    .compare-row .compare-cell:nth-child(4) { display: none; }
+    .enterprise-features { grid-template-columns: 1fr; }
+    .pricing-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 720px) {
+    nav.top { padding: 14px 20px; }
+    nav.top.scrolled { padding: 10px 20px; }
+    .nav-links { gap: 12px; }
+    .nav-links a:not(.nav-cta) { display: none; }
+    .announce { padding: 8px 20px; font-size: 11px; }
+    section.hero { padding: 60px 20px 60px; }
+    section { padding: 64px 20px; }
+    .footer-grid { grid-template-columns: 1fr 1fr; gap: 32px; }
+    .footer-bottom { flex-direction: column; gap: 12px; }
+    .aria-overlay { display: none; }
+    h1.hero-h1 { font-size: 42px; }
+    .hero-ctas { flex-direction: column; align-items: stretch; }
+    .cta-primary, .cta-secondary { justify-content: center; }
+    .features-grid { grid-template-columns: 1fr; }
+    .steps-grid { grid-template-columns: 1fr; }
+    .verticales-grid { grid-template-columns: 1fr; }
+    .price-amount .num { font-size: 48px; }
+  }
+
+  /* REVEAL */
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity .8s cubic-bezier(.16,1,.3,1), transform .8s cubic-bezier(.16,1,.3,1);
+  }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+  .reveal.delay-1 { transition-delay: .08s; }
+  .reveal.delay-2 { transition-delay: .16s; }
+  .reveal.delay-3 { transition-delay: .24s; }
+  .reveal.delay-4 { transition-delay: .32s; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+    .reveal { opacity: 1; transform: none; }
+  }
+
+  /* ============================================
+     DEMO MODAL · Stripe-style 4 tabs
+     ============================================ */
+  .demo-modal {
+    position: fixed; inset: 0; z-index: 200;
+    display: none; align-items: center; justify-content: center;
+    padding: 32px;
+  }
+  .demo-modal.open { display: flex; }
+  .demo-modal-backdrop {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.78);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  .demo-modal-window {
+    position: relative;
+    width: 100%; max-width: 1080px;
+    max-height: calc(100vh - 64px);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-strong);
+    border-radius: 16px;
+    overflow: hidden;
+    display: flex; flex-direction: column;
+    box-shadow: 0 40px 100px -20px rgba(0,0,0,0.7);
+    animation: demoModalIn 280ms cubic-bezier(0.22, 0.9, 0.36, 1);
+  }
+  @keyframes demoModalIn {
+    from { opacity: 0; transform: translateY(12px) scale(0.98); }
+    to   { opacity: 1; transform: none; }
+  }
+  .demo-modal-titlebar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 12px 16px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+  }
+  .demo-modal-titlebar .dot {
+    width: 11px; height: 11px; border-radius: 50%;
+  }
+  .demo-modal-titlebar .dot-red { background: #ff5f57; }
+  .demo-modal-titlebar .dot-yellow { background: #febc2e; }
+  .demo-modal-titlebar .dot-green { background: #28c840; }
+  .demo-modal-title {
+    margin-left: 6px;
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+    flex: 1;
+  }
+  .demo-modal-close {
+    color: var(--text-muted);
+    font-size: 16px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    transition: all .15s;
+  }
+  .demo-modal-close:hover { background: var(--bg-hover); color: var(--text); }
+
+  .demo-modal-tabs {
+    display: flex; gap: 0;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+  }
+  .demo-tab {
+    padding: 14px 18px;
+    color: var(--text-muted);
+    font-size: 13px; font-weight: 500;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: all .15s;
+  }
+  .demo-tab:hover { color: var(--text); }
+  .demo-tab.active {
+    color: var(--text);
+    border-bottom-color: var(--accent);
+  }
+
+  .demo-tab-panel {
+    display: none;
+    padding: 28px 32px;
+    overflow-y: auto;
+    flex: 1;
+  }
+  .demo-tab-panel.active { display: block; }
+
+  .demo-section-head {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 24px; margin-bottom: 24px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--border);
+  }
+  .demo-section-head h3 {
+    font-size: 18px; font-weight: 600;
+    letter-spacing: -0.02em;
+    margin-bottom: 4px;
+  }
+  .demo-section-head p {
+    font-size: 13px; color: var(--text-muted);
+  }
+  .demo-live-pill {
+    background: var(--green-dim);
+    color: var(--green);
+    padding: 4px 10px;
+    border-radius: 100px;
+    font-size: 10px;
+    letter-spacing: 0.8px;
+    white-space: nowrap;
+  }
+  .demo-online {
+    color: var(--green);
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+
+  /* DEMO · KPIs */
+  .demo-kpi-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 12px; margin-bottom: 20px;
+  }
+  .demo-kpi {
+    padding: 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .demo-kpi-label {
+    font-size: 9px;
+    color: var(--text-faint);
+    letter-spacing: 1.2px;
+  }
+  .demo-kpi-value {
+    font-size: 24px; font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+  .demo-kpi-delta {
+    font-size: 11px;
+  }
+  .demo-kpi-delta.up { color: var(--green); }
+  .demo-kpi-delta.neutral { color: var(--text-muted); }
+
+  /* DEMO · Activity */
+  .demo-activity {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 20px;
+  }
+  .demo-activity-head {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 14px;
+  }
+  .demo-activity-head h4 {
+    font-size: 13px; font-weight: 600;
+  }
+  .demo-activity-list { display: flex; flex-direction: column; }
+  .demo-activity-row {
+    padding: 10px 0;
+    border-top: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 13px;
+  }
+  .demo-activity-row:first-child { border-top: 0; padding-top: 0; }
+  .demo-row-text strong { color: var(--text); font-weight: 500; }
+  .demo-row-text { color: var(--text-muted); }
+  .demo-row-time { font-size: 10px; color: var(--text-faint); letter-spacing: 0.8px; }
+  .demo-ok { color: var(--green); margin-left: 6px; }
+
+  /* DEMO · Agenda week view */
+  .demo-agenda-grid {
+    display: grid; grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .demo-agenda-col {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 10px;
+    min-height: 220px;
+  }
+  .demo-agenda-head {
+    font-size: 10px;
+    color: var(--text-faint);
+    letter-spacing: 0.8px;
+    padding-bottom: 10px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .demo-cita {
+    padding: 8px 10px;
+    margin-bottom: 6px;
+    font-size: 11px;
+    border-radius: 6px;
+    border-left: 2px solid var(--text-muted);
+    background: rgba(255,255,255,0.025);
+    color: var(--text-muted);
+    line-height: 1.4;
+  }
+  .demo-cita strong { color: var(--text); font-weight: 500; }
+  .demo-cita.confirmed { border-left-color: var(--text); background: rgba(255,255,255,0.04); }
+  .demo-cita.aria {
+    border-left-color: var(--aria);
+    background: var(--aria-s);
+    color: var(--text);
+  }
+  .demo-cita.aria strong { color: var(--text); }
+  .demo-cita.empty {
+    border-left-color: var(--text-faint);
+    background: transparent;
+    color: var(--text-faint);
+    font-style: italic;
+  }
+  .demo-agenda-foot {
+    text-align: center;
+    font-size: 10px;
+    color: var(--green);
+    letter-spacing: 1px;
+    padding: 12px;
+    background: var(--green-dim);
+    border-radius: 8px;
+  }
+
+  /* DEMO · ARIA chat split view */
+  .demo-aria-grid {
+    display: grid; grid-template-columns: 1.2fr 1fr;
+    gap: 14px;
+  }
+  .demo-chat, .demo-drawer {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+  }
+  .demo-chat-head {
+    display: flex; align-items: center; gap: 12px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 14px;
+  }
+  .demo-chat-avatar {
+    width: 36px; height: 36px;
+    background: var(--bg-hover);
+    border: 1px solid var(--border-strong);
+    color: var(--text);
+    font-weight: 600;
+    border-radius: 50%;
+    display: grid; place-items: center;
+  }
+  .demo-chat-head strong { display: block; font-size: 13px; }
+  .demo-chat-head small { font-size: 10px; color: var(--text-faint); letter-spacing: 0.5px; }
+  .demo-chat-body { display: flex; flex-direction: column; gap: 10px; }
+  /* MATCHES REAL DASHBOARD .msg styles · monochrome grey-on-grey */
+  .demo-msg {
+    padding: 8px 12px;
+    border-radius: 10px;
+    font-size: 12px;
+    max-width: 75%;
+    line-height: 1.45;
+  }
+  .demo-msg.in {
+    align-self: flex-start;
+    background: var(--bg-card);          /* --card2 real */
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .demo-msg.out {
+    align-self: flex-end;
+    background: var(--bg-hover);         /* --card3 real */
+    color: var(--text);
+    border: 1px solid var(--border-strong); /* --border2 real */
+  }
+  /* ARIA tag inside outgoing messages · matches .msg-by-aria real */
+  .demo-msg-aria-tag {
+    display: inline-block;
+    font-size: 9px;
+    background: var(--aria-s);
+    color: var(--aria);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.5px;
+    margin-right: 5px;
+    border: 1px solid var(--aria-border);
+    vertical-align: 1px;
+  }
+  .demo-drawer h4 {
+    font-size: 13px; font-weight: 600;
+    margin-bottom: 12px;
+  }
+  .demo-action {
+    display: grid;
+    grid-template-columns: 28px 1fr auto;
+    gap: 10px;
+    padding: 10px 0;
+    border-top: 1px solid var(--border);
+    align-items: center;
+  }
+  .demo-action:first-of-type { border-top: 0; padding-top: 0; }
+  .demo-action-icon { font-size: 18px; }
+  .demo-action strong { display: block; font-size: 12px; font-weight: 500; }
+  .demo-action p { font-size: 11px; color: var(--text-muted); margin-top: 2px; line-height: 1.4; }
+  .demo-action-ok { color: var(--green); font-size: 14px; }
+  .demo-drawer-foot {
+    margin-top: 12px;
+    padding: 10px;
+    background: var(--aria-s);
+    color: var(--aria);
+    border: 1px solid var(--aria-border);
+    border-radius: 6px;
+    font-size: 9px;
+    letter-spacing: 0.8px;
+    text-align: center;
+  }
+
+  /* DEMO · Reportes */
+  .demo-report {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px;
+  }
+  .demo-report-head {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    gap: 24px;
+    padding-bottom: 18px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .demo-report-mono {
+    font-size: 10px; color: var(--text-faint);
+    letter-spacing: 1px;
+  }
+  .demo-report-head h4 { font-size: 18px; font-weight: 600; margin-top: 6px; }
+  .demo-report-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 14px; margin-bottom: 24px;
+  }
+  .demo-report-stat {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .demo-report-stat-label { font-size: 9px; color: var(--text-faint); letter-spacing: 1px; }
+  .demo-report-stat-value {
+    font-size: 20px; font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+  .demo-report-stat-value small {
+    font-size: 11px; color: var(--green); font-weight: 500;
+    margin-left: 4px;
+  }
+  .demo-report-narrative p {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.7;
+    margin-bottom: 10px;
+  }
+  .demo-report-narrative strong { color: var(--text); }
+
+  /* DEMO · Modal footer */
+  .demo-modal-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px;
+    padding: 14px 24px;
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+  }
+  .demo-modal-footer .mono {
+    font-size: 10px;
+    color: var(--text-faint);
+    letter-spacing: 1px;
+  }
+  .demo-modal-cta { padding: 10px 18px; font-size: 13px; }
+
+  .demo-icon {
+    display: inline-grid; place-items: center;
+    width: 18px; height: 18px;
+    background: var(--green-dim);
+    color: var(--green);
+    border-radius: 4px;
+    font-size: 9px;
+  }
+
+  /* DEMO MODAL · responsive */
+  @media (max-width: 960px) {
+    .demo-modal { padding: 12px; }
+    .demo-modal-window { max-height: calc(100vh - 24px); }
+    .demo-tab-panel { padding: 18px 16px; }
+    .demo-kpi-grid { grid-template-columns: 1fr 1fr; }
+    .demo-agenda-grid { grid-template-columns: 1fr 1fr; }
+    .demo-aria-grid { grid-template-columns: 1fr; }
+    .demo-report-grid { grid-template-columns: 1fr 1fr; }
+    .demo-section-head { flex-direction: column; align-items: flex-start; gap: 10px; }
+    .demo-modal-footer { flex-direction: column; align-items: stretch; gap: 10px; }
+    .demo-modal-tabs { overflow-x: auto; padding: 0 12px; }
+    .demo-tab { padding: 12px 14px; white-space: nowrap; }
+  }
+</style>
+</head>
+<body>
+
+<div class="cursor-glow" id="cursorGlow"></div>
+
+<!-- NAV -->
+<nav class="top" id="topnav">
+  <a href="#" class="brand">
+    <span class="brand-mark">
+      <svg width="16" height="11" viewBox="0 0 22 14" fill="none">
+        <path d="M0 7H2.5V2H6V13H10V2H13.5V7H17" stroke="#f4f4f4" stroke-width="1.6" stroke-linecap="square" stroke-linejoin="miter"/>
+        <circle cx="19.5" cy="7" r="1.8" fill="#f4f4f4"/>
+      </svg>
+    </span>
+    <div class="brand-text">
+      <span class="brand-name">Dominio System</span>
+      <span class="brand-tagline">automation plattform</span>
+    </div>
+  </a>
+  <div class="nav-links">
+    <a href="#producto">Producto</a>
+    <a href="#aria">ARIA</a>
+    <a href="#verticales">Verticales</a>
+    <a href="#pricing">Planes</a>
+    <a href="#faq">Preguntas</a>
+    <a href="#login" class="nav-login">Iniciar sesión</a>
+    <a href="#empezar" class="nav-cta">Empezar 14 días gratis</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-grid">
+
+    <div class="hero-left">
+      <div class="eyebrow mono">PARA NEGOCIOS QUE TRABAJAN POR CITAS</div>
+
+      <h1 class="hero-h1">
+        Llena tu agenda<br>
+        <em>mientras estás con un cliente.</em>
+      </h1>
+
+      <p class="hero-sub" id="heroSub">
+        <span class="word"><strong>ARIA</strong></span>
+        <span class="word">atiende</span>
+        <span class="word">tu</span>
+        <span class="word">WhatsApp,</span>
+        <span class="word">agenda</span>
+        <span class="word">citas</span>
+        <span class="word">y</span>
+        <span class="word">recuerda</span>
+        <span class="word">a</span>
+        <span class="word">tus</span>
+        <span class="word">clientes</span>
+        <span class="word">—</span>
+        <span class="word">todo</span>
+        <span class="word">automático.</span>
+      </p>
+
+      <div class="hero-ctas">
+        <a href="#empezar" class="cta-primary">
+          Empezar 14 días gratis
+          <span class="arrow">→</span>
+        </a>
+        <button type="button" class="cta-secondary" onclick="openDemoModal('brief')">
+          <span class="demo-icon">▶</span>
+          Ver demo del dashboard
+        </button>
+      </div>
+
+      <div class="trust-strip">
+        <span><span class="check">✓</span> Spot Founding gratis</span>
+        <span><span class="check">✓</span> Sin tarjeta hoy</span>
+        <span><span class="check">✓</span> 14 días trial al activar cohorte</span>
+      </div>
+    </div>
+
+    <div class="hero-right">
+      <div class="dashboard-window" id="dashboardWindow">
+        <div class="dashboard-titlebar">
+          <span class="dot dot-red"></span>
+          <span class="dot dot-yellow"></span>
+          <span class="dot dot-green"></span>
+          <span class="title mono">Dominio System · Brief</span>
+          <span class="live-pill">TRIAL · DÍA 3/14</span>
+        </div>
+        <div class="dashboard-tabs">
+          <div class="dashboard-tab active">Brief</div>
+          <div class="dashboard-tab">Agenda</div>
+          <div class="dashboard-tab">CRM 360</div>
+          <div class="dashboard-tab">ARIA</div>
+          <div class="dashboard-tab">Campañas</div>
+        </div>
+        <div class="dashboard-body">
+          <div class="kpi-grid">
+            <div class="kpi-card">
+              <div class="kpi-label">MRR</div>
+              <div class="kpi-value" data-counter="12400" data-format="k">$0</div>
+              <div class="kpi-delta up">8.2% MoM</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">LEADS</div>
+              <div class="kpi-value" data-counter="412">0</div>
+              <div class="kpi-delta up">12%</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">CITAS</div>
+              <div class="kpi-value" data-counter="189">0</div>
+              <div class="kpi-delta up">18%</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">CONV.</div>
+              <div class="kpi-value" data-counter="45.8" data-decimals="1" data-suffix="%">0%</div>
+              <div class="kpi-delta up">3.2pp</div>
+            </div>
+          </div>
+          <div class="chart-area">
+            <div class="chart-label mono">INGRESOS · 30D</div>
+            <div class="chart-bar"></div>
+            <div class="chart-bar"></div>
+            <div class="chart-bar"></div>
+            <div class="chart-bar"></div>
+            <div class="chart-bar"></div>
+            <div class="chart-bar"></div>
+            <div class="chart-bar"></div>
+            <div class="chart-bar"></div>
+            <div class="chart-bar"></div>
+            <div class="chart-bar"></div>
+            <div class="chart-bar"></div>
+          </div>
+          <div class="aria-overlay">
+            <span class="aria-overlay-tag">ARIA · ACABA DE</span>
+            <div class="aria-overlay-text">
+              Laura M. agendó cita<br>
+              Vie 18 · 10:00<span class="aria-overlay-check">✓</span>
+            </div>
+            <div class="aria-overlay-time mono">HACE 12 SEGUNDOS</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- STATS BANNER -->
+<section class="stats-banner">
+  <div class="stats-row">
+    <div class="stat-cell">
+      <div class="num">&lt;3<em>s</em></div>
+      <div class="label mono">RESPUESTA ARIA</div>
+    </div>
+    <div class="stat-cell">
+      <div class="num">Real<em>time</em></div>
+      <div class="label mono">SINCRONIZACIÓN</div>
+    </div>
+    <div class="stat-cell">
+      <div class="num">AES-<em>256</em></div>
+      <div class="label mono">BACKUPS DIARIOS</div>
+    </div>
+    <div class="stat-cell">
+      <div class="num">Self<em>·serve</em></div>
+      <div class="label mono">ONBOARDING GUIADO</div>
+    </div>
+  </div>
+</section>
+
+<!-- PRODUCTO -->
+<section class="producto" id="producto">
+  <div class="container">
+    <div class="section-label mono reveal">PRODUCTO</div>
+    <h2 class="reveal">Todo lo que tu negocio necesita,<br><em>en un solo lugar.</em></h2>
+    <p class="section-sub reveal delay-1">
+      Dashboard nativo, IA conversacional, WhatsApp oficial y reportes en vivo. Sin agencias intermediarias, sin tools sueltas pegadas con cinta adhesiva.
+    </p>
+
+    <div class="features-grid">
+
+      <div class="feature-card reveal delay-1" data-mouse-card>
+        <div class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="14" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/></svg>
+        </div>
+        <h3>Dashboard nativo</h3>
+        <p>App de escritorio Mac (Windows próximamente). Sincronización en tiempo real, sin tabs perdidos del navegador.</p>
+        <div class="feature-meta mono">MACOS · WIN Q3 2026</div>
+      </div>
+
+      <div class="feature-card reveal delay-2" data-mouse-card>
+        <div class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+        </div>
+        <h3>Automatización 24/7</h3>
+        <p>ARIA opera mientras duermes, los fines de semana y feriados. Tú decides qué casos llegan a tu mano y cuáles ejecuta sola.</p>
+        <div class="feature-meta mono">UPTIME 99.9%</div>
+      </div>
+
+      <div class="feature-card reveal delay-3" data-mouse-card>
+        <div class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8v.5z"/></svg>
+        </div>
+        <h3>WhatsApp oficial</h3>
+        <p>Meta Cloud API verificada. Tu número, tu historial, check azul. Cero riesgo de ban — no usamos QR scraping.</p>
+        <div class="feature-meta mono">META BUSINESS · VERIFIED</div>
+      </div>
+
+      <div class="feature-card reveal delay-1" data-mouse-card>
+        <div class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        </div>
+        <h3>Tu data, siempre tuya</h3>
+        <p>Exportas todo a CSV cuando quieras. Sin lock-in, sin permanencia. Si te vas, te llevas a tus clientes contigo.</p>
+        <div class="feature-meta mono">EXPORT LIBRE · SIN PERMANENCIA</div>
+      </div>
+
+      <div class="feature-card reveal delay-2" data-mouse-card>
+        <div class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+        </div>
+        <h3>Reportes en vivo</h3>
+        <p>KPIs actualizados al segundo: MRR, leads, citas, conversión. Reporte mensual automático al día 1.</p>
+        <div class="feature-meta mono">REALTIME · MOM TRACKING</div>
+      </div>
+
+      <div class="feature-card reveal delay-3" data-mouse-card>
+        <div class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <h3>Seguridad</h3>
+        <p>RLS por tenant, AES-256 at rest, TLS en tránsito. SLA 99.9% con backups encriptados diarios.</p>
+        <div class="feature-meta mono">SLA 99.9% · ROW-LEVEL SECURITY</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ARIA SECTION -->
+<section class="aria-section" id="aria">
+  <div class="container">
+    <div class="aria-grid">
+
+      <div>
+        <div class="section-label mono reveal">ARIA · ASISTENTE IA</div>
+        <h2 class="reveal">Responde por ti,<br>agenda por ti,<br><em>cancela por ti.</em></h2>
+        <p class="section-sub reveal delay-1" style="margin-bottom: 0;">
+          ARIA es el agente real entrenado para tu vertical. Conversa, califica, agenda y notifica. Tú solo te enfocas en atender la consulta.
+        </p>
+
+        <ul class="aria-bullets reveal delay-2">
+          <li>
+            <div>
+              <strong>Conversación natural en WhatsApp</strong>
+              <p>Responde &lt;3 segundos. Entiende contexto, recordando 30 días de historial por cliente.</p>
+            </div>
+          </li>
+          <li>
+            <div>
+              <strong>Acciones reales (no solo respuestas)</strong>
+              <p>Agenda, reagenda, cancela y cobra. Ejecuta en tu agenda, no solo "te avisa".</p>
+            </div>
+          </li>
+          <li>
+            <div>
+              <strong>Aprobación humana cuando importa</strong>
+              <p>Casos sensibles (reembolsos, urgencias) pasan por ti antes de ejecutar.</p>
+            </div>
+          </li>
+          <li>
+            <div>
+              <strong>Pre-entrenada para tu industria</strong>
+              <p>12 reglas listas para clínica estética. 8+ servicios pre-cargados. Dentista y barbería Q3-Q4 2026.</p>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <div class="chat-preview reveal delay-2">
+        <div class="chat-header">
+          <div class="chat-avatar">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M12 2a10 10 0 0 0-8.7 14.9L2 22l5.3-1.3A10 10 0 1 0 12 2z" fill="#fff"/>
+            </svg>
+          </div>
+          <div>
+            <div class="chat-name">Laura Martínez</div>
+            <div class="chat-status mono">● online · respondió en 2.4s</div>
+          </div>
+        </div>
+        <div id="chatBody"></div>
+        <div class="chat-chips" id="chatChips">
+          <button class="chat-chip" data-scenario="agendar">Agendar limpieza</button>
+          <button class="chat-chip" data-scenario="horarios">Ver horarios</button>
+          <button class="chat-chip" data-scenario="cancelar">Cancelar cita</button>
+          <button class="chat-chip" data-scenario="reset" id="resetChip" style="display: none;">Reiniciar</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- DASHBOARD PREVIEW -->
+<section class="dashboard-preview">
+  <div class="container">
+    <div class="section-label mono reveal" style="display: inline-flex;">DASHBOARD NATIVO</div>
+    <h2 class="reveal">Tu negocio, <em>medido en tiempo real.</em></h2>
+    <p class="section-sub reveal delay-1" style="margin: 0 auto 0; text-align: left;">
+      Brief · Agenda · CRM 360 · ARIA · Campañas · Marketing · Reportes · Billing. Todo en una sola app nativa.
+    </p>
+
+    <div class="preview-window reveal delay-2">
+      <div class="titlebar">
+        <span class="dot dot-red"></span>
+        <span class="dot dot-yellow"></span>
+        <span class="dot dot-green"></span>
+        <span class="title mono">Dominio System · clínica-estetica-11</span>
+      </div>
+
+      <div class="preview-content">
+
+        <div class="preview-sidebar">
+          <h4>WORKSPACE</h4>
+          <div class="preview-nav-item active"><span class="dot"></span> Brief</div>
+          <div class="preview-nav-item"><span class="dot"></span> Agenda</div>
+          <div class="preview-nav-item"><span class="dot"></span> CRM 360</div>
+          <div class="preview-nav-item"><span class="dot"></span> ARIA</div>
+          <div class="preview-nav-item"><span class="dot"></span> Campañas</div>
+          <div class="preview-nav-item"><span class="dot"></span> Marketing</div>
+          <div class="preview-nav-item"><span class="dot"></span> Reportes</div>
+          <div class="preview-nav-item"><span class="dot"></span> Billing</div>
+        </div>
+
+        <div class="preview-main">
+          <div class="preview-main-header">
+            <h3>Brief · Mayo 2026</h3>
+            <span class="preview-pill">LIVE · ÚLTIMA SYNC HACE 4s</span>
+          </div>
+
+          <div class="preview-kpis">
+            <div class="preview-kpi">
+              <div class="lbl">INGRESOS MES</div>
+              <div class="val">$12.4k</div>
+              <div class="delta">↑ 8.2% MoM</div>
+            </div>
+            <div class="preview-kpi">
+              <div class="lbl">LEADS</div>
+              <div class="val">412</div>
+              <div class="delta">↑ 12%</div>
+            </div>
+            <div class="preview-kpi">
+              <div class="lbl">CITAS</div>
+              <div class="val">189</div>
+              <div class="delta">↑ 18%</div>
+            </div>
+            <div class="preview-kpi">
+              <div class="lbl">CONVERSIÓN</div>
+              <div class="val">45.8%</div>
+              <div class="delta">↑ 3.2pp</div>
+            </div>
+          </div>
+
+          <div class="preview-chart">
+            <span class="lbl mono">INGRESOS DIARIOS · 30D</span>
+            <div class="preview-chart-bar" style="height: 30%;"></div>
+            <div class="preview-chart-bar" style="height: 36%;"></div>
+            <div class="preview-chart-bar" style="height: 34%;"></div>
+            <div class="preview-chart-bar" style="height: 42%;"></div>
+            <div class="preview-chart-bar" style="height: 38%;"></div>
+            <div class="preview-chart-bar" style="height: 48%;"></div>
+            <div class="preview-chart-bar" style="height: 44%;"></div>
+            <div class="preview-chart-bar" style="height: 52%;"></div>
+            <div class="preview-chart-bar" style="height: 50%;"></div>
+            <div class="preview-chart-bar" style="height: 60%;"></div>
+            <div class="preview-chart-bar" style="height: 58%;"></div>
+            <div class="preview-chart-bar" style="height: 68%;"></div>
+            <div class="preview-chart-bar" style="height: 64%;"></div>
+            <div class="preview-chart-bar" style="height: 76%;"></div>
+            <div class="preview-chart-bar" style="height: 72%;"></div>
+            <div class="preview-chart-bar" style="height: 80%;"></div>
+            <div class="preview-chart-bar" style="height: 88%;"></div>
+            <div class="preview-chart-bar" style="height: 92%;"></div>
+            <div class="preview-chart-bar" style="height: 96%;"></div>
+            <div class="preview-chart-bar" style="height: 100%;"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- EMPEZAR · FLUJO TRIAL 14D -->
+<section class="signup-flow" id="empezar">
+  <div class="container">
+    <div class="section-label mono reveal" style="display:inline-flex;">RESERVAR ACCESO · WAITLIST</div>
+    <h2 class="reveal">Apartas tu acceso y<br><em>te avisamos cuando arranquemos.</em></h2>
+    <p class="section-sub reveal delay-1">
+      El trial 14 días lo activamos cuando arranque cohorte Founding (en setup operativo · sin fecha confirmada todavía). Sin tarjeta hoy · sin compromiso · te enviamos updates por email.
+    </p>
+
+    <div class="wizard-grid">
+
+      <div class="wizard-steps">
+        <div class="wizard-step active reveal">
+          <div class="wizard-num">1</div>
+          <div class="wizard-content">
+            <h4>Apartas tu acceso</h4>
+            <p>Email o Google. Quedas en waitlist sin compromiso.</p>
+            <div class="wtime mono">HOY · 30 SEG</div>
+          </div>
+        </div>
+        <div class="wizard-step reveal delay-1">
+          <div class="wizard-num">2</div>
+          <div class="wizard-content">
+            <h4>Cohorte arranca</h4>
+            <p>Cuando termine setup legal y operativo. Te avisamos por email.</p>
+            <div class="wtime mono">SIN FECHA TODAVÍA</div>
+          </div>
+        </div>
+        <div class="wizard-step reveal delay-2">
+          <div class="wizard-num">3</div>
+          <div class="wizard-content">
+            <h4>Onboarding self-serve</h4>
+            <p>Eliges vertical, conectas WhatsApp Meta Cloud API, ARIA aprende tus servicios.</p>
+            <div class="wtime mono">POST COHORTE</div>
+          </div>
+        </div>
+        <div class="wizard-step reveal delay-3">
+          <div class="wizard-num">4</div>
+          <div class="wizard-content">
+            <h4>Trial 14 días arranca</h4>
+            <p>ARIA responde, agenda y recuerda. Acceso completo · sin tarjeta hasta el día 15.</p>
+            <div class="wtime mono">ACCESO COMPLETO</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="signup-form reveal delay-2" id="login">
+        <div class="signup-form-title">¿Qué tipo de negocio tienes?</div>
+
+        <div class="vertical-chips" id="vchips-primary">
+          <button type="button" class="vchip selected" data-v="clinica_estetica">
+            <span class="vemoji">💆</span>
+            <span class="vname">Clínica estética</span>
+            <span class="vtag live">LIVE</span>
+          </button>
+          <button type="button" class="vchip coming" data-v="dental">
+            <span class="vemoji">🦷</span>
+            <span class="vname">Dentista</span>
+            <span class="vtag">Q3 2026</span>
+          </button>
+          <button type="button" class="vchip coming" data-v="salon_belleza">
+            <span class="vemoji">✂️</span>
+            <span class="vname">Barbería &amp; salón</span>
+            <span class="vtag">Q4 2026</span>
+          </button>
+          <button type="button" class="vchip vchip-more" id="vchip-more-btn" onclick="toggleMoreVerticals()">
+            <span class="vemoji">+</span>
+            <span class="vname">Otro</span>
+            <span class="vtag">VER MÁS</span>
+          </button>
+        </div>
+
+        <!-- Verticales adicionales · reveladas al click "+ Otro" -->
+        <div class="vertical-chips vchips-more" id="vchips-more" hidden>
+          <button type="button" class="vchip coming" data-v="spa_wellness">
+            <span class="vemoji">🧖</span>
+            <span class="vname">Spa &amp; wellness</span>
+            <span class="vtag">SOON</span>
+          </button>
+          <button type="button" class="vchip coming" data-v="veterinaria">
+            <span class="vemoji">🐾</span>
+            <span class="vname">Veterinaria</span>
+            <span class="vtag">SOON</span>
+          </button>
+          <button type="button" class="vchip coming" data-v="fisioterapia">
+            <span class="vemoji">🦵</span>
+            <span class="vname">Fisioterapia</span>
+            <span class="vtag">SOON</span>
+          </button>
+          <button type="button" class="vchip coming" data-v="consultorios">
+            <span class="vemoji">🩺</span>
+            <span class="vname">Consultorios</span>
+            <span class="vtag">SOON</span>
+          </button>
+          <button type="button" class="vchip" data-v="otro">
+            <span class="vemoji">✨</span>
+            <span class="vname">Otro servicio</span>
+            <span class="vtag">CUSTOM</span>
+          </button>
+        </div>
+
+        <div class="signup-divider"><span>O EMPIEZA DIRECTO</span></div>
+
+        <button type="button" class="oauth-btn" onclick="submitWaitlist('google')">
+          <span class="g">G</span>
+          Continuar con Google
+        </button>
+
+        <input type="email" id="signup-email" class="signup-email" placeholder="tu@email.com" aria-label="Email" onkeypress="if(event.key==='Enter') submitWaitlist('email')">
+
+        <button type="button" class="signup-submit" onclick="submitWaitlist('email')">
+          Apartar mi acceso · waitlist
+          <span class="arrow">→</span>
+        </button>
+
+        <p class="signup-trust mono">TE ENVIAMOS UPDATES POR EMAIL · ACTIVAMOS COHORTE CUANDO TERMINE SETUP LEGAL Y OPERATIVO · SIN TARJETA HOY</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- REPORTE MENSUAL -->
+<section class="reporte">
+  <div class="container">
+    <div class="reporte-grid">
+
+      <div>
+        <div class="section-label mono reveal">REPORTE MENSUAL</div>
+        <h2 class="reveal">Tu negocio,<br><em>explicado.</em></h2>
+        <p class="section-sub reveal delay-1" style="margin-bottom: 24px;">
+          Día 1 de cada mes, en tu correo. Sin pedirlo, sin armarlo a mano.
+        </p>
+        <ul class="aria-bullets reveal delay-2" style="margin-top: 16px;">
+          <li>
+            <div>
+              <strong>KPIs ejecutivos del mes</strong>
+              <p>Citas, leads calificados, conversión, ingresos, no-show rate.</p>
+            </div>
+          </li>
+          <li>
+            <div>
+              <strong>Servicio top y peor performance</strong>
+              <p>Qué está pagando la renta y qué hay que ajustar.</p>
+            </div>
+          </li>
+          <li>
+            <div>
+              <strong>Métricas de ARIA</strong>
+              <p>Conversaciones atendidas, resolución autónoma, casos escalados.</p>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <div class="email-mock reveal delay-2">
+        <div class="email-header">
+          <div class="email-from">
+            <div class="email-avatar">DS</div>
+            <div>
+              <div class="email-from-name">Dominio System</div>
+              <div class="email-from-addr mono">reportes@dominiosystem.com</div>
+            </div>
+          </div>
+          <div class="email-subject">Tu mes en Dominio · 412 leads · 189 citas</div>
+          <div class="email-date mono">1 DE JUNIO · 09:00 AM</div>
+        </div>
+        <div class="email-body">
+          <p>Hola Marcela, este es tu resumen de mayo. <strong>+18% MoM</strong> en citas cerradas y <strong>+12%</strong> en leads. ARIA atendió 612 conversaciones con 89% de resolución autónoma.</p>
+
+          <div class="email-kpi-row">
+            <div class="email-kpi">
+              <div class="val">$12.4k</div>
+              <div class="lbl mono">INGRESOS</div>
+            </div>
+            <div class="email-kpi">
+              <div class="val">189</div>
+              <div class="lbl mono">CITAS</div>
+            </div>
+            <div class="email-kpi">
+              <div class="val">45.8%</div>
+              <div class="lbl mono">CONV.</div>
+            </div>
+          </div>
+
+          <div class="email-highlight">
+            <strong>Servicio top del mes:</strong> Limpieza facial profunda · $4,128 ingresos · 42 citas · 12% MoM ↑
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- COMPARATIVA -->
+<section class="comparativa">
+  <div class="container">
+    <div class="section-label mono reveal">COMPARATIVA</div>
+    <h2 class="reveal">Por qué Dominio System<br><em>no es otra agencia.</em></h2>
+    <p class="section-sub reveal delay-1">
+      Otras opciones que probaste antes — y por qué Dominio es distinto.
+    </p>
+
+    <div class="compare-table reveal delay-2">
+      <div class="compare-row header">
+        <div class="compare-cell mono">CARACTERÍSTICA</div>
+        <div class="compare-cell mono featured">DOMINIO SYSTEM</div>
+        <div class="compare-cell mono">AGENCIA</div>
+        <div class="compare-cell mono">HUBSPOT / ZOHO</div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-cell label">Setup</div>
+        <div class="compare-cell dominio">Self-serve guiado</div>
+        <div class="compare-cell x">2-4 semanas</div>
+        <div class="compare-cell x">2-6 semanas</div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-cell label">IA conversacional</div>
+        <div class="compare-cell dominio">ARIA pre-entrenada</div>
+        <div class="compare-cell x">Scripts humanos</div>
+        <div class="compare-cell x">Add-on costoso</div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-cell label">WhatsApp Cloud API</div>
+        <div class="compare-cell dominio">Oficial · check azul</div>
+        <div class="compare-cell x">Workarounds</div>
+        <div class="compare-cell x">No nativo</div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-cell label">24/7 sin staff</div>
+        <div class="compare-cell dominio">Sí · automático</div>
+        <div class="compare-cell x">Horario oficina</div>
+        <div class="compare-cell x">Solo workflows</div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-cell label">Costo mensual</div>
+        <div class="compare-cell dominio">$197 · 14d gratis</div>
+        <div class="compare-cell x">$2k-$10k</div>
+        <div class="compare-cell x">$500-$1.5k + impl</div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-cell label">Tu data</div>
+        <div class="compare-cell dominio">Tuya · export CSV</div>
+        <div class="compare-cell x">En manos agencia</div>
+        <div class="compare-cell x">Lock-in vendor</div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-cell label">Personalización</div>
+        <div class="compare-cell dominio">Por vertical · 12 reglas</div>
+        <div class="compare-cell x">Templates genéricos</div>
+        <div class="compare-cell x">Genérica</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- VERTICALES -->
+<section class="verticales" id="verticales">
+  <div class="container">
+    <div class="section-label mono reveal">VERTICALES</div>
+    <h2 class="reveal">Hecho a la medida<br><em>de tu nicho.</em></h2>
+    <p class="section-sub reveal delay-1">
+      ARIA está entrenada por industria — no es un chatbot genérico que tienes que enseñar desde cero.
+    </p>
+
+    <div class="verticales-grid">
+
+      <div class="vertical-card live reveal delay-1">
+        <span class="vertical-badge live mono">● LIVE</span>
+        <div class="icon">💆</div>
+        <h3>Clínica estética</h3>
+        <p class="desc">Vertical LIVE en producción. ARIA agenda limpiezas, peelings, depilación. Conoce contraindicaciones básicas y deriva al doctor cuando corresponde.</p>
+        <div class="vertical-stats">
+          <span>8 servicios pre-cargados</span>
+          <span>12 reglas ARIA activas</span>
+        </div>
+      </div>
+
+      <div class="vertical-card reveal delay-2">
+        <span class="vertical-badge soon mono">Q3 2026</span>
+        <div class="icon">🦷</div>
+        <h3>Dentista</h3>
+        <p class="desc">Template en construcción. Limpiezas, consultas, ortodoncia, urgencias. Recordatorio de control cada 6 meses automático.</p>
+        <div class="vertical-stats">
+          <span>10 servicios planeados</span>
+          <span>Recordatorios cada 6 meses</span>
+        </div>
+      </div>
+
+      <div class="vertical-card reveal delay-3">
+        <span class="vertical-badge soon mono">Q4 2026</span>
+        <div class="icon">✂️</div>
+        <h3>Barbería &amp; salón</h3>
+        <p class="desc">Template Q4 2026. Cortes, color, alisado. Lealtad por cliente recurrente, recordatorios cada 3-4 semanas.</p>
+        <div class="vertical-stats">
+          <span>15+ servicios planeados</span>
+          <span>Cliente recurrente cada 3-4 sem</span>
+        </div>
+      </div>
+
+      <div class="vertical-card reveal delay-4">
+        <span class="vertical-badge soon mono">SOON</span>
+        <div class="icon">🧖</div>
+        <h3>Spa &amp; bienestar</h3>
+        <p class="desc">Masajes, faciales, rituales y tratamientos por bloques. Paquetes de sesiones, gift cards y bonos. Recordatorio pre-cita con preparación.</p>
+        <div class="vertical-stats">
+          <span>Servicios por bloque</span>
+          <span>Paquetes &amp; gift cards</span>
+        </div>
+      </div>
+
+      <div class="vertical-card reveal delay-5">
+        <span class="vertical-badge soon mono">SOON</span>
+        <div class="icon">🐾</div>
+        <h3>Veterinaria</h3>
+        <p class="desc">ARIA agenda al dueño para consultas, vacunación o peluquería. Trato persona a persona — el cliente es quien agenda. Recordatorios de cita automáticos.</p>
+        <div class="vertical-stats">
+          <span>Agenda persona a persona</span>
+          <span>Recordatorios automáticos</span>
+        </div>
+      </div>
+
+      <div class="vertical-card reveal delay-6">
+        <span class="vertical-badge soon mono">SOON</span>
+        <div class="icon">🦵</div>
+        <h3>Fisioterapia</h3>
+        <p class="desc">Sesiones por bloque, evaluación inicial, planes de tratamiento. Recordatorio de continuidad y derivación a especialidad cuando aplica.</p>
+        <div class="vertical-stats">
+          <span>Planes multi-sesión</span>
+          <span>Seguimiento por paciente</span>
+        </div>
+      </div>
+
+      <div class="vertical-card reveal delay-6">
+        <span class="vertical-badge soon mono">SOON</span>
+        <div class="icon">🩺</div>
+        <h3>Consultorios médicos</h3>
+        <p class="desc">Consulta general, especialidad, telemedicina. ARIA solo agenda y muestra días disponibles — no da consulta ni instrucciones médicas. Recordatorio pre-consulta automático.</p>
+        <div class="vertical-stats">
+          <span>Solo agenda · sin consulta médica</span>
+          <span>Recordatorios automáticos</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pricing" id="pricing">
+  <div class="container">
+    <div class="section-label mono reveal" style="display: inline-flex;">PRECIO</div>
+    <h2 class="reveal" style="margin: 0 auto;">Un plan. <em>Trial 14 días.</em><br>Cuando arranque cohorte.</h2>
+    <p class="section-sub reveal delay-1" style="margin: 0 auto 0;">
+      El trial 14 días lo activamos cuando arranque cohorte Founding (en setup operativo · sin fecha confirmada todavía). Al día 15 del trial eliges si sigues o cancelas — si no haces nada, tu cuenta se pausa sola.
+    </p>
+
+    <div class="price-toggle reveal delay-1">
+      <button class="active" data-period="monthly">Mensual</button>
+      <button data-period="annual">Anual <span class="save">2 MESES GRATIS</span></button>
+    </div>
+
+    <div class="pricing-grid reveal delay-2">
+
+      <!-- FOUNDING -->
+      <div class="price-card founding">
+        <span class="founding-badge mono">● FOUNDING · CUPO LIMITADO</span>
+        <div class="price-tier mono">FOUNDING</div>
+        <div class="price-amount">
+          <span class="num">$97</span>
+          <span class="period">USD / mes · locked-in de por vida</span>
+        </div>
+        <div class="price-trial">→ Solo los primeros 20 negocios · precio bloqueado para siempre</div>
+
+        <ul class="price-features">
+          <li>Todo lo del plan Pro</li>
+          <li>Precio bloqueado · jamás sube</li>
+          <li>Acceso directo al founder por WhatsApp</li>
+          <li>Vote en el roadmap de features</li>
+          <li>Onboarding 1-a-1 con el equipo</li>
+          <li>Logo en hall of fame (opcional)</li>
+        </ul>
+
+        <button type="button" class="cta-secondary founding-cta" onclick="openFoundingModal('founding-pro')">
+          Reservar mi spot Founding
+          <span class="arrow">→</span>
+        </button>
+
+        <div class="founding-progress">
+          <div class="founding-bar"><div class="founding-bar-fill" style="width: 0%;"></div></div>
+          <p class="founding-progress-text mono">0 DE 20 SPOTS · COHORTE RECIÉN ABIERTA</p>
+        </div>
+      </div>
+
+      <!-- PRO -->
+      <div class="price-card featured">
+        <span class="price-recommended mono">RECOMENDADO</span>
+        <div class="price-tier mono">PRO</div>
+        <div class="price-amount">
+          <span class="num" id="priceNum">$197</span>
+          <span class="period" id="pricePeriod">USD / mes</span>
+        </div>
+        <div class="price-trial">→ 14 días trial al arrancar cohorte · cobramos al día 15 solo si confirmas</div>
+
+        <ul class="price-features">
+          <li>Dashboard nativo Mac (Windows próximamente)</li>
+          <li>ARIA · IA conversacional sobre WhatsApp Cloud API</li>
+          <li>Cancela, reagenda y agenda automático</li>
+          <li>Captura + scoring de leads con intent</li>
+          <li>Reporte mensual automático con KPIs</li>
+          <li>WhatsApp oficial Meta · sin riesgo de ban</li>
+          <li>Onboarding self-serve · ARIA activa post-verificación Meta WhatsApp Business</li>
+          <li>Soporte por WhatsApp y email</li>
+          <li>Tu data, siempre tuya (export CSV + backups)</li>
+        </ul>
+
+        <a href="#empezar" class="cta-primary">
+          Empezar 14 días gratis
+          <span class="arrow">→</span>
+        </a>
+
+        <p class="price-trust">SIN TARJETA · CANCELAS CUANDO QUIERAS</p>
+      </div>
+
+    </div>
+
+    <p class="price-disclaimer mono">
+      PRECIOS EN USD · CONVERSIÓN APROXIMADA ≈ $3,400 MXN ≈ DOP $11,500 AL CAMBIO ACTUAL
+    </p>
+  </div>
+</section>
+
+<!-- ENTERPRISE -->
+<section class="enterprise">
+  <div class="container">
+    <div class="enterprise-card">
+      <div class="enterprise-grid">
+
+        <div class="enterprise-left">
+          <span class="enterprise-pill mono">BY INVITATION</span>
+          <h3>Enterprise · multi-sede,<br>franquicias y grupos.</h3>
+          <p>Para operaciones con 3+ sucursales o 500+ citas/mes que necesitan stack custom, SLA dedicado y soporte 1:1.</p>
+          <div class="enterprise-req mono">REQUISITO MÍNIMO · 3+ SUCURSALES · 500+ CITAS/MES</div>
+          <button type="button" class="cta-secondary" onclick="openFoundingModal('enterprise')">
+            Sumarme a lista de espera
+          </button>
+        </div>
+
+        <div>
+          <ul class="enterprise-features">
+            <li>API v1 + webhooks</li>
+            <li>SSO (SAML)</li>
+            <li>Multi-sede &amp; multi-tenant</li>
+            <li>SLA dedicado</li>
+            <li>Stack custom</li>
+            <li>Account manager 1:1</li>
+            <li>Onboarding white-glove</li>
+            <li>Soporte 24/7 dedicado</li>
+          </ul>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="faq" id="faq">
+  <div class="container">
+    <div class="section-label mono reveal" style="display: inline-flex;">PREGUNTAS</div>
+    <h2 class="reveal" style="margin: 16px 0 56px;">Lo que la gente <em>siempre</em><br>nos pregunta.</h2>
+
+    <details class="faq-item">
+      <summary>¿Qué incluye el trial de 14 días?</summary>
+      <div class="answer">Acceso completo al plan Pro: dashboard nativo, ARIA conectada a tu WhatsApp Cloud API, captura y scoring de leads, reporte mensual. Sin tarjeta requerida durante los 14 días.</div>
+    </details>
+
+    <details class="faq-item">
+      <summary>¿Qué pasa al día 15?</summary>
+      <div class="answer">Si confirmaste tu método de pago: cobramos $197/mes (o $1,970/año si elegiste anual) y tu cuenta sigue activa sin interrupción. Si no confirmaste: tu cuenta se pausa automáticamente. Tu data queda guardada 90 días y puedes exportarla a CSV antes.</div>
+    </details>
+
+    <details class="faq-item">
+      <summary>¿Puedo extender el trial?</summary>
+      <div class="answer">Si llegas al día 14 y todavía estás evaluando, escríbenos a hola@dominiosystem.com y te damos 7 días más. Una sola extensión por cuenta.</div>
+    </details>
+
+    <details class="faq-item">
+      <summary>¿Puedo usar mi WhatsApp Business actual?</summary>
+      <div class="answer">Sí. Conectamos tu número existente a la Meta Cloud API oficial. Tu historial, contactos y check azul se preservan. Cero riesgo de ban porque usamos la API verificada, no QR scraping.</div>
+    </details>
+
+    <details class="faq-item">
+      <summary>¿ARIA puede equivocarse? ¿Qué control tengo?</summary>
+      <div class="answer">ARIA opera con confirmación humana cuando detecta intent ambiguo. Tienes un drawer en el dashboard donde apruebas, rechazas o ajustas sus sugerencias antes de ejecutar. Para preguntas claras actúa autónoma. Para casos sensibles (cancelaciones de último minuto, reembolsos) te pregunta.</div>
+    </details>
+
+    <details class="faq-item">
+      <summary>¿Cuándo llega el plan Enterprise?</summary>
+      <div class="answer">Q3 2026, solo por invitación. Para operaciones multi-sede, franquicias y grupos con 3+ sucursales o 500+ citas/mes. Stack custom construido contigo. Si te interesa, súmate a la lista de espera desde la sección Enterprise.</div>
+    </details>
+
+    <details class="faq-item">
+      <summary>¿Puedo cancelar cuando quiera?</summary>
+      <div class="answer">Sí. Self-serve desde el dashboard, sección Billing. Un click, sin llamadas, sin retención forzada. Si cancelas durante el trial no se cobra nada. Si cancelas después, mantienes acceso hasta el final del periodo pagado.</div>
+    </details>
+
+    <details class="faq-item">
+      <summary>¿En qué países funciona?</summary>
+      <div class="answer">República Dominicana, México, Estados Unidos y la mayoría de LATAM. WhatsApp Cloud API requiere que tu negocio esté verificado en Meta Business Suite — durante el onboarding te ayudamos con eso si no lo tienes.</div>
+    </details>
+
+    <details class="faq-item">
+      <summary>¿Cómo gestiono varios negocios bajo una misma cuenta?</summary>
+      <div class="answer">Cada negocio es un tenant separado con su propio dashboard, WhatsApp y ARIA. Para grupos con 3+ sucursales, considera Enterprise — un solo workspace con vista consolidada multi-sede.</div>
+    </details>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="final-cta" id="cta-final">
+  <div class="section-label mono" style="display: inline-flex;">RESERVAR ACCESO</div>
+  <h2>Apartas tu spot ahora.<br><em>Te activamos cuando arranque cohorte.</em></h2>
+  <p>
+    El trial 14 días lo activamos cuando arranque cohorte Founding (en setup operativo · sin fecha confirmada todavía). Sin tarjeta hoy · sin compromiso.
+  </p>
+  <div class="final-ctas">
+    <a href="#empezar" class="cta-primary">
+      Reservar mi spot
+      <span class="arrow">→</span>
+    </a>
+    <a href="#aria" class="cta-secondary" onclick="openAria();return false;">
+      <span class="chat-icon">A</span>
+      Chatear con ARIA
+    </a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <a href="#" class="brand">
+        <span class="brand-mark">
+          <svg width="16" height="11" viewBox="0 0 22 14" fill="none">
+            <path d="M0 7H2.5V2H6V13H10V2H13.5V7H17" stroke="#f4f4f4" stroke-width="1.6" stroke-linecap="square"/>
+            <circle cx="19.5" cy="7" r="1.8" fill="#f4f4f4"/>
+          </svg>
+        </span>
+        <div class="brand-text">
+          <span class="brand-name">Dominio System</span>
+          <span class="brand-tagline">automation plattform</span>
+        </div>
+      </a>
+      <p>Automation plattform para negocios con citas. Cohorte Founding cerrada · operación oficial activa post-incorporación LLC Wyoming.</p>
+    </div>
+    <div class="footer-col">
+      <h4>PRODUCTO</h4>
+      <ul><li>Dashboard</li><li>ARIA IA</li><li>Verticales</li><li>Precios</li></ul>
+    </div>
+    <div class="footer-col">
+      <h4>EMPRESA</h4>
+      <ul><li>Acerca</li><li>Blog</li><li>Casos de éxito</li><li>Contacto</li></ul>
+    </div>
+    <div class="footer-col">
+      <h4>RECURSOS</h4>
+      <ul><li>Docs</li><li>API reference</li><li>Preguntas</li><li>SLA</li></ul>
+    </div>
+    <div class="footer-col">
+      <h4>LEGAL</h4>
+      <ul><li>Términos</li><li>Privacidad</li><li>Cookies</li><li>DPA</li></ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div>© 2026 DOMINIO SYSTEM · RD · MX · USA · automation plattform</div>
+    <div class="footer-social">
+      <a href="#" aria-label="X">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+      </a>
+      <a href="#" aria-label="Instagram">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+      </a>
+      <a href="#" aria-label="LinkedIn">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.063 2.063 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+      </a>
+    </div>
+  </div>
+</footer>
+
+<!-- DEMO MODAL · 4 tabs Stripe-style con vistas reales del dashboard cliente -->
+<div class="demo-modal" id="demoModal" role="dialog" aria-modal="true" aria-labelledby="demoModalTitle">
+  <div class="demo-modal-backdrop" onclick="closeDemoModal()"></div>
+  <div class="demo-modal-window">
+    <div class="demo-modal-titlebar">
+      <span class="dot dot-red" onclick="closeDemoModal()" style="cursor:pointer;"></span>
+      <span class="dot dot-yellow"></span>
+      <span class="dot dot-green"></span>
+      <span class="demo-modal-title mono" id="demoModalTitle">Dominio System · Demo interactivo</span>
+      <button class="demo-modal-close" onclick="closeDemoModal()" aria-label="Cerrar">✕</button>
+    </div>
+    <div class="demo-modal-tabs">
+      <button class="demo-tab active" data-tab="brief">Brief</button>
+      <button class="demo-tab" data-tab="agenda">Agenda</button>
+      <button class="demo-tab" data-tab="aria">ARIA</button>
+      <button class="demo-tab" data-tab="reportes">Reportes</button>
+    </div>
+
+    <!-- TAB · BRIEF -->
+    <div class="demo-tab-panel active" data-panel="brief">
+      <div class="demo-section-head">
+        <div>
+          <h3>Resumen del mes · Mayo 2026</h3>
+          <p>El brief diario que ves al abrir Dominio System.</p>
+        </div>
+        <span class="demo-live-pill mono">● TRIAL · DÍA 3/14</span>
+      </div>
+      <div class="demo-kpi-grid">
+        <div class="demo-kpi">
+          <span class="demo-kpi-label mono">MRR PROYECTADO</span>
+          <span class="demo-kpi-value">$3,321</span>
+          <span class="demo-kpi-delta up">↑ 12% vs abril</span>
+        </div>
+        <div class="demo-kpi">
+          <span class="demo-kpi-label mono">LEADS · MES</span>
+          <span class="demo-kpi-value">22</span>
+          <span class="demo-kpi-delta up">↑ 8 nuevos</span>
+        </div>
+        <div class="demo-kpi">
+          <span class="demo-kpi-label mono">CITAS CONFIRMADAS</span>
+          <span class="demo-kpi-value">34</span>
+          <span class="demo-kpi-delta up">↑ 154% conversión</span>
+        </div>
+        <div class="demo-kpi">
+          <span class="demo-kpi-label mono">ARIA CERRÓ</span>
+          <span class="demo-kpi-value">19</span>
+          <span class="demo-kpi-delta neutral">56% del total</span>
+        </div>
+      </div>
+      <div class="demo-activity">
+        <div class="demo-activity-head">
+          <h4>Actividad reciente</h4>
+          <span class="demo-online mono">● ARIA online</span>
+        </div>
+        <div class="demo-activity-list">
+          <div class="demo-activity-row">
+            <span class="demo-row-text"><strong>Laura M.</strong> agendó limpieza facial <span class="demo-ok">✓</span></span>
+            <span class="demo-row-time mono">10:24 · HOY</span>
+          </div>
+          <div class="demo-activity-row">
+            <span class="demo-row-text"><strong>Carlos D.</strong> pagó cita · $1,500 MXN <span class="demo-ok">✓</span></span>
+            <span class="demo-row-time mono">09:51 · HOY</span>
+          </div>
+          <div class="demo-activity-row">
+            <span class="demo-row-text"><strong>Andrea P.</strong> reagendó · vie 18 10:00 <span class="demo-ok">✓</span></span>
+            <span class="demo-row-time mono">09:12 · HOY</span>
+          </div>
+          <div class="demo-activity-row">
+            <span class="demo-row-text"><strong>ARIA</strong> respondió 47 mensajes</span>
+            <span class="demo-row-time mono">ÚLTIMAS 24H</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB · AGENDA -->
+    <div class="demo-tab-panel" data-panel="agenda">
+      <div class="demo-section-head">
+        <div>
+          <h3>Agenda · semana del 11–17 mayo</h3>
+          <p>34 citas confirmadas · 8 huecos disponibles · ARIA puede llenarlos vía WhatsApp.</p>
+        </div>
+        <span class="demo-live-pill mono">● TRIAL · DÍA 3/14</span>
+      </div>
+      <div class="demo-agenda-grid">
+        <div class="demo-agenda-col"><div class="demo-agenda-head mono">LUN 11</div>
+          <div class="demo-cita confirmed"><strong>09:00</strong> · Laura M. · limpieza</div>
+          <div class="demo-cita confirmed"><strong>11:30</strong> · Andrea P. · peeling</div>
+          <div class="demo-cita empty">14:00 · libre</div>
+          <div class="demo-cita confirmed"><strong>16:00</strong> · Carlos D.</div>
+        </div>
+        <div class="demo-agenda-col"><div class="demo-agenda-head mono">MAR 12</div>
+          <div class="demo-cita confirmed"><strong>10:00</strong> · Sofía R.</div>
+          <div class="demo-cita aria"><strong>11:30</strong> · agendada por ARIA</div>
+          <div class="demo-cita confirmed"><strong>15:00</strong> · Pedro M.</div>
+        </div>
+        <div class="demo-agenda-col"><div class="demo-agenda-head mono">MIE 13</div>
+          <div class="demo-cita confirmed"><strong>09:30</strong> · María J.</div>
+          <div class="demo-cita confirmed"><strong>13:00</strong> · Diana L.</div>
+          <div class="demo-cita aria"><strong>17:00</strong> · agendada por ARIA</div>
+        </div>
+        <div class="demo-agenda-col"><div class="demo-agenda-head mono">JUE 14 · HOY</div>
+          <div class="demo-cita confirmed"><strong>10:00</strong> · Ana V.</div>
+          <div class="demo-cita aria"><strong>12:00</strong> · agendada por ARIA</div>
+          <div class="demo-cita empty">15:30 · libre</div>
+        </div>
+        <div class="demo-agenda-col"><div class="demo-agenda-head mono">VIE 15</div>
+          <div class="demo-cita confirmed"><strong>11:00</strong> · Carmen O.</div>
+          <div class="demo-cita confirmed"><strong>14:00</strong> · Luis F.</div>
+          <div class="demo-cita empty">16:30 · libre</div>
+        </div>
+      </div>
+      <p class="demo-agenda-foot mono">7 CITAS AGENDADAS POR ARIA ESTA SEMANA · SIN INTERVENCIÓN MANUAL</p>
+    </div>
+
+    <!-- TAB · ARIA -->
+    <div class="demo-tab-panel" data-panel="aria">
+      <div class="demo-section-head">
+        <div>
+          <h3>ARIA · conversación en vivo</h3>
+          <p>Así contesta ARIA en WhatsApp. Tú apruebas las acciones críticas desde el drawer.</p>
+        </div>
+        <span class="demo-online mono">● ARIA online · responde en 2.4s</span>
+      </div>
+      <div class="demo-aria-grid">
+        <div class="demo-chat">
+          <div class="demo-chat-head">
+            <div class="demo-chat-avatar">L</div>
+            <div>
+              <strong>Laura Martínez</strong>
+              <small class="mono">+52 998 ··· · ONLINE</small>
+            </div>
+          </div>
+          <div class="demo-chat-body">
+            <div class="demo-msg in">Hola, ¿tienen turno para limpieza facial el viernes?</div>
+            <div class="demo-msg out"><span class="demo-msg-aria-tag">ARIA</span>¡Hola Laura! Sí, este viernes 15 tengo disponible 11:00 y 16:30. ¿Cuál prefieres?</div>
+            <div class="demo-msg in">11:00 está perfecto</div>
+            <div class="demo-msg out"><span class="demo-msg-aria-tag">ARIA</span>Listo, te agendé limpieza facial · viernes 15 a las 11:00. Te confirmo por email. ¿Algo más?</div>
+            <div class="demo-msg in">No, gracias 😊</div>
+            <div class="demo-msg out"><span class="demo-msg-aria-tag">ARIA</span>¡Perfecto! Nos vemos el viernes. Cualquier cambio, escríbeme acá mismo.</div>
+          </div>
+        </div>
+        <div class="demo-drawer">
+          <h4>ARIA acaba de</h4>
+          <div class="demo-action">
+            <span class="demo-action-icon">📅</span>
+            <div>
+              <strong>Agendar cita</strong>
+              <p>Limpieza facial · Vie 15 · 11:00 · Laura Martínez</p>
+            </div>
+            <span class="demo-action-ok">✓</span>
+          </div>
+          <div class="demo-action">
+            <span class="demo-action-icon">📧</span>
+            <div>
+              <strong>Enviar email de confirmación</strong>
+              <p>A: laura@gmail.com · template "confirmacion_cita_es"</p>
+            </div>
+            <span class="demo-action-ok">✓</span>
+          </div>
+          <div class="demo-action">
+            <span class="demo-action-icon">⏰</span>
+            <div>
+              <strong>Programar recordatorio</strong>
+              <p>Jue 14 · 11:00 · 24h antes vía WhatsApp</p>
+            </div>
+            <span class="demo-action-ok">✓</span>
+          </div>
+          <div class="demo-drawer-foot mono">
+            3 ACCIONES AUTÓNOMAS · 0 REQUIEREN TU APROBACIÓN
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB · REPORTES -->
+    <div class="demo-tab-panel" data-panel="reportes">
+      <div class="demo-section-head">
+        <div>
+          <h3>Reporte mensual · ejecutivo</h3>
+          <p>Te llega al email el día 1 de cada mes. Sin que lo pidas.</p>
+        </div>
+        <span class="demo-live-pill mono">ENTREGADO · 01 MAY 2026</span>
+      </div>
+      <div class="demo-report">
+        <div class="demo-report-head">
+          <div>
+            <div class="demo-report-mono mono">DOMINIO SYSTEM · REPORTE EJECUTIVO</div>
+            <h4>Mayo 2026 · resumen de impacto</h4>
+          </div>
+          <div class="demo-report-mono mono">PARA: MARCELA · CLÍNICA RD</div>
+        </div>
+        <div class="demo-report-grid">
+          <div class="demo-report-stat">
+            <span class="demo-report-stat-label mono">CITAS CERRADAS</span>
+            <span class="demo-report-stat-value">34 <small>↑ 18% MoM</small></span>
+          </div>
+          <div class="demo-report-stat">
+            <span class="demo-report-stat-label mono">LEADS CAPTURADOS</span>
+            <span class="demo-report-stat-value">22 <small>↑ 12% MoM</small></span>
+          </div>
+          <div class="demo-report-stat">
+            <span class="demo-report-stat-label mono">CONVERSACIONES ARIA</span>
+            <span class="demo-report-stat-value">612 <small>89% autónomas</small></span>
+          </div>
+          <div class="demo-report-stat">
+            <span class="demo-report-stat-label mono">REVENUE GENERADO</span>
+            <span class="demo-report-stat-value">$51,000 <small class="mono">MXN</small></span>
+          </div>
+        </div>
+        <div class="demo-report-narrative">
+          <p>Hola Marcela, este es tu resumen de mayo. <strong>+18% MoM</strong> en citas cerradas y <strong>+12%</strong> en leads. ARIA atendió 612 conversaciones con 89% de resolución autónoma sin que tengas que hacer nada.</p>
+          <p>Tu mejor día fue el <strong>viernes 15</strong> con 7 citas confirmadas. El servicio más solicitado fue <strong>limpieza facial profunda</strong> (32% de tu revenue).</p>
+          <p><strong>Sugerencia:</strong> los lunes están al 40% de capacidad. Considera lanzar campaña "Lunes -15%" — ARIA puede ejecutarla por ti en 1 click.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="demo-modal-footer">
+      <span class="mono">DEMO INTERACTIVO · ESTO ES EL DASHBOARD REAL</span>
+      <a href="#empezar" class="cta-primary demo-modal-cta" onclick="closeDemoModal()">
+        Empezar 14 días gratis
+        <span class="arrow">→</span>
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================
+     ARIA WIDGET · FUNCIONAL (ported from prod)
+     ============================================ -->
+<button id="aria-btn" type="button" onclick="openAria()">
+  <div class="aria-btn-avatar">A</div>
+  <div class="aria-btn-body">
+    <div class="aria-btn-name">Chatea con ARIA</div>
+    <div class="aria-btn-msg">¿Te ayudo a ver si Dominio encaja?</div>
+  </div>
+</button>
+
+<div id="aria-widget" aria-hidden="true">
+  <div class="aria-wh">
+    <div class="aria-wh-avatar">A</div>
+    <div class="aria-wh-info">
+      <div class="aria-wh-name">ARIA · Asistente Dominio</div>
+      <div class="aria-wh-status">ONLINE</div>
+    </div>
+    <button class="aria-close" type="button" onclick="closeAria()" aria-label="Cerrar chat">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M4 4l8 8M12 4l-8 8"/>
+      </svg>
+    </button>
+  </div>
+  <div class="aria-msgs" id="aria-msgs"></div>
+  <div class="aria-quick" id="aria-quick"></div>
+  <div class="aria-compose">
+    <input id="aria-input" placeholder="Escribe tu mensaje..." onkeypress="if(event.key==='Enter') sendAria()">
+    <button class="aria-send" type="button" onclick="sendAria()" aria-label="Enviar">→</button>
+  </div>
+</div>
+
+<!-- ============================================
+     FOUNDING MODAL · captura real
+     ============================================ -->
+<div class="founding-modal-backdrop" id="founding-modal" aria-hidden="true" onclick="if(event.target===this)closeFoundingModal()">
+  <div class="founding-modal" role="dialog" aria-modal="true" aria-labelledby="fm-title">
+    <div class="fm-head">
+      <div>
+        <div class="fm-eyebrow" id="fm-eyebrow">EARLY ACCESS · FOUNDING 20</div>
+        <div class="fm-title" id="fm-title">Apartar mi spot Founding</div>
+      </div>
+      <button class="fm-close" type="button" aria-label="Cerrar" onclick="closeFoundingModal()">×</button>
+    </div>
+    <p class="fm-sub" id="fm-sub">Apartas tu spot con precio <strong style="color:var(--text);">$97/mes locked-in de por vida</strong>. El trial 14 días lo activamos cuando arranque cohorte Founding (en setup operativo · sin fecha confirmada todavía). Sin tarjeta hoy.</p>
+
+    <div class="fm-error" id="fm-error"></div>
+
+    <form class="fm-form" id="fm-form" novalidate>
+      <div class="fm-field">
+        <label for="fm-nombre">Tu nombre *</label>
+        <input type="text" id="fm-nombre" name="nombre" placeholder="Sofía Hernández" autocomplete="name" required maxlength="100">
+      </div>
+      <div class="fm-field">
+        <label for="fm-empresa">Empresa / clínica *</label>
+        <input type="text" id="fm-empresa" name="empresa" placeholder="Clínica Sofía Estética" autocomplete="organization" required maxlength="120">
+      </div>
+      <div class="fm-row">
+        <div class="fm-field">
+          <label for="fm-email">Email *</label>
+          <input type="email" id="fm-email" name="email" placeholder="tu@email.com" autocomplete="email" required maxlength="100">
+        </div>
+        <div class="fm-field">
+          <label for="fm-whatsapp">WhatsApp</label>
+          <input type="tel" id="fm-whatsapp" name="whatsapp" placeholder="+52 55 1234 5678" autocomplete="tel" maxlength="30">
+        </div>
+      </div>
+      <div class="fm-row">
+        <div class="fm-field">
+          <label for="fm-industria">Vertical *</label>
+          <select id="fm-industria" name="industria" required>
+            <option value="clinica_estetica">Clínica estética</option>
+            <option value="dental">Dental / odontología</option>
+            <option value="veterinaria">Veterinaria</option>
+            <option value="spa_wellness">Spa / wellness</option>
+            <option value="salon_belleza">Salón de belleza</option>
+            <option value="fisioterapia">Fisioterapia</option>
+            <option value="consultorios">Consultorios médicos</option>
+            <option value="otro">Otro servicio</option>
+          </select>
+        </div>
+        <div class="fm-field">
+          <label for="fm-volumen">Citas aprox/mes</label>
+          <select id="fm-volumen" name="volumen">
+            <option value="">Prefiero no decir</option>
+            <option value="0-50">Menos de 50</option>
+            <option value="50-150">50 a 150</option>
+            <option value="150-400">150 a 400</option>
+            <option value="400-1000">400 a 1,000</option>
+            <option value="1000+">Más de 1,000</option>
+          </select>
+        </div>
+      </div>
+      <div class="fm-field">
+        <label for="fm-timeframe">¿Cuándo necesitas estar operando? *</label>
+        <select id="fm-timeframe" name="timeframe" required>
+          <option value="asap">Lo antes posible — ya no doy abasto</option>
+          <option value="1-3m">En 1 a 3 meses</option>
+          <option value="3-6m">En 3 a 6 meses</option>
+          <option value="explorando">Solo estoy explorando por ahora</option>
+        </select>
+      </div>
+
+      <button type="submit" class="fm-submit" id="fm-submit">
+        <span class="fm-label">Apartar mi spot</span>
+        <span class="fm-spin"></span>
+      </button>
+      <div class="fm-footnote">Al enviar aceptas recibir un email de confirmación desde <strong>hola@dominiosystem.com</strong>.<br>Sin tarjeta · sin compromiso · sin spam.</div>
+    </form>
+
+    <div id="fm-success-state" style="display:none;">
+      <div class="fm-success">
+        <div class="fm-success-icon">✓</div>
+        <div class="fm-success-title" id="fm-success-title">Acceso apartado</div>
+        <div class="fm-success-sub" id="fm-success-msg">Quedas en la waitlist. Te enviamos updates por email cuando arranque cohorte Founding (en setup operativo · sin fecha confirmada todavía).</div>
+        <div class="fm-success-email" id="fm-success-email-display">hola@dominiosystem.com</div>
+        <div class="fm-success-sub" style="margin-top:18px;font-size:12px;">Revisa también la carpeta de spam. Si no llega, escríbenos a hola@dominiosystem.com</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ============================================
+  // GLOBAL CONSTS · declared first to avoid TDZ
+  // (waitlist block references these before founding block)
+  // ============================================
+  // PRODUCCIÓN · escribe en tabla `waitlist` (separada del showcase `leads`)
+  const FOUNDING_ENDPOINT = 'https://ywlyuuddqitduqtdttgo.supabase.co/functions/v1/waitlist-capture';
+  const FOUNDING_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3bHl1dWRkcWl0ZHVxdGR0dGdvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwNDg2MzgsImV4cCI6MjA4OTYyNDYzOH0.vpjRNcQ_v2Vo9M2oQsCq95mSLOCctRf6cO4sWzpNCF8';
+
+  // Cursor follower
+  const cursorGlow = document.getElementById('cursorGlow');
+  let rafCursor;
+  document.addEventListener('mousemove', (e) => {
+    document.body.classList.add('cursor-active');
+    cancelAnimationFrame(rafCursor);
+    rafCursor = requestAnimationFrame(() => {
+      cursorGlow.style.left = e.clientX + 'px';
+      cursorGlow.style.top = e.clientY + 'px';
+    });
+  });
+  document.addEventListener('mouseleave', () => {
+    document.body.classList.remove('cursor-active');
+  });
+
+  // Word typing
+  document.querySelectorAll('#heroSub .word').forEach((w, i) => {
+    w.style.animationDelay = (300 + i * 70) + 'ms';
+  });
+
+  // Nav scroll
+  const nav = document.getElementById('topnav');
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 16) nav.classList.add('scrolled');
+    else nav.classList.remove('scrolled');
+  });
+
+  // Counter
+  function animateCounter(el, target, decimals, format, suffix) {
+    const duration = 1400;
+    const start = performance.now();
+    const easeOut = (t) => 1 - Math.pow(1 - t, 3);
+    function tick(now) {
+      const p = Math.min((now - start) / duration, 1);
+      const value = target * easeOut(p);
+      let display;
+      if (format === 'k') display = '$' + (value / 1000).toFixed(1) + 'k';
+      else if (decimals > 0) display = value.toFixed(decimals);
+      else display = Math.round(value).toLocaleString('es-ES');
+      el.textContent = display + (suffix || '');
+      if (p < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+  const counterObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        const el = entry.target;
+        animateCounter(el, parseFloat(el.dataset.counter), parseInt(el.dataset.decimals || 0), el.dataset.format, el.dataset.suffix || '');
+        counterObserver.unobserve(el);
+      }
+    });
+  }, { threshold: 0.4 });
+  document.querySelectorAll('[data-counter]').forEach((el) => counterObserver.observe(el));
+  setTimeout(() => {
+    document.querySelectorAll('.dashboard-window [data-counter]').forEach((el) => {
+      animateCounter(el, parseFloat(el.dataset.counter), parseInt(el.dataset.decimals || 0), el.dataset.format, el.dataset.suffix || '');
+    });
+  }, 800);
+
+  // Chat
+  const chatBody = document.getElementById('chatBody');
+  const chatChips = document.getElementById('chatChips');
+  const resetChip = document.getElementById('resetChip');
+  const scenarios = {
+    agendar: [
+      { type: 'user', text: 'Hola, quiero agendar una limpieza facial' },
+      { type: 'aria', text: '¡Hola! Tenemos disponibilidad: Vie 18 · 10:00, Vie 18 · 14:30, Sáb 19 · 11:00. ¿Cuál te funciona?' },
+      { type: 'user', text: 'El viernes a las 10 está perfecto' },
+      { type: 'aria', text: 'Listo, te confirmo. Te enviamos recordatorio el jueves 🎉' }
+    ],
+    horarios: [
+      { type: 'user', text: '¿Qué horario tienen el sábado?' },
+      { type: 'aria', text: 'Sábados abrimos 9am-3pm. Servicios disponibles: consulta, limpieza facial, peeling, depilación. ¿Te interesa alguno?' }
+    ],
+    cancelar: [
+      { type: 'user', text: 'Necesito cancelar mi cita del viernes' },
+      { type: 'aria', text: 'Tengo tu cita: Vie 18 · 10:00 · Limpieza facial. ¿Cancelo o prefieres reagendar?' },
+      { type: 'user', text: 'Reagendar al sábado mejor' },
+      { type: 'aria', text: 'Listo. Cita movida a Sáb 19 · 11:00 ✓ Tu slot del viernes lo ofrecemos al siguiente lead.' }
+    ]
+  };
+  function addBubble(msg, delay = 0) {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const bubble = document.createElement('div');
+        bubble.className = 'chat-bubble ' + msg.type;
+        bubble.textContent = msg.text;
+        chatBody.appendChild(bubble);
+        resolve();
+      }, delay);
+    });
+  }
+  function addTypingIndicator() {
+    const bubble = document.createElement('div');
+    bubble.className = 'chat-bubble aria typing';
+    bubble.innerHTML = '<span class="typing-dots"><span></span><span></span><span></span></span>';
+    chatBody.appendChild(bubble);
+    return bubble;
+  }
+  async function playScenario(name) {
+    chatBody.innerHTML = '';
+    chatChips.querySelectorAll('.chat-chip:not(#resetChip)').forEach(c => c.disabled = true);
+    resetChip.style.display = 'inline-flex';
+    const messages = scenarios[name];
+    for (let i = 0; i < messages.length; i++) {
+      const m = messages[i];
+      if (m.type === 'aria' && i > 0) {
+        const typing = addTypingIndicator();
+        await new Promise(r => setTimeout(r, 900));
+        typing.remove();
+      }
+      await addBubble(m, m.type === 'user' ? 400 : 200);
+    }
+    chatChips.querySelectorAll('.chat-chip:not(#resetChip)').forEach(c => c.disabled = false);
+  }
+  function resetChat() {
+    chatBody.innerHTML = '';
+    resetChip.style.display = 'none';
+    initialChat();
+  }
+  function initialChat() {
+    const initial = [
+      { type: 'user', text: 'Hola, quiero agendar una limpieza facial' },
+      { type: 'aria', text: '¡Hola! Tenemos disponibilidad: Vie 18 · 10:00, Vie 18 · 14:30, Sáb 19 · 11:00. ¿Cuál te funciona?' }
+    ];
+    initial.forEach((m, i) => {
+      setTimeout(() => {
+        const bubble = document.createElement('div');
+        bubble.className = 'chat-bubble ' + m.type;
+        bubble.textContent = m.text;
+        chatBody.appendChild(bubble);
+      }, i * 600);
+    });
+  }
+  chatChips.addEventListener('click', (e) => {
+    if (!e.target.matches('.chat-chip')) return;
+    const scenario = e.target.dataset.scenario;
+    if (scenario === 'reset') resetChat();
+    else playScenario(scenario);
+  });
+  const chatObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        initialChat();
+        chatObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.3 });
+  chatObserver.observe(document.querySelector('.chat-preview'));
+
+  // Reveal
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        revealObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+  document.querySelectorAll('.reveal').forEach((el) => revealObserver.observe(el));
+
+  // Hover gradient
+  document.querySelectorAll('[data-mouse-card]').forEach((card) => {
+    card.addEventListener('mousemove', (e) => {
+      const rect = card.getBoundingClientRect();
+      card.style.setProperty('--mouse-x', ((e.clientX - rect.left) / rect.width) * 100 + '%');
+      card.style.setProperty('--mouse-y', ((e.clientY - rect.top) / rect.height) * 100 + '%');
+    });
+  });
+
+  // Magnetic CTA
+  document.querySelectorAll('.cta-primary').forEach((btn) => {
+    btn.addEventListener('mousemove', (e) => {
+      const rect = btn.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      btn.style.transform = `translate(${(e.clientX - cx) * 0.12}px, ${(e.clientY - cy) * 0.18}px)`;
+    });
+    btn.addEventListener('mouseleave', () => { btn.style.transform = 'translate(0, 0)'; });
+  });
+
+  // Dashboard 3D tilt
+  const dashboard = document.getElementById('dashboardWindow');
+  if (dashboard) {
+    let dashTimeout;
+    dashboard.addEventListener('mousemove', (e) => {
+      clearTimeout(dashTimeout);
+      const rect = dashboard.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width - 0.5;
+      const y = (e.clientY - rect.top) / rect.height - 0.5;
+      dashboard.style.transform = `rotateX(${-y * 6}deg) rotateY(${x * 8}deg) translateZ(0)`;
+      dashboard.style.animation = 'none';
+    });
+    dashboard.addEventListener('mouseleave', () => {
+      dashTimeout = setTimeout(() => {
+        dashboard.style.transform = '';
+        dashboard.style.animation = '';
+      }, 100);
+    });
+  }
+
+  // Vertical chip selection — coming verticals OK para waitlist.
+  // El trigger ".vchip-more" NO es seleccionable (solo expande/colapsa).
+  document.querySelectorAll('.vchip:not(.vchip-more)').forEach((chip) => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('.vchip').forEach(c => c.classList.remove('selected'));
+      chip.classList.add('selected');
+    });
+  });
+
+  // "+ Otro / Ver más" → expande las verticales adicionales del ICP
+  function toggleMoreVerticals(){
+    const more = document.getElementById('vchips-more');
+    const btn = document.getElementById('vchip-more-btn');
+    const isHidden = more.hasAttribute('hidden');
+    if(isHidden){
+      more.removeAttribute('hidden');
+      btn.classList.add('expanded');
+      btn.querySelector('.vname').textContent = 'Menos';
+      btn.querySelector('.vtag').textContent = 'OCULTAR';
+      btn.querySelector('.vemoji').textContent = '–';
+    } else {
+      more.setAttribute('hidden', '');
+      btn.classList.remove('expanded');
+      btn.querySelector('.vname').textContent = 'Otro';
+      btn.querySelector('.vtag').textContent = 'VER MÁS';
+      btn.querySelector('.vemoji').textContent = '+';
+    }
+  }
+  window.toggleMoreVerticals = toggleMoreVerticals;
+
+  // ============================================
+  // WAITLIST SIGNUP · signup form → data-capture modal
+  // ============================================
+  function getSelectedVertical(){
+    const selected = document.querySelector('.vchip.selected:not(.vchip-more)');
+    return selected ? selected.dataset.v : 'clinica_estetica';
+  }
+
+  // Signup form → opens the data-capture modal pre-filled (vertical + email)
+  // framed as WAITLIST. Real lead data collected in the modal · founding-capture
+  // stores it in `leads` with intent_score 70 + sends founder email notification.
+  function submitWaitlist(method){
+    const emailInput = document.getElementById('signup-email');
+    let email = emailInput.value.trim();
+
+    // "Continuar con Google" — sin OAuth backend, pedimos el email manual
+    if(method === 'google' && !email){
+      const prompted = window.prompt('Pega tu email de Google para apartar tu acceso en la waitlist:');
+      if(!prompted) return;
+      email = prompted.trim();
+      emailInput.value = email;
+    }
+
+    if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+      emailInput.focus();
+      emailInput.style.borderColor = 'var(--red)';
+      setTimeout(() => emailInput.style.borderColor = '', 2000);
+      return;
+    }
+
+    const vertical = getSelectedVertical();
+    // Open the capture modal in WAITLIST mode pre-filled with vertical + email
+    openFoundingModal('waitlist', { email: email, vertical: vertical });
+  }
+  window.submitWaitlist = submitWaitlist;
+
+  // (resetSignupForm / upgradeToFounding / inline-success removed in v9 ·
+  //  signup form now opens the data-capture modal directly · single clean flow)
+
+  // Price toggle mensual/anual
+  const priceNum = document.getElementById('priceNum');
+  const pricePeriod = document.getElementById('pricePeriod');
+  document.querySelectorAll('.price-toggle button').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.price-toggle button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      if (btn.dataset.period === 'monthly') {
+        priceNum.textContent = '$197';
+        pricePeriod.textContent = 'USD / mes';
+      } else {
+        priceNum.textContent = '$1,970';
+        pricePeriod.textContent = 'USD / año';
+      }
+    });
+  });
+
+  // ===== DEMO MODAL =====
+  const demoModal = document.getElementById('demoModal');
+
+  function openDemoModal(tab) {
+    demoModal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    if (tab) setDemoTab(tab);
+    // focus first tab for keyboard accessibility
+    const firstTab = demoModal.querySelector('.demo-tab.active');
+    if (firstTab) setTimeout(() => firstTab.focus(), 50);
+  }
+  function closeDemoModal() {
+    demoModal.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  function setDemoTab(name) {
+    demoModal.querySelectorAll('.demo-tab').forEach(t => {
+      t.classList.toggle('active', t.dataset.tab === name);
+    });
+    demoModal.querySelectorAll('.demo-tab-panel').forEach(p => {
+      p.classList.toggle('active', p.dataset.panel === name);
+    });
+  }
+  demoModal.querySelectorAll('.demo-tab').forEach(t => {
+    t.addEventListener('click', () => setDemoTab(t.dataset.tab));
+  });
+  // ESC closes modal
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && demoModal.classList.contains('open')) closeDemoModal();
+    // Arrow keys navigate tabs when modal open
+    if (demoModal.classList.contains('open') && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')) {
+      const tabs = Array.from(demoModal.querySelectorAll('.demo-tab'));
+      const idx = tabs.findIndex(t => t.classList.contains('active'));
+      const next = e.key === 'ArrowRight'
+        ? (idx + 1) % tabs.length
+        : (idx - 1 + tabs.length) % tabs.length;
+      setDemoTab(tabs[next].dataset.tab);
+      tabs[next].focus();
+    }
+  });
+
+  // ============================================
+  // ARIA WIDGET · FAQ tree + lead capture (port prod)
+  // ============================================
+  const ARIA_TREE = {
+    greeting: {
+      messages: [
+        '¡Hola! 👋 Soy ARIA, asistente virtual de Dominio System.',
+        'Te ayudo a ver si Dominio encaja con tu negocio en 2 minutos. ¿Qué tipo de negocio manejas?'
+      ],
+      quick: [
+        {label:'💆 Clínica estética', next:'vertical_clinica'},
+        {label:'🦷 Dentista', next:'vertical_dentista'},
+        {label:'✂️ Barbería / Salón', next:'vertical_barberia'},
+        {label:'🧖 Spa / wellness', next:'vertical_spa'},
+        {label:'🐾 Veterinaria', next:'vertical_vet'},
+        {label:'🦵 Fisioterapia', next:'vertical_fisio'},
+        {label:'🩺 Consultorios', next:'vertical_otro'},
+        {label:'🏢 Otro negocio', next:'vertical_general'}
+      ]
+    },
+    vertical_clinica: {
+      context:{vertical:'clinica_estetica'},
+      messages:[
+        'Excelente, las clínicas estéticas son nuestro vertical principal. Ya tenemos 8 servicios y 12 reglas ARIA pre-configurados para este nicho.',
+        '¿Cuál es tu mayor dolor actualmente? Elige el que más se parezca:'
+      ],
+      quick:[
+        {label:'📱 WhatsApp caótico', next:'pain_whatsapp'},
+        {label:'⏰ No tengo tiempo', next:'pain_tiempo'},
+        {label:'📉 Pierdo leads', next:'pain_leads'},
+        {label:'💰 Caro lo actual', next:'pain_caro'},
+        {label:'🚀 Quiero escalar', next:'pain_escalar'}
+      ]
+    },
+    vertical_dentista: {
+      context:{vertical:'dental'},
+      messages:[
+        'Perfecto. El flujo para clínica estética se adapta fácil a consultorios dentales, con reglas personalizadas para tus servicios específicos.',
+        '¿Te gustaría apartar tu spot Founding o contarme tu mayor dolor operativo actual?'
+      ],
+      quick:[
+        {label:'🔒 Apartar spot Founding', next:'founding_explain'},
+        {label:'⚡ Contar mi dolor', next:'pain_whatsapp'},
+        {label:'¿Cómo funciona?', next:'explain_product'}
+      ]
+    },
+    vertical_barberia: {
+      context:{vertical:'salon_belleza'},
+      messages:['Dominio se adapta a barberías y salones con reglas personalizadas. El core (ARIA + WhatsApp + agenda + dashboard) funciona igual.','¿Cómo manejas hoy tus reservas?'],
+      quick:[
+        {label:'📱 WhatsApp manual', next:'pain_whatsapp'},
+        {label:'📅 Google Calendar', next:'pain_tiempo'},
+        {label:'Ninguno sistemático', next:'pain_leads'}
+      ]
+    },
+    vertical_spa: {
+      context:{vertical:'spa_wellness'},
+      messages:['Spa y wellness es un fit natural — citas por bloque, paquetes, gift cards. ARIA conoce el flujo de tratamientos múltiples y recordatorios pre-cita con preparación.','¿Tu reto principal hoy?'],
+      quick:[
+        {label:'📱 WhatsApp caótico', next:'pain_whatsapp'},
+        {label:'⏰ Falta tiempo', next:'pain_tiempo'},
+        {label:'🚀 Quiero escalar', next:'pain_escalar'}
+      ]
+    },
+    vertical_vet: {
+      context:{vertical:'veterinaria'},
+      messages:['Veterinaria encaja bien. ARIA agenda al dueño para consultas, vacunación o peluquería — trato persona a persona, el cliente es quien agenda. Recordatorios de cita automáticos.','¿Cómo agendan citas hoy?'],
+      quick:[
+        {label:'📱 WhatsApp', next:'pain_whatsapp'},
+        {label:'☎️ Solo teléfono', next:'pain_tiempo'},
+        {label:'📅 Otro sistema', next:'pain_caro'}
+      ]
+    },
+    vertical_fisio: {
+      context:{vertical:'fisioterapia'},
+      messages:['Fisioterapia funciona perfecto con planes multi-sesión. ARIA maneja evaluación inicial, paquetes de tratamiento y seguimiento de continuidad por paciente.','¿Tu mayor dolor operativo?'],
+      quick:[
+        {label:'📱 WhatsApp', next:'pain_whatsapp'},
+        {label:'⏰ Tiempo', next:'pain_tiempo'},
+        {label:'📉 Leads perdidos', next:'pain_leads'}
+      ]
+    },
+    vertical_otro: {
+      context:{vertical:'consultorios'},
+      messages:['Entendido. Dominio funciona para consultorios médicos en general (médicos, psicólogos, nutricionistas, oftalmólogos...). ARIA solo agenda y muestra días disponibles — nunca da consulta, diagnóstico ni instrucciones médicas.','¿Cuál es tu principal desafío hoy?'],
+      quick:[
+        {label:'📱 WhatsApp', next:'pain_whatsapp'},
+        {label:'⏰ Tiempo', next:'pain_tiempo'},
+        {label:'📉 Leads perdidos', next:'pain_leads'}
+      ]
+    },
+    vertical_general: {
+      context:{vertical:'otro'},
+      messages:['Para otros negocios también funcionamos, aunque nuestro sweet spot son negocios con citas/consultas.','¿Tu negocio tiene citas o consultas con clientes?'],
+      quick:[
+        {label:'Sí, principalmente', next:'pain_whatsapp'},
+        {label:'Parcialmente', next:'pain_tiempo'},
+        {label:'No realmente', next:'no_fit'}
+      ]
+    },
+    pain_whatsapp:{
+      context:{pain:'whatsapp_chaos'},
+      messages:['Clásico. Con ARIA conectada a tu WhatsApp Cloud API oficial (no el regular), las respuestas son en menos de 3 segundos, 24/7. ARIA responde precios, agenda citas y califica leads sin que tú hagas nada.','¿Cuántos mensajes recibes al día aproximadamente?'],
+      quick:[
+        {label:'Menos de 20', next:'size_small'},
+        {label:'20-100', next:'size_medium'},
+        {label:'100+', next:'size_large'}
+      ]
+    },
+    pain_tiempo:{
+      context:{pain:'no_time'},
+      messages:['Entiendo. El dueño del negocio no debería estar pegado al teléfono 12 horas al día.','ARIA maneja el 70-85% de las conversaciones automáticamente. Tú solo apruebas lo crítico (precios especiales, casos médicos complejos).','¿Cuántas horas al día pasas en WhatsApp ahora?'],
+      quick:[
+        {label:'1-2 horas', next:'size_small'},
+        {label:'3-5 horas', next:'size_medium'},
+        {label:'5+ horas', next:'size_large'}
+      ]
+    },
+    pain_leads:{
+      context:{pain:'lost_leads'},
+      messages:['Esa es exactamente la historia que escuchamos siempre. Leads que escriben a las 9pm y nunca responden.','ARIA responde en 3 segundos, a cualquier hora.','¿Tienes idea de cuántos leads pierdes por no responder a tiempo?'],
+      quick:[
+        {label:'Algunos', next:'size_small'},
+        {label:'Bastantes', next:'size_medium'},
+        {label:'Demasiados 😔', next:'size_large'}
+      ]
+    },
+    pain_caro:{
+      context:{pain:'expensive'},
+      messages:['Las agencias cobran $2,000-10,000/mes y no ejecutan 24/7. Los CRMs genéricos cobran $200-1,200 sin IA conversacional real.','Dominio System cuesta $97/mes como Founding — todo incluido, precio blindado de por vida.','¿Qué usas actualmente?'],
+      quick:[
+        {label:'Agencia', next:'compare_agencia'},
+        {label:'HubSpot/CRM', next:'compare_crm'},
+        {label:'Nada', next:'pain_whatsapp'},
+        {label:'🔒 Ver Founding', next:'founding_explain'}
+      ]
+    },
+    pain_escalar:{
+      context:{pain:'scaling'},
+      messages:['Ese es el escenario ideal. Con ARIA 24/7 puedes triplicar el volumen de mensajes sin contratar.','¿Cuántas locaciones tienes?'],
+      quick:[
+        {label:'1', next:'size_medium'},
+        {label:'2-5', next:'enterprise_teaser'},
+        {label:'5+', next:'enterprise_teaser'}
+      ]
+    },
+    size_small:{
+      messages:['Perfecto, Dominio es overkill para menos de 20 mensajes/día — pero si quieres crecer, es la base correcta desde el día 1.','El Founding Member te blinda $97/mes de por vida. Solo 20 spots disponibles.','¿Te gustaría apartar tu spot?'],
+      quick:[
+        {label:'🔒 Apartar spot', next:'founding_explain'},
+        {label:'📅 Agenda demo', next:'book_demo'},
+        {label:'Más info', next:'explain_product'}
+      ]
+    },
+    size_medium:{
+      messages:['Perfecto, ese es exactamente nuestro sweet spot. A ese volumen ARIA te ahorra varias horas al día y captura leads que se perderían sin respuesta.','¿Apartamos tu spot Founding o prefieres demo primero?'],
+      quick:[
+        {label:'🔒 Apartar spot', next:'founding_explain'},
+        {label:'📅 Agendar demo', next:'book_demo'},
+        {label:'💰 Ver precio', next:'go_pricing'}
+      ]
+    },
+    size_large:{
+      messages:['Con ese volumen estás dejando mucho dinero en la mesa sin automatización.','Te conviene conversación directa cuando arranque cohorte. ¿Me compartes tu email?'],
+      quick:[
+        {label:'📅 Sí, reservar acceso', next:'collect_email'},
+        {label:'🏢 ¿Es Enterprise?', next:'enterprise_teaser'}
+      ]
+    },
+    compare_agencia:{
+      messages:['Las agencias te venden tiempo. Nosotros te vendemos un sistema. ARIA ejecuta 24/7, una agencia humana no.','Además, tu data es 100% tuya con export CSV libre. Las agencias se quedan con tu data si te vas.','Con $97/mes Founding tienes lo que una agencia te cobra $2k-10k.','¿Apartamos tu spot?'],
+      quick:[
+        {label:'🔒 Apartar spot', next:'founding_explain'},
+        {label:'📅 Agendar demo', next:'book_demo'}
+      ]
+    },
+    compare_crm:{
+      messages:['Los CRMs genéricos (HubSpot, Zoho, Pipedrive) no están hechos para negocios con citas y WhatsApp como core.','Dominio tiene ARIA IA real (no bot básico), WhatsApp Cloud API oficial incluida (no add-on pagado), self-serve directo (no semanas configurando).','Precio Founding: $97/mes locked-in vs $200-1,200/mes CRMs.','¿Te muestro el dashboard en vivo?'],
+      quick:[
+        {label:'🎬 Ver demo', next:'see_demo'},
+        {label:'🔒 Apartar spot', next:'founding_explain'}
+      ]
+    },
+    enterprise_teaser:{
+      messages:['Enterprise es by invitation only. Consideramos operaciones con 3+ sucursales o 500+ citas/mes.','Las features son clasificadas hasta lanzamiento oficial — queremos que los clientes Enterprise tengan algo único.','¿Te agrego a la lista de espera Enterprise?'],
+      quick:[
+        {label:'📋 Sí, lista Enterprise', next:'collect_email'},
+        {label:'🔒 Prefiero Founding', next:'founding_explain'}
+      ]
+    },
+    founding_explain:{
+      messages:[
+        'El programa Founding Member es simple:',
+        '🔒 Apartas tu spot entre los primeros 20',
+        '💰 Precio $97/mes queda blindado de por vida (incluso cuando el público sea $197/mes)',
+        '✋ Sin tarjeta hoy · sin compromiso · sin cargos',
+        '📧 Cuando arranque cohorte Founding (en setup operativo · sin fecha confirmada todavía), te avisamos desde hola@dominiosystem.com',
+        '¿Te lo aparto?'
+      ],
+      quick:[
+        {label:'✅ Sí, apartar mi spot', next:'open_founding_modal'},
+        {label:'📅 Prefiero demo 20min', next:'book_demo'},
+        {label:'🎬 Ver demo primero', next:'see_demo'}
+      ]
+    },
+    open_founding_modal:{
+      messages:['Perfecto. Te abro el formulario de reserva 👇','Solo necesito nombre, empresa y email. Tu spot queda apartado al instante.'],
+      action:'open_founding_modal',
+      quick:[]
+    },
+    explain_product:{
+      messages:[
+        'Así funciona Dominio cuando arranque cohorte:',
+        '1️⃣ Accedes al dashboard (nativo Mac/Windows)',
+        '2️⃣ Conectamos tu WhatsApp Cloud API (te guiamos)',
+        '3️⃣ ARIA aprende tus servicios y responde por ti',
+        '4️⃣ Ves todo en tu dashboard en tiempo real',
+        'Estamos finalizando setup operativo · te avisamos cuando active cohorte Founding.',
+        '¿Reservás tu spot ahora con $97 lifetime?'
+      ],
+      quick:[
+        {label:'🔒 Apartar spot', next:'founding_explain'},
+        {label:'🎬 Ver demo live', next:'see_demo'},
+        {label:'📅 Agendar llamada', next:'book_demo'}
+      ]
+    },
+    go_pricing:{
+      messages:['Te llevo a la sección de planes 👇','Solo 20 spots Founding Member con precio $97/mes locked-in para siempre. El público después será $197/mes.'],
+      action:'scroll_to_pricing',
+      quick:[
+        {label:'🔒 Apartar spot ya', next:'open_founding_modal'},
+        {label:'📅 Prefiero demo', next:'book_demo'}
+      ]
+    },
+    book_demo:{
+      messages:['Perfecto, Willian te contacta personalmente cuando arranque cohorte Founding (en setup operativo · sin fecha confirmada todavía).','¿Me compartes tu email para reservar tu acceso?'],
+      expectsEmail:true,
+      quick:[]
+    },
+    see_demo:{
+      messages:['Abro el demo interactivo del dashboard cliente para que veas todo en acción.','Cuando termines, vuelve aquí para apartar tu spot.'],
+      action:'open_demo_modal',
+      quick:[
+        {label:'🔒 Apartar mi spot', next:'open_founding_modal'},
+        {label:'📅 Mejor agendo demo', next:'book_demo'}
+      ]
+    },
+    collect_email:{
+      messages:['Por favor escribe tu email en el cuadro de abajo y presiona Enter. Quedas en waitlist · te enviamos updates por email cuando arranque cohorte Founding.'],
+      expectsEmail:true,
+      quick:[]
+    },
+    email_received:{
+      messages:['¡Perfecto! Quedaste en waitlist · te confirmamos por email.','El trial 14 días lo activamos cuando arranque cohorte Founding (en setup operativo · sin fecha confirmada todavía).','Mientras, ¿quieres ver el dashboard en acción?'],
+      quick:[
+        {label:'🎬 Ver demo', next:'see_demo'},
+        {label:'💰 Ver planes', next:'go_pricing'},
+        {label:'🙋 Otra pregunta', next:'greeting'}
+      ]
+    },
+    no_fit:{
+      messages:['Entiendo. Dominio está específicamente diseñado para negocios con citas/consultas. Si tu modelo es e-commerce, retail, o SaaS, quizás no seamos el mejor fit.','Si cambias de modelo o tienes una división con citas, aquí estaremos.','¿Algo más en lo que pueda ayudarte?'],
+      quick:[
+        {label:'Contar más', next:'greeting'},
+        {label:'Ok gracias', next:'end'}
+      ]
+    },
+    end:{
+      messages:['¡Gracias por chatear! Si quieres retomar cuando gustes, aquí estaré.','dominiosystem.com'],
+      quick:[{label:'🔄 Empezar de nuevo', next:'greeting'}]
+    }
+  };
+
+  let ariaContext = {};
+  const ariaBtn = document.getElementById('aria-btn');
+  const ariaWidget = document.getElementById('aria-widget');
+
+  function openAria(){
+    ariaBtn.classList.add('hiding');
+    ariaWidget.classList.add('open');
+    ariaWidget.setAttribute('aria-hidden','false');
+    if(document.getElementById('aria-msgs').children.length === 0){
+      renderAriaStep('greeting');
+    }
+  }
+  function closeAria(){
+    ariaBtn.classList.remove('hiding');
+    ariaWidget.classList.remove('open');
+    ariaWidget.setAttribute('aria-hidden','true');
+  }
+  function renderAriaStep(stepId){
+    const step = ARIA_TREE[stepId];
+    if(!step) return;
+    if(step.context) Object.assign(ariaContext, step.context);
+
+    const msgsEl = document.getElementById('aria-msgs');
+
+    if(msgsEl.children.length === 0){
+      msgsEl.insertAdjacentHTML('beforeend',`<div class="msg-system">AHORA</div>`);
+    }
+
+    step.messages.forEach((text, i) => {
+      setTimeout(() => {
+        msgsEl.insertAdjacentHTML('beforeend',`<div class="msg-bubble aria-m">${text}</div>`);
+        msgsEl.scrollTop = msgsEl.scrollHeight;
+      }, i * 600);
+    });
+
+    const quickEl = document.getElementById('aria-quick');
+    setTimeout(() => {
+      quickEl.innerHTML = '';
+      if(step.quick && step.quick.length > 0){
+        step.quick.forEach(q => {
+          const btn = document.createElement('button');
+          btn.className = 'quick-btn';
+          btn.type = 'button';
+          btn.textContent = q.label;
+          btn.onclick = () => selectQuick(q.label, q.next);
+          quickEl.appendChild(btn);
+        });
+      }
+    }, (step.messages.length) * 600);
+
+    if(step.action === 'scroll_to_pricing'){
+      setTimeout(() => {
+        document.getElementById('pricing').scrollIntoView({behavior:'smooth'});
+      }, 1500);
+    }
+    if(step.action === 'open_founding_modal'){
+      setTimeout(() => {
+        closeAria();
+        openFoundingModal('founding-pro');
+      }, 1600);
+    }
+    if(step.action === 'open_demo_modal'){
+      setTimeout(() => {
+        closeAria();
+        openDemoModal('brief');
+      }, 1500);
+    }
+  }
+  function selectQuick(label, nextId){
+    const msgsEl = document.getElementById('aria-msgs');
+    msgsEl.insertAdjacentHTML('beforeend',`<div class="msg-bubble user-m">${label}</div>`);
+    msgsEl.scrollTop = msgsEl.scrollHeight;
+    document.getElementById('aria-quick').innerHTML = '';
+    setTimeout(() => renderAriaStep(nextId), 400);
+  }
+
+  // Lead capture · POST to existing n8n webhook (same as prod)
+  const DOMINIO_LEAD_WEBHOOK = 'https://n8n-production-d3a5.up.railway.app/webhook/dominio/lead-capture';
+  const DOMINIO_INTERNAL_CLIENT_ID = '1fa00a33-f3f9-4ee5-8d2a-ead60b6085f2';
+
+  async function submitLeadToBackend(email){
+    const payload = {
+      client_id: DOMINIO_INTERNAL_CLIENT_ID,
+      nombre: ariaContext.nombre || 'Lead ARIA mockup v7',
+      email: email,
+      whatsapp: ariaContext.whatsapp || null,
+      fuente: 'landing_dominiosystem',
+      servicio_interes: ariaContext.vertical || null,
+      notas: 'ARIA context (mockup v7): ' + JSON.stringify(ariaContext).slice(0, 500),
+    };
+    try {
+      const r = await fetch(DOMINIO_LEAD_WEBHOOK, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload),
+      });
+      if(!r.ok) throw new Error('http_' + r.status);
+      try { localStorage.removeItem('dominio_pending_lead_v7'); } catch(e) {}
+      return true;
+    } catch(e) {
+      console.warn('[ARIA v7] lead submit failed, queued for retry:', e && e.message);
+      try { localStorage.setItem('dominio_pending_lead_v7', JSON.stringify(payload)); } catch(e2) {}
+      return false;
+    }
+  }
+
+  // Retry queued lead on page load
+  window.addEventListener('load', () => {
+    let pending;
+    try { pending = localStorage.getItem('dominio_pending_lead_v7'); } catch(e) { return; }
+    if(!pending) return;
+    fetch(DOMINIO_LEAD_WEBHOOK, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: pending,
+    }).then(r => { if(r.ok) { try { localStorage.removeItem('dominio_pending_lead_v7'); } catch(e) {} } })
+      .catch(() => {});
+  });
+
+  function sendAria(){
+    const input = document.getElementById('aria-input');
+    const text = input.value.trim();
+    if(!text) return;
+
+    const msgsEl = document.getElementById('aria-msgs');
+    msgsEl.insertAdjacentHTML('beforeend',`<div class="msg-bubble user-m">${text}</div>`);
+    input.value = '';
+    msgsEl.scrollTop = msgsEl.scrollHeight;
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if(emailRegex.test(text)){
+      ariaContext.email = text;
+      submitLeadToBackend(text);
+      setTimeout(() => renderAriaStep('email_received'), 500);
+      return;
+    }
+
+    const low = text.toLowerCase();
+    let next = null;
+    if(low.includes('precio') || low.includes('cuesta') || low.includes('cuanto') || low.includes('cuánto')) next = 'go_pricing';
+    else if(low.includes('clinic')) next = 'vertical_clinica';
+    else if(low.includes('dentist')) next = 'vertical_dentista';
+    else if(low.includes('barbe') || low.includes('salon') || low.includes('salón')) next = 'vertical_barberia';
+    else if(low.includes('spa') || low.includes('wellness')) next = 'vertical_spa';
+    else if(low.includes('veterin') || low.includes('mascota')) next = 'vertical_vet';
+    else if(low.includes('fisio')) next = 'vertical_fisio';
+    else if(low.includes('demo')) next = 'see_demo';
+    else if(low.includes('trial') || low.includes('gratis') || low.includes('empezar') || low.includes('founding') || low.includes('spot')) next = 'founding_explain';
+    else if(low.includes('enterprise') || low.includes('multi') || low.includes('sede')) next = 'enterprise_teaser';
+    else if(low.includes('funcion') || low.includes('cómo') || low.includes('como')) next = 'explain_product';
+    else if(low.includes('whatsapp') || low.includes('mensaje')) next = 'pain_whatsapp';
+    else if(low.includes('tiempo') || low.includes('hora')) next = 'pain_tiempo';
+    else if(low.includes('lead') || low.includes('pierd')) next = 'pain_leads';
+
+    if(next){
+      setTimeout(() => renderAriaStep(next), 500);
+    } else {
+      setTimeout(() => {
+        msgsEl.insertAdjacentHTML('beforeend',`<div class="msg-bubble aria-m">Gracias por tu mensaje. Para darte la mejor respuesta, ¿me compartes tu email? Te enviamos updates por email cuando arranque cohorte Founding.</div>`);
+        msgsEl.scrollTop = msgsEl.scrollHeight;
+        const quickEl = document.getElementById('aria-quick');
+        quickEl.innerHTML = '';
+        ['📅 Agenda demo','💰 Ver planes','🔄 Empezar de nuevo'].forEach((label, i) => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'quick-btn';
+          btn.textContent = label;
+          btn.onclick = () => selectQuick(label, ['book_demo','go_pricing','greeting'][i]);
+          quickEl.appendChild(btn);
+        });
+      }, 600);
+    }
+  }
+
+  // ============================================
+  // FOUNDING MODAL · captura con Edge Function
+  // (FOUNDING_ENDPOINT + FOUNDING_ANON_KEY declarados al tope del script)
+  // ============================================
+  function openFoundingModal(tier = 'founding-pro', prefill){
+    const modal = document.getElementById('founding-modal');
+    const eyebrow = document.getElementById('fm-eyebrow');
+    const title = document.getElementById('fm-title');
+    const sub = document.getElementById('fm-sub');
+    const submitLabel = document.querySelector('#fm-submit .fm-label');
+    const form = document.getElementById('fm-form');
+    const successState = document.getElementById('fm-success-state');
+
+    form.style.display = '';
+    successState.style.display = 'none';
+    form.reset();
+    document.getElementById('fm-error').classList.remove('show');
+    document.querySelectorAll('.fm-field').forEach(f => f.classList.remove('error'));
+
+    form.dataset.tier = tier;
+    if(tier === 'enterprise'){
+      eyebrow.textContent = 'ENTERPRISE · LISTA DE ESPERA';
+      title.textContent = 'Sumarme a lista de espera Enterprise';
+      sub.innerHTML = 'Te enviamos updates por email cuando abramos cupos para operaciones multi-sede. <strong style="color:var(--text);">Sin precio público, sin compromiso · sin fecha confirmada todavía.</strong>';
+      submitLabel.textContent = 'Unirme a lista Enterprise';
+    } else if(tier === 'waitlist'){
+      eyebrow.textContent = 'RESERVAR ACCESO · WAITLIST';
+      title.textContent = 'Apartar mi acceso';
+      sub.innerHTML = 'Quedas en waitlist · te enviamos updates por email. El trial 14 días lo activamos cuando arranque cohorte Founding <strong style="color:var(--text);">(en setup operativo · sin fecha confirmada todavía)</strong>. Sin tarjeta hoy.';
+      submitLabel.textContent = 'Apartar mi acceso';
+    } else {
+      eyebrow.textContent = 'EARLY ACCESS · FOUNDING 20';
+      title.textContent = 'Apartar mi spot Founding';
+      sub.innerHTML = 'Apartas tu spot con precio <strong style="color:var(--text);">$97/mes locked-in de por vida</strong>. El trial 14 días lo activamos cuando arranque cohorte Founding (en setup operativo · sin fecha confirmada todavía). Sin tarjeta hoy.';
+      submitLabel.textContent = 'Apartar mi spot';
+    }
+
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+
+    // Pre-fill email + vertical when coming from signup form (waitlist)
+    setTimeout(() => {
+      if(prefill && prefill.email) document.getElementById('fm-email').value = prefill.email;
+      if(prefill && prefill.vertical){
+        const sel = document.getElementById('fm-industria');
+        const opt = Array.from(sel.options).find(o => o.value === prefill.vertical);
+        if(opt) sel.value = prefill.vertical;
+      }
+      document.getElementById('fm-nombre').focus();
+    }, 250);
+  }
+  window.openFoundingModal = openFoundingModal;
+
+  function closeFoundingModal(){
+    const modal = document.getElementById('founding-modal');
+    modal.classList.remove('open');
+    modal.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+  }
+  window.closeFoundingModal = closeFoundingModal;
+
+  document.addEventListener('keydown', e => {
+    if(e.key === 'Escape' && document.getElementById('founding-modal').classList.contains('open')) closeFoundingModal();
+    if(e.key === 'Escape' && document.getElementById('aria-widget').classList.contains('open')) closeAria();
+  });
+
+  document.getElementById('fm-form').addEventListener('submit', async function(e){
+    e.preventDefault();
+    const form = e.currentTarget;
+    const submit = document.getElementById('fm-submit');
+    const errorBox = document.getElementById('fm-error');
+
+    errorBox.classList.remove('show');
+    document.querySelectorAll('.fm-field').forEach(f => f.classList.remove('error'));
+
+    const data = {
+      nombre:    document.getElementById('fm-nombre').value.trim(),
+      empresa:   document.getElementById('fm-empresa').value.trim(),
+      email:     document.getElementById('fm-email').value.trim(),
+      whatsapp:  document.getElementById('fm-whatsapp').value.trim(),
+      industria: document.getElementById('fm-industria').value,
+      volumen:   document.getElementById('fm-volumen').value,
+      timeframe: document.getElementById('fm-timeframe').value,
+      tier:      form.dataset.tier || 'founding-pro',
+      landing_url: location.href,
+      fuente: 'landing_dominiosystem',
+    };
+
+    const urlParams = new URLSearchParams(location.search);
+    ['utm_source','utm_medium','utm_campaign'].forEach(k => { data[k] = urlParams.get(k) || ''; });
+
+    if(!data.nombre || data.nombre.length < 2){ showFmError('Por favor ingresa tu nombre completo.'); document.querySelector('[for="fm-nombre"]').parentElement.classList.add('error'); return; }
+    if(!data.empresa){ showFmError('Necesitamos el nombre de tu empresa o clínica.'); document.querySelector('[for="fm-empresa"]').parentElement.classList.add('error'); return; }
+    if(!data.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)){ showFmError('Ingresa un email válido.'); document.querySelector('[for="fm-email"]').parentElement.classList.add('error'); return; }
+
+    submit.classList.add('loading');
+    submit.disabled = true;
+
+    try {
+      const resp = await fetch(FOUNDING_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': FOUNDING_ANON_KEY,
+          'Authorization': 'Bearer ' + FOUNDING_ANON_KEY,
+        },
+        body: JSON.stringify(data),
+      });
+      const result = await resp.json();
+
+      if(!resp.ok || !result.success){
+        const msg = result.error === 'email_invalido' ? 'El email no parece válido.'
+          : result.error === 'nombre_invalido' ? 'Nombre inválido.'
+          : 'No pudimos registrar tu solicitud. Intenta de nuevo o escríbenos a hola@dominiosystem.com';
+        showFmError(msg);
+        submit.classList.remove('loading');
+        submit.disabled = false;
+        return;
+      }
+
+      // Dynamic success copy by tier
+      const successTitle = document.getElementById('fm-success-title');
+      const successMsg = document.getElementById('fm-success-msg');
+      if(data.tier === 'founding-pro'){
+        successTitle.textContent = 'Spot Founding apartado';
+        successMsg.innerHTML = 'Tu spot queda apartado con precio <strong>$97/mes locked-in de por vida</strong>. Te enviamos updates por email cuando arranque cohorte Founding (en setup operativo · sin fecha confirmada todavía).';
+      } else if(data.tier === 'enterprise'){
+        successTitle.textContent = 'En lista Enterprise';
+        successMsg.innerHTML = 'Quedas en la lista de espera Enterprise. Te contactamos cuando abramos cupos multi-sede (sin fecha confirmada todavía).';
+      } else {
+        successTitle.textContent = 'Acceso apartado';
+        successMsg.innerHTML = 'Quedas en la waitlist. Te enviamos updates por email cuando arranque cohorte Founding (en setup operativo · sin fecha confirmada todavía).';
+      }
+      document.getElementById('fm-success-email-display').textContent = data.email;
+      form.style.display = 'none';
+      document.getElementById('fm-success-state').style.display = 'block';
+      submit.classList.remove('loading');
+      submit.disabled = false;
+    } catch(err){
+      showFmError('Problema de conexión. Verifica tu internet y vuelve a intentar.');
+      submit.classList.remove('loading');
+      submit.disabled = false;
+    }
+  });
+
+  function showFmError(msg){
+    const box = document.getElementById('fm-error');
+    box.textContent = msg;
+    box.classList.add('show');
+  }
+
+  // #empezar anchors → smooth-scroll to signup section (user picks vertical + email there)
+  // The signup form submit then opens the data-capture modal pre-filled.
+  document.addEventListener('click', function(e){
+    const link = e.target.closest('a[href="#empezar"]');
+    if(!link) return;
+    e.preventDefault();
+    const target = document.getElementById('empezar');
+    if(target){
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Focus the email field after scroll for fast conversion
+      setTimeout(() => {
+        const em = document.getElementById('signup-email');
+        if(em) em.focus({ preventScroll: true });
+      }, 600);
+    }
+  });
+</script>
+
+</body>
+</html>
