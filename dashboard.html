@@ -947,9 +947,13 @@ body.aria-open .aria-overlay{ pointer-events:auto; }
 /* Base · días CON cobro (default) — gradient blanco, altura proporcional */
 .bar-chart .bar{flex:1;background:linear-gradient(to top,#ffffff 0%,#f5f5f5 50%,rgba(245,245,245,0.85) 100%);border-radius:3px 3px 0 0;min-height:4px;cursor:pointer;position:relative;transition:opacity 180ms ease,outline 100ms,filter 180ms,height 280ms cubic-bezier(0.4,0,0.2,1);}
 .bar-chart .bar:hover{opacity:1;outline:1px solid var(--accent);outline-offset:2px;filter:brightness(1.1);}
-/* Días SIN cobro · barra gris uniforme baja · unificado dim + empty */
+/* Días SIN cobro · barra gris uniforme baja · unificado dim + empty
+   v2.3.19 FIX · agregar padding:0 + text-align reset para anular la regla
+   global ".empty{text-align:center;padding:40px 20px}" (linea 841) que afecta
+   TODO elemento .empty incluyendo nuestras .bar.empty del chart. Esa regla
+   inflaba el bar.empty a 80px de alto (padding 40+40 top/bottom). */
 .bar-chart .bar.dim,
-.bar-chart .bar.empty{background:var(--text4)!important;border:none!important;height:8px!important;min-height:8px!important;border-radius:2px 2px 0 0!important;opacity:0.5;cursor:default;}
+.bar-chart .bar.empty{background:var(--text4)!important;border:none!important;height:8px!important;min-height:8px!important;padding:0!important;text-align:initial!important;border-radius:2px 2px 0 0!important;opacity:0.5;cursor:default;box-sizing:border-box;}
 .bar-chart .bar.dim:hover,
 .bar-chart .bar.empty:hover{opacity:0.75;outline:none;}
 /* Empty (futuro) levemente más sutil que dim (pasado) */
