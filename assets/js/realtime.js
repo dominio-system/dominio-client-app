@@ -358,6 +358,20 @@ function handleInvoiceChange(payload){
   debounceCall('inv-brief',   () => callIfActive('brief',   window.loadBriefData));
 }
 
+// v2.3.14 — Realtime para subscriptions (plan/status/próximo cobro cambian sin invoice INSERT)
+// Antes: si Stripe webhook upgradeaba plan o adelantaba period_end, la vista Cuenta
+// no se actualizaba hasta refresh manual o re-entrada a la sección.
+function handleSubscriptionChange(payload){
+  emitChange('subscriptions', payload);
+  const { eventType, new: newRow, old: oldRow } = payload;
+  if(eventType === 'UPDATE' && newRow && oldRow){
+    if(newRow.status !== oldRow.status && newRow.status === 'past_due' && !_wasToastedRecently(`sub-pd-${newRow.id}`)){
+      window.toast?.('⚠️ Cobro fallido', 'Revisa tu método de pago en Cuenta', 'warn');
+    }
+  }
+  debounceCall('subs-billing', () => callIfActive('billing', window.loadBilling));
+}
+
 function handleClientChange(payload){
   emitChange('clients', payload);
   const { new: newRow, old: oldRow } = payload;
@@ -416,6 +430,8 @@ function initRealtime(){
     { name: 'ariamsg',  table: 'aria_messages',      filter: {},           handler: handleAriaMsgChange },
     { name: 'ariarule', table: 'aria_rules',         filter: clientFilter, handler: handleAriaRuleChange },
     { name: 'invoice',  table: 'invoices',           filter: clientFilter, handler: handleInvoiceChange },
+    // v2.3.14 — subscriptions realtime (plan upgrades, status past_due, period_end advance)
+    { name: 'subs',     table: 'subscriptions',      filter: clientFilter, handler: handleSubscriptionChange },
     { name: 'client',   table: 'clients',            filter: { filter: `id=eq.${cid}` }, handler: handleClientChange },
     { name: 'camp',     table: 'whatsapp_campaigns', filter: clientFilter, handler: handleCampaignChange },
     { name: 'adcamp',   table: 'ad_campaigns',       filter: clientFilter, handler: handleAdCampaignChange },

@@ -807,7 +807,7 @@ window.go = function(view){
   else if(view === 'campaigns') loadCampaigns();
   else if(view === 'reports') loadReports();
   else if(view === 'inbox') loadInbox();
-  else if(view === 'billing') loadBilling();
+  else if(view === 'billing') { loadBilling(); window.startBillingPoll?.(); }
   else if(view === 'settings') loadSettings();
   else if(view === 'aria') loadAriaSection();
 };
@@ -4869,6 +4869,26 @@ window.loadInbox = async function(){
 // ============================================
 // VIEW: BILLING
 // ============================================
+// v2.3.14 — Polling fallback (refresh cada 45s mientras vista activa).
+// Backup por si realtime de subscriptions/invoices no propaga (RLS o
+// replication identity no configurado en alguna tabla). Stop automático
+// al cambiar de vista.
+let _billingPollTimer = null;
+window.startBillingPoll = function(){
+  if(_billingPollTimer) return;
+  _billingPollTimer = setInterval(() => {
+    if(window.currentView !== 'billing'){
+      clearInterval(_billingPollTimer);
+      _billingPollTimer = null;
+      return;
+    }
+    window.loadBilling?.();
+  }, 45000);
+};
+window.stopBillingPoll = function(){
+  if(_billingPollTimer){ clearInterval(_billingPollTimer); _billingPollTimer = null; }
+};
+
 window.loadBilling = async function(){
   try {
     const [subs, invoices] = await Promise.all([
@@ -5323,7 +5343,18 @@ window.renderBriefBarChart = function(monthKey){
   const dayCounts = data.apptCountByMonthDay[monthKey] || {};
   const values = [];
   for(let d = 1; d <= days; d++) values.push(dayData[d] || 0);
-  const max = Math.max(...values, 1);
+
+  // v2.3.14 — Cálculo de max con headroom dinámico para evitar barras
+  // desproporcionadas cuando hay 1-2 días con cobro (antes: 1 día = 100% altura,
+  // se veía aislado y dominaba el card).
+  // - 0 días con data → max = 1 (todas dim)
+  // - 1-2 días        → headroom 75% (la barra única queda al 57%, equilibrada)
+  // - 3+ días         → headroom 25% (proporciones realistas + techo respira)
+  const realValues = values.filter(v => v > 0);
+  const realMax = realValues.length > 0 ? Math.max(...realValues) : 1;
+  const max = realValues.length === 0
+    ? 1
+    : (realValues.length <= 2 ? realMax * 1.75 : realMax * 1.25);
 
   // Labels en sec-head
   const monthLabel = `${MONTHS_LONG_ES[month0]} ${year}`;
@@ -5385,7 +5416,8 @@ window.renderBriefBarChart = function(monthKey){
       bar.dataset.v = monedaSym + '0';
       bar.dataset.c = 'sin ingresos';
     } else {
-      const pct = Math.max(12, Math.round((value / max) * 100));
+      // v2.3.14 — pct con techo 88% (no toca borde superior del card) y piso 14%
+      const pct = Math.max(14, Math.min(88, Math.round((value / max) * 100)));
       bar.style.height = pct + '%';
       if(isCurrentMonth && d === today) bar.classList.add('today');
       bar.dataset.d = dateStr;
@@ -5507,7 +5539,8 @@ window.renderIngresosBarChart = function(monthKey){
       bar.dataset.v = monedaSym + '0';
       bar.dataset.c = 'sin ingresos';
     } else {
-      const pct = Math.max(12, Math.round((value / max) * 100));
+      // v2.3.14 — pct con techo 88% (no toca borde superior del card) y piso 14%
+      const pct = Math.max(14, Math.min(88, Math.round((value / max) * 100)));
       bar.style.height = pct + '%';
       if(isCurrentMonth && d === today) bar.classList.add('today');
       bar.dataset.d = dateStr;
