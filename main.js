@@ -553,7 +553,51 @@ ipcMain.handle('check-for-updates', async () => {
 ipcMain.handle('get-app-version', () => app.getVersion());
 
 // ── App lifecycle ────────────────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════════════
+// CACHE INVALIDATION ON VERSION CHANGE (v2.3.18 fix)
+// ════════════════════════════════════════════════════════════════════
+// Bug encontrado: Electron compila HTML/CSS/JS la primera vez y los cachea
+// en `Code Cache`, `GPUCache`, `DawnGraphiteCache`, `DawnWebGPUCache`. Cuando
+// el app.asar se actualiza vía autoUpdater, el cache NO se invalida — el
+// renderer sigue usando código compilado viejo hasta que el cache se borre
+// manualmente. Síntoma típico: nueva versión instalada, About muestra la
+// nueva versión, pero UI sigue mostrando comportamiento de versión anterior.
+//
+// Fix: al arrancar, comparar version actual vs version persistida del último
+// arranque. Si cambió, borrar el cache del session (mantiene cookies y
+// localStorage para preservar login + preferencias del user).
+async function invalidateCacheOnVersionChange() {
+  try {
+    const userDataPath = app.getPath('userData');
+    const versionFile = path.join(userDataPath, 'last-app-version.txt');
+    const currentVersion = app.getVersion();
+    let lastVersion = null;
+    try { lastVersion = fs.readFileSync(versionFile, 'utf8').trim(); } catch (_) {}
+
+    if (lastVersion !== currentVersion) {
+      console.log(`[Cache] Versión cambió ${lastVersion} → ${currentVersion}, limpiando cache renderer`);
+      const { session: electronSession } = require('electron');
+      // clearCache() y clearCodeCaches() son async; esperamos ambos antes de
+      // crear ventanas (si no, el renderer puede cargar con cache viejo).
+      await electronSession.defaultSession.clearCache();
+      if (electronSession.defaultSession.clearCodeCaches) {
+        await electronSession.defaultSession.clearCodeCaches({});
+      }
+      // Persistir versión actual para próximo arranque
+      try { fs.writeFileSync(versionFile, currentVersion, 'utf8'); } catch (_) {}
+      console.log('[Cache] Limpiado · siguiente render usará v' + currentVersion);
+    }
+  } catch (e) {
+    console.warn('[Cache] invalidate falló (no crítico):', e.message);
+    try { Sentry.captureException(e, { tags: { source: 'cache-invalidate' } }); } catch (_) {}
+  }
+}
+
 app.whenReady().then(async () => {
+  // 1. Limpiar cache si versión cambió (antes de crear ventana)
+  await invalidateCacheOnVersionChange();
+
+  // 2. Login flow
   const autoLoggedIn = await tryAutoLogin();
   if (!autoLoggedIn) createLoginWindow();
 
