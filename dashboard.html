@@ -238,8 +238,10 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,-apple
 .btn.danger{background:var(--danger-s);border-color:rgba(235,87,87,0.3);color:var(--danger);}
 
 /* KPI cards (Commit 6.5: alineado al mockup) */
-.kpi-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:14px;}
-.kpi-strip.five{grid-template-columns:repeat(5,1fr);}
+.kpi-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:14px;}
+.kpi-strip.five{grid-template-columns:repeat(5,minmax(0,1fr));}
+@media (max-width:920px){.kpi-strip,.kpi-strip.five{grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media (max-width:520px){.kpi-strip,.kpi-strip.five{grid-template-columns:1fr;}}
 .kpi-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px 20px;transition:border-color 150ms;}
 .kpi-card:hover{border-color:var(--border2);}
 .kpi-label{font-size:10px;letter-spacing:1.5px;color:var(--text3);font-family:'Geist Mono',monospace;text-transform:uppercase;margin-bottom:8px;font-weight:500;}
@@ -255,17 +257,23 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,-apple
 .panel-sub{font-size:10px;color:var(--text3);margin-left:auto;font-family:'Geist Mono',monospace;letter-spacing:0.5px;}
 .panel-body{padding:16px;}
 
-.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.grid-2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;}
+@media (max-width:880px){.grid-2{grid-template-columns:1fr;}}
 
-/* v2.3.3 — grid-side con altura locked y breakpoints responsivos.
-   Ambas columnas heredan height:480px para que chart y panel Próximas Citas
-   queden SIEMPRE paralelos sin importar cuántas citas haya en la lista.
-   Breakpoints alineados a window sizes reales de Electron (min 900, default 1280). */
-.grid-side{display:grid;grid-template-columns:1fr 420px;gap:14px;height:480px;}
-@media (min-width:1800px){ .grid-side{grid-template-columns:1fr 460px;} }
-@media (max-width:1399px) and (min-width:1200px){ .grid-side{grid-template-columns:1fr 400px;} }
-@media (max-width:1199px) and (min-width:1000px){ .grid-side{grid-template-columns:1fr 360px;} }
-@media (max-width:999px){ .grid-side{grid-template-columns:1fr 340px;} }
+/* v2.3.12 — grid-side responsivo CORRECTO.
+   `minmax(0,1fr)` permite que la columna chart se contraiga (1fr solo no lo hace, mantiene min-content).
+   Apila vertical cuando window < 920px para que en ventana chica chart y Próximas Citas no se monten. */
+.grid-side{display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:14px;height:480px;}
+@media (min-width:1800px){ .grid-side{grid-template-columns:minmax(0,1fr) 460px;} }
+@media (max-width:1399px) and (min-width:1200px){ .grid-side{grid-template-columns:minmax(0,1fr) 400px;} }
+@media (max-width:1199px) and (min-width:1000px){ .grid-side{grid-template-columns:minmax(0,1fr) 360px;} }
+@media (max-width:999px) and (min-width:921px){ .grid-side{grid-template-columns:minmax(0,1fr) 320px;} }
+@media (max-width:920px){
+  .grid-side{grid-template-columns:1fr;height:auto;gap:18px;}
+  .grid-side > div:first-child{min-height:320px;}
+  .next-section{height:auto;min-height:360px;}
+}
+.grid-side > div{min-width:0;}
 
 /* Próximas citas · panel locked + scroll interno */
 .next-section{min-width:0;display:flex;flex-direction:column;height:100%;}

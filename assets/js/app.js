@@ -95,23 +95,89 @@ function sbHeaders(pref){
   return h;
 }
 
-// Fetch wrapper: retry una vez con refresh si recibe 401
-async function sbFetch(url, options = {}){
-  let r = await fetch(url, options);
-  if(r.status === 401 && window.electronAPI?.refreshSession){
+// ════════════════════════════════════════════════════════════════════
+// AUTH · sbFetch v2 (ELECTRON-9 fix · v2.3.12)
+// ════════════════════════════════════════════════════════════════════
+// Bugs fixed vs v2.3.11:
+//   1. Race condition: 5+ fetches paralelos disparaban 5 refreshes → Supabase
+//      invalida refresh_token tras 1er uso → 4/5 fallaban con 401 zombie.
+//      → Ahora _refreshPromise actúa como mutex (singleton in-flight).
+//   2. macOS background sleep + scheduleRefresh timer throttled → token
+//      expira sin que main re-emita session-refreshed.
+//      → Refresh PROACTIVO si expiresAt - now < 60s antes del fetch.
+//   3. Retry-401 silencioso: si el reintento también devolvía 401, sbFetch
+//      retornaba sin logout → caller throw genérico, app zombie.
+//      → Ahora retry-401 fuerza logout + telemetría Sentry.
+//   4. Telemetría pobre: error en Sentry decía solo "appointments: 401".
+//      → Ahora captura status, body, retry-count, age sesión.
+// ════════════════════════════════════════════════════════════════════
+let _refreshPromise = null;
+
+async function _refreshTokenOnce(){
+  // Mutex compartido: si ya hay un refresh en vuelo, los callers esperan ese
+  if (_refreshPromise) return _refreshPromise;
+  _refreshPromise = (async () => {
     try {
       const fresh = await window.electronAPI.refreshSession();
+      if (!fresh || !fresh.accessToken) throw new Error('Empty refresh response');
       window.SESSION = fresh;
       window.ACCESS_TOKEN = fresh.accessToken;
-      window.sb.realtime.setAuth(fresh.accessToken);
-      const newOptions = { ...options, headers: { ...(options.headers||{}), 'Authorization': `Bearer ${fresh.accessToken}` } };
-      r = await fetch(url, newOptions);
-    } catch(e){
-      console.warn('Refresh falló en 401; logout:', e.message);
-      window.electronAPI?.logout?.();
-      throw new Error('Session expired');
+      try { window.sb?.realtime?.setAuth(fresh.accessToken); } catch(_){}
+      return fresh.accessToken;
+    } finally {
+      _refreshPromise = null;
     }
+  })();
+  return _refreshPromise;
+}
+
+async function _ensureFreshToken(){
+  // Refresh proactivo si la sesión expira en <60s
+  const exp = window.SESSION?.expiresAt;
+  if (!exp) return;
+  const now = Math.floor(Date.now() / 1000);
+  if ((exp - now) < 60 && window.electronAPI?.refreshSession){
+    try { await _refreshTokenOnce(); } catch(_){ /* fallback al fetch que dará 401 */ }
   }
+}
+
+async function sbFetch(url, options = {}){
+  // 1) Refresh proactivo si el token está por expirar (background sleep recovery)
+  await _ensureFreshToken();
+
+  // 2) Asegurar Authorization header con token actual (puede haber cambiado)
+  const baseHeaders = { ...(options.headers || {}), 'Authorization': `Bearer ${window.ACCESS_TOKEN}` };
+  let r = await fetch(url, { ...options, headers: baseHeaders });
+
+  if (r.status !== 401 || !window.electronAPI?.refreshSession) return r;
+
+  // 3) Reactive refresh con mutex (evita refresh_token invalidation en paralelo)
+  let newToken;
+  try {
+    newToken = await _refreshTokenOnce();
+  } catch (e) {
+    try { window.electronAPI?.sentryCapture?.(new Error('Refresh failed: ' + (e && e.message || e))); } catch(_){}
+    window.electronAPI?.logout?.();
+    throw new Error('Session expired (refresh failed)');
+  }
+
+  // 4) Retry con token nuevo
+  const retryHeaders = { ...(options.headers || {}), 'Authorization': `Bearer ${newToken}` };
+  r = await fetch(url, { ...options, headers: retryHeaders });
+
+  if (r.status === 401){
+    // 5) Retry sigue 401 → token nuevo también rechazado (RLS? user banned? force logout)
+    let body = '';
+    try { body = (await r.clone().text()).slice(0, 300); } catch(_){}
+    try {
+      window.electronAPI?.sentryCapture?.(new Error(
+        `sbFetch retry still 401 · url:${String(url).split('/').slice(-2).join('/')} · body:${body}`
+      ));
+    } catch(_){}
+    window.electronAPI?.logout?.();
+    throw new Error('Session expired (retry 401)');
+  }
+
   return r;
 }
 
@@ -128,9 +194,16 @@ const COLS_LEAD  = 'id,nombre,whatsapp,email,industria,empresa,fuente,status,est
 const COLS_SUGG  = 'id,client_id,type,title,reasoning,payload,confidence,source,status,approved_by,approved_at,executed_at,expires_at,created_at';
 
 // REST helpers (usan el JWT del cliente + auto-refresh on 401)
+// v2.3.12 — enrich error con body para audit Sentry (ELECTRON-9)
 async function sbGet(table, params=''){
   const r = await sbFetch(`${SUPABASE_URL}/rest/v1/${table}?${params}`, { headers: sbHeaders() });
-  if(!r.ok) throw new Error(`${table}: ${r.status}`);
+  if(!r.ok){
+    let body = '';
+    try { body = (await r.clone().text()).slice(0, 300); } catch(_){}
+    const err = new Error(`${table}: ${r.status}${body ? ' · ' + body : ''}`);
+    err.status = r.status; err.table = table;
+    throw err;
+  }
   return r.json();
 }
 async function sbInsert(table, payload){

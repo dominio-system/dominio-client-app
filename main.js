@@ -251,6 +251,39 @@ function createDashboardWindow() {
   if (process.argv.includes('--dev')) dashboardWindow.webContents.openDevTools({ mode: 'detach' });
   dashboardWindow.on('closed', () => { dashboardWindow = null; });
   dashboardWindow.once('ready-to-show', () => dashboardWindow.show());
+
+  // ── Sleep-wake recovery (ELECTRON-9 fix · v2.3.12) ────────────────────
+  // macOS suspende setTimeout durante deep sleep / app backgrounded por horas.
+  // Al volver a focus, si expiresAt - now < 60s, refrescamos inmediato y
+  // re-arrancamos scheduleRefresh para no caer en 401s en el próximo fetch.
+  dashboardWindow.on('focus', async () => {
+    if (!currentSession || !currentSession.expiresAt) return;
+    const now = Math.floor(Date.now() / 1000);
+    if ((currentSession.expiresAt - now) > 60) return; // token aún válido
+    try {
+      const fresh = await refreshAccessToken(currentSession.refreshToken);
+      const nextAccess = typeof fresh.access_token === 'string' && JWT_RE.test(fresh.access_token) ? fresh.access_token : null;
+      if (!nextAccess) throw new Error('invalid_refresh_response');
+      currentSession = {
+        ...currentSession,
+        accessToken: nextAccess,
+        refreshToken: (typeof fresh.refresh_token === 'string' && fresh.refresh_token.length > 10)
+          ? fresh.refresh_token : currentSession.refreshToken,
+        expiresAt: (typeof fresh.expires_at === 'number' && Number.isFinite(fresh.expires_at))
+          ? fresh.expires_at : (Math.floor(Date.now() / 1000) + (fresh.expires_in || 3600)),
+      };
+      persistSession(currentSession);
+      if (dashboardWindow && !dashboardWindow.isDestroyed()) {
+        dashboardWindow.webContents.send('session-refreshed', currentSession);
+      }
+      scheduleRefresh();
+      console.log('[Auth] focus-refresh ok · expiresAt:', currentSession.expiresAt);
+    } catch (e) {
+      console.warn('[Auth] focus-refresh failed, logout:', e.message);
+      try { Sentry.captureException(e, { tags: { source: 'focus-refresh' } }); } catch(_){}
+      doLogout();
+    }
+  });
 }
 
 async function doLogout() {
