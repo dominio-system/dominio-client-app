@@ -936,23 +936,29 @@ body.aria-open .aria-overlay{ pointer-events:auto; }
 /* v2.3.11 · Bar chart simplificado · sin animation de entrada (causaba bars invisibles
    en algunos cases · scaleY(0) + backwards quedaba pegado si la animation no completaba).
    Mantenemos transitions de hover, dim uniformes y today highlight. */
-/* v2.3.16 — Bar chart minimalista · 31 columnas uniformes (1 por día del mes).
-   Solo días con cobro renderizan barra visible; días sin data son tick-marks
-   (puntos 2px en la base) que mantienen el grid spacing sin competir con
-   las barras con data. Esto cuadra perfecto con el largo del card y deja
-   respirar visualmente cuando hay 1-2 días de cobro al inicio del mes. */
+/* v2.3.17 — Bar chart final · 31 columnas uniformes (1 por día del mes).
+   - Días sin cobro = barra gris uniforme 8px (mismo tamaño para todos,
+     ya sean pasados o futuros — visualmente un grid limpio).
+   - Días con cobro = barra blanca con gradient, altura proporcional al
+     revenue (clamp 14-88% del card).
+   - Hoy = outline blanco 1.5px (destaca incluso si no tiene cobro).
+   Validado vs mockup outputs/mockup-chart-brief-v3.html (aprobado user). */
 .bar-chart{height:180px;display:flex;align-items:flex-end;gap:4px;padding:8px 0 4px;position:relative;}
-.bar-chart .bar{flex:1;background:linear-gradient(to top,var(--text) 0%,var(--text2) 70%,var(--text3) 100%);border-radius:3px 3px 0 0;min-height:4px;cursor:pointer;position:relative;transition:opacity 180ms ease,outline 100ms,filter 180ms,height 280ms cubic-bezier(0.4,0,0.2,1);}
+/* Base · días CON cobro (default) — gradient blanco, altura proporcional */
+.bar-chart .bar{flex:1;background:linear-gradient(to top,#ffffff 0%,#f5f5f5 50%,rgba(245,245,245,0.85) 100%);border-radius:3px 3px 0 0;min-height:4px;cursor:pointer;position:relative;transition:opacity 180ms ease,outline 100ms,filter 180ms,height 280ms cubic-bezier(0.4,0,0.2,1);}
 .bar-chart .bar:hover{opacity:1;outline:1px solid var(--accent);outline-offset:2px;filter:brightness(1.1);}
-/* Día pasado SIN cobro · invisible + dot 2px en la base */
-.bar-chart .bar.dim{background:transparent!important;border:none!important;height:0!important;min-height:0!important;border-radius:0!important;position:relative;cursor:default;}
-.bar-chart .bar.dim::after{content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:2px;height:2px;border-radius:50%;background:var(--text3);opacity:0.55;transition:opacity 180ms;}
-.bar-chart .bar.dim:hover::after{opacity:0.85;width:3px;height:3px;}
-/* Día futuro · mismo dot pero más sutil */
-.bar-chart .bar.empty{background:transparent!important;border:none!important;height:0!important;min-height:0!important;border-radius:0!important;position:relative;cursor:default;}
-.bar-chart .bar.empty::after{content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:2px;height:2px;border-radius:50%;background:var(--text4);opacity:0.35;}
-.bar-chart .bar.empty:hover{outline:none;}
-.bar-chart .bar.today{background:linear-gradient(to top,#ffffff 0%,var(--text) 50%,var(--text2) 100%);outline:1.5px solid var(--accent);outline-offset:2px;box-shadow:0 0 12px rgba(245,245,245,0.18);}
+/* Días SIN cobro · barra gris uniforme baja · unificado dim + empty */
+.bar-chart .bar.dim,
+.bar-chart .bar.empty{background:var(--text4)!important;border:none!important;height:8px!important;min-height:8px!important;border-radius:2px 2px 0 0!important;opacity:0.5;cursor:default;}
+.bar-chart .bar.dim:hover,
+.bar-chart .bar.empty:hover{opacity:0.75;outline:none;}
+/* Empty (futuro) levemente más sutil que dim (pasado) */
+.bar-chart .bar.empty{opacity:0.4;}
+.bar-chart .bar.empty:hover{opacity:0.65;}
+/* Hoy · outline blanco (aplica tanto si tiene cobro como si no) */
+.bar-chart .bar.today{outline:1.5px solid var(--accent);outline-offset:2px;box-shadow:0 0 12px rgba(245,245,245,0.18);}
+.bar-chart .bar.today.dim,
+.bar-chart .bar.today.empty{background:var(--text3)!important;opacity:0.8;}
 
 /* Tooltip · DENTRO del chart-wrap (sin translate up) para evitar clip por overflow:hidden del .panel */
 .bar-tooltip{position:absolute;background:var(--card3);border:1px solid var(--border2);border-radius:7px;padding:8px 12px;font-size:11px;color:var(--text);pointer-events:none;transform:translateX(-50%);white-space:nowrap;opacity:0;transition:opacity 120ms;z-index:10;box-shadow:0 6px 18px rgba(0,0,0,0.5);top:8px;}
